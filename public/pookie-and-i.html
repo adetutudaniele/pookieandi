@@ -1133,7 +1133,7 @@ function copyShareLink() {
   }).catch(() => showToast('Copy failed — try selecting manually'));
 }
 
-function startApp() {
+async function startApp() {
   p1Name = document.getElementById('name1').value.trim() || 'You';
   p2Name = document.getElementById('name2').value.trim() || 'Partner';
   // Track visit count
@@ -1142,7 +1142,8 @@ function startApp() {
     localStorage.setItem('pookie_visits', visits);
     localStorage.setItem('pookie_last', new Date().toISOString());
   } catch(e) {}
-  // Go straight to the app
+  // Create a multiplayer room
+  await createRoom();
   goToApp();
 }
 
