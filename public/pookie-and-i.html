@@ -1398,16 +1398,17 @@ function attachEvents(game, s) {
       const idx = avail[Math.floor(Math.random()*avail.length)];
       s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
       buildMain();
+      broadcastState('game_update');
     });
-    document.getElementById('prev-btn')?.addEventListener('click', () => { if (s.histIdx > 0) { s.histIdx--; buildMain(); } });
-    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; buildMain(); });
+    document.getElementById('prev-btn')?.addEventListener('click', () => { if (s.histIdx > 0) { s.histIdx--; buildMain(); broadcastState('game_update'); } });
+    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; buildMain(); broadcastState('game_update'); });
   }
   if (game.type === 'fingers') {
-    document.getElementById('p1-down')?.addEventListener('click', () => { if(s.p1>0){s.p1--;buildMain();} });
-    document.getElementById('p1-up')?.addEventListener('click', () => { if(s.p1<10){s.p1++;buildMain();} });
-    document.getElementById('p2-down')?.addEventListener('click', () => { if(s.p2>0){s.p2--;buildMain();} });
-    document.getElementById('p2-up')?.addEventListener('click', () => { if(s.p2<10){s.p2++;buildMain();} });
-    document.getElementById('reset-fingers')?.addEventListener('click', () => { s.p1=10;s.p2=10;buildMain(); });
+    document.getElementById('p1-down')?.addEventListener('click', () => { if(s.p1>0){s.p1--;buildMain();broadcastState('game_update');} });
+    document.getElementById('p1-up')?.addEventListener('click', () => { if(s.p1<10){s.p1++;buildMain();broadcastState('game_update');} });
+    document.getElementById('p2-down')?.addEventListener('click', () => { if(s.p2>0){s.p2--;buildMain();broadcastState('game_update');} });
+    document.getElementById('p2-up')?.addEventListener('click', () => { if(s.p2<10){s.p2++;buildMain();broadcastState('game_update');} });
+    document.getElementById('reset-fingers')?.addEventListener('click', () => { s.p1=10;s.p2=10;buildMain();broadcastState('game_update'); });
   }
   if (game.type === 'twenty') {
     function addQ(ans) {
@@ -1416,11 +1417,12 @@ function attachEvents(game, s) {
       if (!q || s.qCount >= 20) return;
       s.qLog.push({q,a:ans}); s.qCount++;
       buildMain();
+      broadcastState('game_update');
     }
     document.getElementById('qa-yes')?.addEventListener('click', () => addQ('yes'));
     document.getElementById('qa-no')?.addEventListener('click', () => addQ('no'));
     document.getElementById('qa-sort')?.addEventListener('click', () => addQ('sortof'));
-    document.getElementById('qa-reset')?.addEventListener('click', () => { s.qLog=[]; s.qCount=0; buildMain(); });
+    document.getElementById('qa-reset')?.addEventListener('click', () => { s.qLog=[]; s.qCount=0; buildMain(); broadcastState('game_update'); });
     document.getElementById('q-input')?.addEventListener('keydown', e => { if(e.key==='Enter') addQ('yes'); });
   }
 }
