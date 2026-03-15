@@ -1226,6 +1226,7 @@ function switchGame(id) {
   buildNav();
   buildMain();
   document.querySelector('.nav-wrap').scrollLeft = 0;
+  broadcastState('switch_game');
 }
 
 function getGame() { return allItems.find(g => g.id === activeGame); }
