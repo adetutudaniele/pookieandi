@@ -1434,6 +1434,322 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
-</script>
+
+// ═══════════════════════════════════════════════════════════
+//  MULTIPLAYER — Supabase Realtime
+// ═══════════════════════════════════════════════════════════
+
+const SUPABASE_URL = 'https://xeounxqeitbirvfjfgrb.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhlb3VueHFlaXRiaXJ2ZmpmZ3JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDE3NDIsImV4cCI6MjA4OTE3Nzc0Mn0.hEPG1OPhUUKmllrqpvTz4epPUpnJS8BY4OmAR8f_Xf4';
+
+let supabase;
+let roomChannel = null;
+let currentRoomCode = null;
+let playerNumber = null; // 1 or 2
+let partnerConnected = false;
+let partnerWasConnected = false;
+
+// Init Supabase
+try {
+  supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch(e) {
+  console.warn('Supabase init failed:', e);
+}
+
+// Generate a unique 4-digit room code
+function generateRoomCode() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+// Create a room when starting a date night
+async function createRoom() {
+  if (!supabase) return;
+  
+  const code = generateRoomCode();
+  
+  // Build initial game state snapshot
+  const gameState = {};
+  allItems.forEach(g => {
+    gameState[g.id] = { drawn: [], histIdx: -1, p1: 10, p2: 10, qLog: [], qCount: 0 };
+  });
+  
+  try {
+    const { data, error } = await supabase
+      .from('rooms')
+      .insert({
+        room_code: code,
+        player1_name: p1Name,
+        player2_name: p2Name,
+        game_state: gameState,
+        active_game: activeGame,
+        player1_connected: true,
+        player2_connected: false
+      })
+      .select()
+      .single();
+    
+    if (error) {
+      // If code collision, try again
+      if (error.code === '23505') return createRoom();
+      console.error('Room creation error:', error);
+      return;
+    }
+    
+    currentRoomCode = code;
+    playerNumber = 1;
+    joinChannel(code);
+    showToast('Room created! Share code: ' + code);
+  } catch(e) {
+    console.error('Room creation failed:', e);
+  }
+}
+
+// Join an existing room by code
+async function joinRoom() {
+  if (!supabase) { showToast('Connection unavailable'); return; }
+  
+  const codeInput = document.getElementById('joinCode');
+  const code = codeInput.value.trim();
+  if (code.length !== 4 || !/^\d{4}$/.test(code)) {
+    showToast('Enter a valid 4-digit code');
+    return;
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('room_code', code)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+    
+    if (error || !data) {
+      showToast('Room not found or expired');
+      return;
+    }
+    
+    // Set names from the room
+    p1Name = data.player1_name;
+    p2Name = data.player2_name || 'Partner';
+    
+    // Set player2 name if not set
+    const myName = document.getElementById('name1').value.trim();
+    if (myName && !data.player2_name) {
+      p2Name = myName;
+      // Swap: the joiner's name becomes player2
+      await supabase.from('rooms').update({ player2_name: myName, player2_connected: true }).eq('room_code', code);
+    } else {
+      await supabase.from('rooms').update({ player2_connected: true }).eq('room_code', code);
+    }
+    
+    // Restore game state from room
+    if (data.game_state) {
+      Object.keys(data.game_state).forEach(gameId => {
+        if (state[gameId]) {
+          Object.assign(state[gameId], data.game_state[gameId]);
+        }
+      });
+    }
+    activeGame = data.active_game || 'questions';
+    
+    currentRoomCode = code;
+    playerNumber = 2;
+    joinChannel(code);
+    
+    // Track visit
+    try {
+      let visits = parseInt(localStorage.getItem('pookie_visits') || '0') + 1;
+      localStorage.setItem('pookie_visits', visits);
+    } catch(e) {}
+    
+    goToApp();
+    showToast('Joined room! 🧡');
+  } catch(e) {
+    console.error('Join failed:', e);
+    showToast('Failed to join room');
+  }
+}
+
+// Join a Supabase Realtime channel for the room
+function joinChannel(code) {
+  if (!supabase || roomChannel) return;
+  
+  roomChannel = supabase.channel(`room-${code}`, {
+    config: { presence: { key: `player-${playerNumber}` } }
+  });
+  
+  // Listen for broadcast messages
+  roomChannel.on('broadcast', { event: 'sync' }, ({ payload }) => {
+    handleRemoteSync(payload);
+  });
+  
+  // Listen for presence changes
+  roomChannel.on('presence', { event: 'sync' }, () => {
+    updatePresenceUI();
+  });
+  
+  roomChannel.subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await roomChannel.track({
+        player: playerNumber,
+        name: playerNumber === 1 ? p1Name : p2Name,
+        online: true
+      });
+    }
+  });
+}
+
+// Broadcast current state to partner
+function broadcastState(type) {
+  if (!roomChannel || !currentRoomCode) return;
+  
+  const payload = {
+    type: type,
+    activeGame: activeGame,
+    gameState: state[activeGame],
+    gameId: activeGame,
+    sender: playerNumber
+  };
+  
+  roomChannel.send({
+    type: 'broadcast',
+    event: 'sync',
+    payload: payload
+  });
+  
+  // Also persist to DB (debounced)
+  clearTimeout(broadcastState._timer);
+  broadcastState._timer = setTimeout(() => {
+    if (!supabase || !currentRoomCode) return;
+    const allState = {};
+    allItems.forEach(g => { allState[g.id] = state[g.id]; });
+    supabase.from('rooms').update({
+      game_state: allState,
+      active_game: activeGame
+    }).eq('room_code', currentRoomCode).then(() => {});
+  }, 1000);
+}
+
+// Handle incoming sync from partner
+function handleRemoteSync(payload) {
+  if (payload.sender === playerNumber) return; // ignore own broadcasts
+  
+  if (payload.type === 'switch_game') {
+    activeGame = payload.activeGame;
+    if (payload.gameState) {
+      Object.assign(state[payload.gameId], payload.gameState);
+    }
+    buildNav();
+    buildMain();
+  } else if (payload.type === 'game_update') {
+    if (payload.gameState && payload.gameId) {
+      Object.assign(state[payload.gameId], payload.gameState);
+    }
+    if (payload.activeGame) activeGame = payload.activeGame;
+    buildNav();
+    buildMain();
+  }
+}
+
+// Update connected/disconnected UI based on presence
+function updatePresenceUI() {
+  if (!roomChannel) return;
+  
+  const presenceState = roomChannel.presenceState();
+  const players = Object.values(presenceState).flat();
+  const otherPlayer = players.find(p => p.player !== playerNumber);
+  
+  const indicator = document.getElementById('connected-indicator');
+  const dot = document.getElementById('connected-dot');
+  const text = document.getElementById('connected-text');
+  const notice = document.getElementById('disconnect-notice');
+  
+  if (!indicator) return;
+  indicator.style.display = 'flex';
+  
+  if (otherPlayer) {
+    partnerConnected = true;
+    dot.className = 'connected-dot online';
+    const otherName = playerNumber === 1 ? p2Name : p1Name;
+    text.textContent = `${otherName} is connected`;
+    if (notice) notice.classList.remove('show');
+    
+    // Update header with both names
+    const headerNames = document.getElementById('header-names');
+    if (headerNames) headerNames.textContent = `${p1Name} & ${p2Name}`;
+    
+    if (!partnerWasConnected) {
+      partnerWasConnected = true;
+      showToast('Your partner joined! 🧡');
+    }
+  } else {
+    if (partnerWasConnected && partnerConnected) {
+      // Partner was connected but left
+      if (notice) notice.classList.add('show');
+      setTimeout(() => { if (notice) notice.classList.remove('show'); }, 5000);
+    }
+    partnerConnected = false;
+    dot.className = 'connected-dot waiting';
+    text.textContent = 'waiting for your partner...';
+  }
+}
+
+// Update the invite/share screen to include room code
+const _originalShowInviteScreen = showInviteScreen;
+showInviteScreen = function() {
+  _originalShowInviteScreen();
+  
+  if (currentRoomCode) {
+    const inviteCard = document.querySelector('.invite-card');
+    if (inviteCard) {
+      const roomCodeHtml = `
+        <div class="room-code-display" style="margin-bottom:1rem;">
+          <div class="room-code-label">Your room code</div>
+          <div class="room-code-value">${currentRoomCode}</div>
+          <div class="room-code-status">
+            <span class="dot-pulse"></span>
+            ${partnerConnected ? 'Partner connected' : 'Waiting for partner...'}
+          </div>
+          <button class="share-code-btn" onclick="copyRoomCode()">Share room code</button>
+        </div>
+      `;
+      inviteCard.insertAdjacentHTML('beforebegin', roomCodeHtml);
+    }
+    
+    // Update the invite message to include room code
+    const msgEl = document.getElementById('invite-msg');
+    if (msgEl) {
+      const name = p2Name && p2Name !== 'Partner' ? p2Name : 'pookie';
+      msgEl.textContent = `Join our date night 🧡 Go to pookieandi.lovable.app and enter code: ${currentRoomCode}`;
+    }
+  }
+};
+
+function copyRoomCode() {
+  const msg = `Join our date night 🧡 Go to pookieandi.lovable.app and enter code: ${currentRoomCode}`;
+  navigator.clipboard.writeText(msg).then(() => showToast('Room code copied! 🧡'));
+}
+
+// Update goToApp to show room code in header if in a room
+const _originalGoToApp = goToApp;
+goToApp = function() {
+  _originalGoToApp();
+  
+  if (currentRoomCode) {
+    // Show connected indicator
+    const indicator = document.getElementById('connected-indicator');
+    if (indicator) {
+      indicator.style.display = 'flex';
+      updatePresenceUI();
+    }
+  }
+};
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+  if (roomChannel) {
+    roomChannel.untrack();
+  }
+});
 </body>
 </html>
