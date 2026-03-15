@@ -842,9 +842,14 @@ body {
     <div class="app-header-left">
       <div class="app-header-title">Pookie <em>&</em> I</div>
       <div class="app-header-names" id="header-names">your date night companion</div>
+      <div class="connected-indicator" id="connected-indicator" style="display:none;">
+        <span class="connected-dot" id="connected-dot"></span>
+        <span id="connected-text"></span>
+      </div>
     </div>
     <button class="app-share-btn" onclick="showInvite()">Share ↗</button>
   </div>
+  <div class="disconnect-notice" id="disconnect-notice">Partner disconnected</div>
 
   <div class="nav-wrap">
     <div class="nav" id="nav"></div>
