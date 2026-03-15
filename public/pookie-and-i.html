@@ -795,6 +795,19 @@ body {
 
     <!-- STEP 3: Start button -->
     <button class="cta-btn" id="startBtn" onclick="startApp()">Start date night →</button>
+
+    <div class="join-section" id="joinSection">
+      <div class="join-divider">
+        <div class="join-divider-line"></div>
+        <span class="join-divider-text">or join your partner</span>
+        <div class="join-divider-line"></div>
+      </div>
+      <div class="join-row">
+        <input class="join-input" id="joinCode" placeholder="Enter 4-digit code" maxlength="4" inputmode="numeric" pattern="[0-9]*" />
+        <button class="join-btn" onclick="joinRoom()">Join →</button>
+      </div>
+    </div>
+
     <p class="landing-footer-note" id="footernote">No account needed · works on any device · free forever</p>
   </div>
 </div>
