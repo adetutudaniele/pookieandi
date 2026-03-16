@@ -8,6 +8,7 @@
 <link rel="icon" href="/app-icon.png" type="image/png">
 <link rel="apple-touch-icon" href="/app-icon.png">
 <script defer src="https://cloud.umami.is/script.js" data-website-id="802e19a5-b733-481c-820c-1eef1d603559"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -547,6 +548,154 @@ body {
   border: 1px solid rgba(250,247,242,0.1);
 }
 .toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ══ MULTIPLAYER UI ══ */
+.room-code-display {
+  background: rgba(200,82,58,0.12);
+  border: 1px solid rgba(200,82,58,0.25);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  text-align: center;
+  margin-bottom: 1rem;
+  width: 100%;
+}
+.room-code-label {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.room-code-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--cream);
+  letter-spacing: 0.2em;
+}
+.room-code-share-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.15s;
+}
+.room-code-share-btn:hover { opacity: 0.85; }
+.room-waiting {
+  font-size: 13px;
+  color: rgba(250,247,242,0.45);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.join-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin: 0.5rem 0 1rem;
+  opacity: 0;
+  transition: opacity 0.5s ease 1.4s;
+}
+.join-divider.visible { opacity: 1; }
+.join-divider-line { flex: 1; height: 1px; background: rgba(250,247,242,0.1); }
+.join-divider-text {
+  font-size: 12px;
+  color: rgba(250,247,242,0.35);
+  white-space: nowrap;
+}
+.join-section {
+  width: 100%;
+  background: rgba(250,247,242,0.05);
+  border: 1px solid rgba(250,247,242,0.1);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease 1.6s, transform 0.5s ease 1.6s;
+}
+.join-section.visible { opacity: 1; transform: translateY(0); }
+.join-section-label {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+.join-code-row {
+  display: flex;
+  gap: 8px;
+}
+.join-code-input {
+  flex: 1;
+  background: rgba(250,247,242,0.07);
+  border: 1px solid rgba(250,247,242,0.15);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  color: var(--cream);
+  outline: none;
+  text-align: center;
+  letter-spacing: 0.3em;
+  transition: border-color 0.2s;
+}
+.join-code-input::placeholder { color: rgba(250,247,242,0.25); letter-spacing: 0.15em; font-size: 13px; }
+.join-code-input:focus { border-color: rgba(200,82,58,0.5); }
+.join-code-btn {
+  background: rgba(250,247,242,0.08);
+  color: var(--cream);
+  border: 1px solid rgba(250,247,242,0.15);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.join-code-btn:hover { background: rgba(250,247,242,0.12); }
+.connected-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.connected-dot.green { background: #4CAF50; box-shadow: 0 0 4px rgba(76,175,80,0.5); }
+.connected-dot.yellow { background: #FFC107; box-shadow: 0 0 4px rgba(255,193,7,0.5); }
+.connected-dot.red { background: #f44336; box-shadow: 0 0 4px rgba(244,67,54,0.5); }
+.connection-status {
+  font-size: 11px;
+  color: rgba(250,247,242,0.4);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+}
+.app-header-room-code {
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-top: 1px;
+}
+.partner-disconnected-banner {
+  background: rgba(244,67,54,0.1);
+  border: 1px solid rgba(244,67,54,0.2);
+  color: rgba(250,247,242,0.7);
+  font-size: 12px;
+  text-align: center;
+  padding: 6px 12px;
+  display: none;
+}
 </style>
 </head>
 <body>
@@ -628,6 +777,21 @@ body {
 
     <!-- STEP 3: Start button -->
     <button class="cta-btn" id="startBtn" onclick="startApp()">Start date night →</button>
+
+    <!-- Join room section -->
+    <div class="join-divider" id="joinDivider">
+      <div class="join-divider-line"></div>
+      <span class="join-divider-text">or join your partner</span>
+      <div class="join-divider-line"></div>
+    </div>
+    <div class="join-section" id="joinSection">
+      <div class="join-section-label">Have a room code?</div>
+      <div class="join-code-row">
+        <input class="join-code-input" id="joinCodeInput" placeholder="Enter 4-digit code" maxlength="4" inputmode="numeric" />
+        <button class="join-code-btn" id="joinCodeBtn" onclick="joinRoom()">Join</button>
+      </div>
+    </div>
+
     <p class="landing-footer-note" id="footernote">No account needed · works on any device · free forever</p>
   </div>
 </div>
@@ -662,10 +826,13 @@ body {
     <div class="app-header-left">
       <div class="app-header-title">Pookie <em>&</em> I</div>
       <div class="app-header-names" id="header-names">your date night companion</div>
+      <div class="connection-status" id="connection-status" style="display:none;"></div>
+      <div class="app-header-room-code" id="header-room-code" style="display:none;"></div>
     </div>
     <button class="app-share-btn" onclick="showInvite()">Share ↗</button>
   </div>
 
+  <div class="partner-disconnected-banner" id="disconnected-banner">Your partner has disconnected</div>
   <div class="nav-wrap">
     <div class="nav" id="nav"></div>
   </div>
@@ -904,6 +1071,10 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('startBtn').classList.add('visible');
     document.getElementById('footernote').classList.add('visible');
   }, 2400);
+  setTimeout(() => {
+    document.getElementById('joinDivider').classList.add('visible');
+    document.getElementById('joinSection').classList.add('visible');
+  }, 2700);
 });
 
 // Live-update the share box as names are typed
@@ -1244,6 +1415,367 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
+
+// ═══════════════════════════════════════════════════════════
+// MULTIPLAYER SYNC (Supabase Realtime)
+// ═══════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://xeounxqeitbirvfjfgrb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhlb3VueHFlaXRiaXJ2ZmpmZ3JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDE3NDIsImV4cCI6MjA4OTE3Nzc0Mn0.hEPG1OPhUUKmllrqpvTz4epPUpnJS8BY4OmAR8f_Xf4';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentRoom = null;    // room row from DB
+let isPlayer1 = false;     // am I player 1?
+let roomChannel = null;    // realtime subscription
+let syncPaused = false;    // prevent echo loops
+let syncTimer = null;      // debounce timer
+
+function generateRoomCode() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+function getFullState() {
+  return { state: JSON.parse(JSON.stringify(state)), activeGame };
+}
+
+function applyRemoteState(gs) {
+  if (!gs || !gs.state) return;
+  syncPaused = true;
+  // Apply all game states
+  Object.keys(gs.state).forEach(k => {
+    if (state[k]) {
+      Object.assign(state[k], gs.state[k]);
+    }
+  });
+  if (gs.activeGame && gs.activeGame !== activeGame) {
+    activeGame = gs.activeGame;
+    buildNav();
+  }
+  buildMain();
+  setTimeout(() => { syncPaused = false; }, 200);
+}
+
+function pushState() {
+  if (syncPaused || !currentRoom) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    const gs = getFullState();
+    await sb.from('rooms').update({
+      game_state: gs,
+      active_game: activeGame
+    }).eq('id', currentRoom.id);
+  }, 100);
+}
+
+function updateConnectionUI() {
+  if (!currentRoom) return;
+  const statusEl = document.getElementById('connection-status');
+  const bannerEl = document.getElementById('disconnected-banner');
+  const namesEl = document.getElementById('header-names');
+  const codeEl = document.getElementById('header-room-code');
+
+  if (statusEl) statusEl.style.display = 'flex';
+  if (codeEl) {
+    codeEl.style.display = 'block';
+    codeEl.textContent = 'Room: ' + currentRoom.room_code;
+  }
+
+  const p1c = currentRoom.player1_connected;
+  const p2c = currentRoom.player2_connected;
+  const p2n = currentRoom.player2_name;
+
+  if (p2n) {
+    namesEl.textContent = currentRoom.player1_name + ' & ' + p2n;
+    p1Name = isPlayer1 ? currentRoom.player1_name : p2n;
+    p2Name = isPlayer1 ? p2n : currentRoom.player1_name;
+  }
+
+  if (p1c && p2c) {
+    statusEl.innerHTML = '<span class="connected-dot green"></span> Both connected';
+    bannerEl.style.display = 'none';
+  } else if ((isPlayer1 && !p2c) || (!isPlayer1 && !p1c)) {
+    if (p2n) {
+      statusEl.innerHTML = '<span class="connected-dot red"></span> Partner disconnected';
+      bannerEl.style.display = 'block';
+    } else {
+      statusEl.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your partner...';
+      bannerEl.style.display = 'none';
+    }
+  }
+}
+
+function subscribeToRoom(roomId) {
+  if (roomChannel) { sb.removeChannel(roomChannel); }
+  roomChannel = sb.channel('room-' + roomId)
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'rooms',
+      filter: 'id=eq.' + roomId
+    }, (payload) => {
+      const newRow = payload.new;
+      currentRoom = newRow;
+      updateConnectionUI();
+      // Apply game state from remote
+      if (newRow.game_state && newRow.game_state.state) {
+        applyRemoteState(newRow.game_state);
+      }
+    })
+    .subscribe();
+}
+
+// Modify startApp to create a room
+const _originalStartApp = startApp;
+startApp = async function() {
+  p1Name = document.getElementById('name1').value.trim() || 'You';
+  p2Name = document.getElementById('name2').value.trim() || 'Partner';
+  isPlayer1 = true;
+
+  // Track visits
+  try {
+    let visits = parseInt(localStorage.getItem('pookie_visits') || '0') + 1;
+    localStorage.setItem('pookie_visits', visits);
+    localStorage.setItem('pookie_last', new Date().toISOString());
+  } catch(e) {}
+
+  // Create room
+  const code = generateRoomCode();
+  const { data, error } = await sb.from('rooms').insert({
+    room_code: code,
+    player1_name: p1Name,
+    player2_name: null,
+    player1_connected: true,
+    player2_connected: false,
+    active_game: activeGame,
+    game_state: getFullState()
+  }).select().single();
+
+  if (error) {
+    console.error('Room creation failed:', error);
+    showToast('Failed to create room');
+    goToApp();
+    return;
+  }
+
+  currentRoom = data;
+  subscribeToRoom(data.id);
+
+  // Store room ID for disconnect cleanup
+  try { localStorage.setItem('pookie_room_id', data.id); } catch(e) {}
+
+  // Show room code on invite screen
+  showRoomInvite(code);
+};
+
+function showRoomInvite(code) {
+  const url = 'pookieandi.lovable.app';
+  const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
+  document.getElementById('invite-name').textContent = name;
+  document.getElementById('invite-url').textContent = url;
+  document.getElementById('invite-msg').textContent = `Join our date night 🧡 Go to ${url} and enter code: ${code}`;
+
+  // Add room code display to invite screen
+  const inviteInner = document.querySelector('.invite-inner');
+  // Remove existing room code display if any
+  const existing = document.getElementById('invite-room-code');
+  if (existing) existing.remove();
+
+  const rcDiv = document.createElement('div');
+  rcDiv.id = 'invite-room-code';
+  rcDiv.className = 'room-code-display';
+  rcDiv.innerHTML = `
+    <div class="room-code-label">Your room code</div>
+    <div class="room-code-value">${code}</div>
+    <button class="room-code-share-btn" onclick="copyRoomCode('${code}')">Share room code</button>
+    <div class="room-waiting" id="invite-waiting" style="margin-top:10px;">Waiting for your partner to join...</div>
+  `;
+  // Insert before the invite card
+  const inviteCard = document.querySelector('.invite-card');
+  inviteInner.insertBefore(rcDiv, inviteCard);
+
+  showScreen('invite');
+
+  // Poll for partner join
+  pollForPartner();
+}
+
+function copyRoomCode(code) {
+  const url = 'pookieandi.lovable.app';
+  const msg = `Join our date night 🧡 Go to ${url} and enter code: ${code}`;
+  navigator.clipboard.writeText(msg).then(() => showToast('Room code copied! 🧡'));
+}
+
+async function pollForPartner() {
+  if (!currentRoom) return;
+  const checkInterval = setInterval(async () => {
+    const { data } = await sb.from('rooms').select('*').eq('id', currentRoom.id).single();
+    if (data) {
+      currentRoom = data;
+      if (data.player2_connected && data.player2_name) {
+        clearInterval(checkInterval);
+        p2Name = data.player2_name;
+        const waitEl = document.getElementById('invite-waiting');
+        if (waitEl) waitEl.textContent = `${data.player2_name} has joined! 🧡`;
+        showToast(`${data.player2_name} joined! 🧡`);
+        setTimeout(() => goToApp(), 1500);
+      }
+    }
+  }, 2000);
+  // Stop polling after 5 minutes
+  setTimeout(() => clearInterval(checkInterval), 300000);
+}
+
+async function joinRoom() {
+  const codeInput = document.getElementById('joinCodeInput');
+  const code = codeInput.value.trim();
+  if (code.length !== 4) {
+    showToast('Please enter a 4-digit code');
+    return;
+  }
+
+  // Get your name
+  const myName = document.getElementById('name1').value.trim() || 'Partner';
+
+  const { data, error } = await sb.from('rooms')
+    .select('*')
+    .eq('room_code', code)
+    .gte('expires_at', new Date().toISOString())
+    .maybeSingle();
+
+  if (error || !data) {
+    showToast('Room not found or expired');
+    return;
+  }
+
+  if (data.player2_connected && data.player2_name) {
+    showToast('Room is already full');
+    return;
+  }
+
+  // Join as player 2
+  isPlayer1 = false;
+  const { data: updated, error: updateErr } = await sb.from('rooms').update({
+    player2_name: myName,
+    player2_connected: true
+  }).eq('id', data.id).select().single();
+
+  if (updateErr) {
+    showToast('Failed to join room');
+    return;
+  }
+
+  currentRoom = updated;
+  p1Name = myName;
+  p2Name = updated.player1_name;
+
+  // Apply existing game state from room
+  if (updated.game_state && updated.game_state.state) {
+    applyRemoteState(updated.game_state);
+  }
+
+  subscribeToRoom(updated.id);
+  try { localStorage.setItem('pookie_room_id', updated.id); } catch(e) {}
+
+  showToast(`Joined ${updated.player1_name}'s room! 🧡`);
+  goToApp();
+}
+
+// Override switchGame to sync
+const _originalSwitchGame = switchGame;
+switchGame = function(id) {
+  activeGame = id;
+  buildNav();
+  buildMain();
+  document.querySelector('.nav-wrap').scrollLeft = 0;
+  pushState();
+};
+
+// Override goToApp to update connection UI
+const _originalGoToApp = goToApp;
+goToApp = function() {
+  if (currentRoom) {
+    document.getElementById('header-names').textContent = p1Name + ' & ' + p2Name;
+  } else {
+    document.getElementById('header-names').textContent = p1Name && p2Name ? `${p1Name} & ${p2Name}` : 'your date night companion';
+  }
+  showScreen('app');
+  buildNav();
+  buildMain();
+  if (currentRoom) updateConnectionUI();
+  try {
+    const visits = parseInt(localStorage.getItem('pookie_visits') || '1');
+    const note = document.getElementById('app-visit-note');
+    if (note) note.textContent = visits > 1 ? `you've had ${visits} date nights here 🧡` : '';
+  } catch(e) {}
+};
+
+// Override attachEvents to add sync on every state mutation
+const _originalAttachEvents = attachEvents;
+attachEvents = function(game, s) {
+  if (game.type === 'draw' || game.type === 'fingers') {
+    document.getElementById('draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i=>!s.drawn.includes(i));
+      if (avail.length === 0) { s.drawn = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      buildMain();
+      pushState();
+    });
+    document.getElementById('prev-btn')?.addEventListener('click', () => { if (s.histIdx > 0) { s.histIdx--; buildMain(); pushState(); } });
+    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; buildMain(); pushState(); });
+  }
+  if (game.type === 'fingers') {
+    document.getElementById('p1-down')?.addEventListener('click', () => { if(s.p1>0){s.p1--;buildMain();pushState();} });
+    document.getElementById('p1-up')?.addEventListener('click', () => { if(s.p1<10){s.p1++;buildMain();pushState();} });
+    document.getElementById('p2-down')?.addEventListener('click', () => { if(s.p2>0){s.p2--;buildMain();pushState();} });
+    document.getElementById('p2-up')?.addEventListener('click', () => { if(s.p2<10){s.p2++;buildMain();pushState();} });
+    document.getElementById('reset-fingers')?.addEventListener('click', () => { s.p1=10;s.p2=10;buildMain();pushState(); });
+  }
+  if (game.type === 'twenty') {
+    function addQ(ans) {
+      const input = document.getElementById('q-input');
+      const q = input.value.trim();
+      if (!q || s.qCount >= 20) return;
+      s.qLog.push({q,a:ans}); s.qCount++;
+      buildMain();
+      pushState();
+    }
+    document.getElementById('qa-yes')?.addEventListener('click', () => addQ('yes'));
+    document.getElementById('qa-no')?.addEventListener('click', () => addQ('no'));
+    document.getElementById('qa-sort')?.addEventListener('click', () => addQ('sortof'));
+    document.getElementById('qa-reset')?.addEventListener('click', () => { s.qLog=[]; s.qCount=0; buildMain(); pushState(); });
+    document.getElementById('q-input')?.addEventListener('keydown', e => { if(e.key==='Enter') addQ('yes'); });
+  }
+};
+
+// Handle page unload — mark disconnected
+window.addEventListener('beforeunload', async () => {
+  if (!currentRoom) return;
+  const field = isPlayer1 ? 'player1_connected' : 'player2_connected';
+  // Use sendBeacon for reliability
+  const url = `${SUPABASE_URL}/rest/v1/rooms?id=eq.${currentRoom.id}`;
+  const body = JSON.stringify({ [field]: false });
+  try {
+    navigator.sendBeacon(url + '&apikey=' + SUPABASE_KEY, new Blob([body], { type: 'application/json' }));
+  } catch(e) {
+    // Fallback
+    fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
+      body,
+      keepalive: true
+    }).catch(() => {});
+  }
+});
+
+// On page load, check URL for room code parameter
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code && code.length === 4) {
+    const input = document.getElementById('joinCodeInput');
+    if (input) input.value = code;
+  }
+});
 </script>
 </body>
 </html>
