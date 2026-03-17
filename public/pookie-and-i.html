@@ -1860,6 +1860,15 @@ async function joinRoom() {
   subscribeToRoom(updated.id);
   try { localStorage.setItem('pookie_room_id', updated.id); } catch(e) {}
 
+  // Load initial chat/scores
+  if (updated.messages && Array.isArray(updated.messages)) {
+    chatMessages = updated.messages;
+    if (chatMessages.length) updateChatBadge();
+  }
+  if (updated.scores && typeof updated.scores === 'object') {
+    scores = updated.scores;
+  }
+
   showToast(`Joined ${updated.player1_name}'s room! 🧡`);
   goToApp();
 }
