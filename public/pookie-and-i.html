@@ -2285,21 +2285,6 @@ subscribeToRoom = function(roomId) {
   setupPresence();
 };
 
-// Also load initial chat/scores when joining room
-const _origJoinRoom = joinRoom;
-joinRoom = async function() {
-  await _origJoinRoom();
-  // After join, load messages and scores from currentRoom
-  if (currentRoom) {
-    if (currentRoom.messages && Array.isArray(currentRoom.messages)) {
-      chatMessages = currentRoom.messages;
-      if (chatMessages.length) updateChatBadge();
-    }
-    if (currentRoom.scores && typeof currentRoom.scores === 'object') {
-      scores = currentRoom.scores;
-    }
-  }
-};
 </script>
 </body>
 </html>
