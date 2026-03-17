@@ -829,7 +829,11 @@ body {
       <div class="connection-status" id="connection-status" style="display:none;"></div>
       <div class="app-header-room-code" id="header-room-code" style="display:none;"></div>
     </div>
-    <button class="app-share-btn" onclick="showInvite()">Share ↗</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="app-share-btn" id="trophy-btn" onclick="toggleScoreboard()" style="position:relative;padding:6px 8px;font-size:16px;">🏆<span id="trophy-badge" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--accent);border-radius:50;"></span></button>
+      <button class="app-share-btn" id="chat-btn" onclick="toggleChat()" style="position:relative;padding:6px 8px;font-size:16px;">💬<span id="chat-badge" style="display:none;position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:#f44336;border-radius:50%;"></span></button>
+      <button class="app-share-btn" onclick="showInvite()">Share ↗</button>
+    </div>
   </div>
 
   <div class="partner-disconnected-banner" id="disconnected-banner">Your partner has disconnected</div>
