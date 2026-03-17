@@ -21,11 +21,13 @@ export type Database = {
           expires_at: string
           game_state: Json
           id: string
+          messages: Json
           player1_connected: boolean
           player1_name: string
           player2_connected: boolean
           player2_name: string | null
           room_code: string
+          scores: Json
           updated_at: string
         }
         Insert: {
@@ -34,11 +36,13 @@ export type Database = {
           expires_at?: string
           game_state?: Json
           id?: string
+          messages?: Json
           player1_connected?: boolean
           player1_name?: string
           player2_connected?: boolean
           player2_name?: string | null
           room_code: string
+          scores?: Json
           updated_at?: string
         }
         Update: {
@@ -47,11 +51,13 @@ export type Database = {
           expires_at?: string
           game_state?: Json
           id?: string
+          messages?: Json
           player1_connected?: boolean
           player1_name?: string
           player2_connected?: boolean
           player2_name?: string | null
           room_code?: string
+          scores?: Json
           updated_at?: string
         }
         Relationships: []
