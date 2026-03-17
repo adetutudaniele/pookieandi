@@ -997,6 +997,36 @@ body {
   </footer>
 </div>
 
+<!-- ══ CHAT PANEL ══ -->
+<div class="panel-overlay" id="chat-overlay" onclick="toggleChat()"></div>
+<div class="panel-drawer" id="chat-drawer">
+  <div class="panel-handle"></div>
+  <div class="panel-header">
+    <span class="panel-title">Chat</span>
+    <button class="panel-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages">
+    <div class="chat-empty">No messages yet — say hi! 👋</div>
+  </div>
+  <div class="emoji-grid" id="emoji-grid"></div>
+  <div class="chat-input-row">
+    <button class="emoji-btn" onclick="toggleEmojiGrid()">😊</button>
+    <input class="chat-input" id="chat-input" placeholder="Type a message..." maxlength="500" />
+    <button class="chat-send-btn" onclick="sendChatMsg()">→</button>
+  </div>
+</div>
+
+<!-- ══ SCOREBOARD PANEL ══ -->
+<div class="panel-overlay" id="sb-overlay" onclick="toggleScoreboard()"></div>
+<div class="panel-drawer" id="sb-drawer">
+  <div class="panel-handle"></div>
+  <div class="panel-header">
+    <span class="panel-title">Scoreboard</span>
+    <button class="panel-close" onclick="toggleScoreboard()">✕</button>
+  </div>
+  <div class="sb-body" id="sb-body"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
