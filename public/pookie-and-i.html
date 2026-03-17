@@ -1932,25 +1932,81 @@ attachEvents = function(game, s) {
   }
 };
 
-// Handle page unload — mark disconnected
-window.addEventListener('beforeunload', async () => {
+// Handle page unload — mark disconnected via sendBeacon
+window.addEventListener('beforeunload', () => {
   if (!currentRoom) return;
   const field = isPlayer1 ? 'player1_connected' : 'player2_connected';
-  // Use sendBeacon for reliability
   const url = `${SUPABASE_URL}/rest/v1/rooms?id=eq.${currentRoom.id}`;
   const body = JSON.stringify({ [field]: false });
   try {
     navigator.sendBeacon(url + '&apikey=' + SUPABASE_KEY, new Blob([body], { type: 'application/json' }));
   } catch(e) {
-    // Fallback
     fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
-      body,
-      keepalive: true
+      body, keepalive: true
     }).catch(() => {});
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// PRESENCE — heartbeat-based slot release
+// ═══════════════════════════════════════════════════════════
+let presenceChannel = null;
+let heartbeatInterval = null;
+
+function setupPresence() {
+  if (!currentRoom) return;
+  if (presenceChannel) sb.removeChannel(presenceChannel);
+
+  presenceChannel = sb.channel('presence-' + currentRoom.id, {
+    config: { presence: { key: isPlayer1 ? 'player1' : 'player2' } }
+  });
+
+  presenceChannel.on('presence', { event: 'sync' }, () => {
+    const presState = presenceChannel.presenceState();
+    const p1Online = !!presState['player1']?.length;
+    const p2Online = !!presState['player2']?.length;
+
+    // Update connected fields if they differ
+    if (currentRoom) {
+      const updates = {};
+      if (currentRoom.player1_connected !== p1Online) updates.player1_connected = p1Online;
+      if (currentRoom.player2_connected !== p2Online) updates.player2_connected = p2Online;
+      // Also release slot if player left
+      if (!p2Online && currentRoom.player2_connected) {
+        updates.player2_connected = false;
+      }
+      if (!p1Online && currentRoom.player1_connected) {
+        updates.player1_connected = false;
+      }
+      if (Object.keys(updates).length) {
+        sb.from('rooms').update(updates).eq('id', currentRoom.id).then(() => {});
+      }
+    }
+  });
+
+  presenceChannel.subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await presenceChannel.track({ online: true, ts: Date.now() });
+    }
+  });
+
+  // Heartbeat every 10 seconds
+  clearInterval(heartbeatInterval);
+  heartbeatInterval = setInterval(() => {
+    if (presenceChannel) {
+      presenceChannel.track({ online: true, ts: Date.now() });
+    }
+  }, 10000);
+}
+
+// Patch subscribeToRoom to also setup presence
+const _origSubscribe = subscribeToRoom;
+subscribeToRoom = function(roomId) {
+  _origSubscribe(roomId);
+  setupPresence();
+};
 
 // On page load, check URL for room code parameter
 window.addEventListener('DOMContentLoaded', () => {
@@ -1961,6 +2017,280 @@ window.addEventListener('DOMContentLoaded', () => {
     if (input) input.value = code;
   }
 });
+
+// ═══════════════════════════════════════════════════════════
+// GO BACK TO LANDING
+// ═══════════════════════════════════════════════════════════
+function goBackToLanding() {
+  showScreen('landing');
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════════════════
+let chatOpen = false;
+let chatMessages = [];
+let lastReadCount = 0;
+
+const CHAT_EMOJIS = [
+  '❤️','🧡','💛','💚','💙','💜','🖤','💕','💗','💖',
+  '😍','🥰','😘','😊','😂','🤣','😭','🥺','😏','😉',
+  '🙈','🙉','🙊','👀','🔥','✨','💫','⭐','🌙','🌈',
+  '👏','🙌','💪','🤝','👋','🤞','✌️','👍','👎','💅'
+];
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chat-overlay').classList.toggle('open', chatOpen);
+  document.getElementById('chat-drawer').classList.toggle('open', chatOpen);
+  if (chatOpen) {
+    lastReadCount = chatMessages.length;
+    updateChatBadge();
+    renderChatMessages();
+    setTimeout(() => document.getElementById('chat-input')?.focus(), 300);
+  }
+  // Close emoji grid when closing chat
+  if (!chatOpen) document.getElementById('emoji-grid').classList.remove('open');
+}
+
+function updateChatBadge() {
+  const badge = document.getElementById('chat-badge');
+  if (badge) badge.style.display = chatMessages.length > lastReadCount ? 'block' : 'none';
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('chat-messages');
+  if (!chatMessages.length) {
+    container.innerHTML = '<div class="chat-empty">No messages yet — say hi! 👋</div>';
+    return;
+  }
+  const myRole = isPlayer1 ? 'p1' : 'p2';
+  container.innerHTML = chatMessages.map(m => {
+    const isMine = m.from === myRole;
+    const name = m.from === 'p1' ? (currentRoom?.player1_name || p1Name) : (currentRoom?.player2_name || p2Name);
+    const time = new Date(m.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    return `<div class="chat-msg ${isMine ? 'mine' : 'theirs'}">
+      <div class="chat-msg-name">${name}</div>
+      <div>${escapeHtml(m.text)}</div>
+      <div class="chat-msg-time">${time}</div>
+    </div>`;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+
+function sendChatMsg() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || !currentRoom) return;
+  input.value = '';
+
+  const msg = { from: isPlayer1 ? 'p1' : 'p2', text, ts: Date.now() };
+  chatMessages.push(msg);
+  lastReadCount = chatMessages.length;
+  renderChatMessages();
+  updateChatBadge();
+
+  // Push to DB
+  sb.from('rooms').update({ messages: chatMessages }).eq('id', currentRoom.id).then(() => {});
+  // Close emoji grid
+  document.getElementById('emoji-grid').classList.remove('open');
+}
+
+function toggleEmojiGrid() {
+  const grid = document.getElementById('emoji-grid');
+  const isOpen = grid.classList.contains('open');
+  if (!isOpen && !grid.innerHTML) {
+    grid.innerHTML = CHAT_EMOJIS.map(e => `<button onclick="insertEmoji('${e}')">${e}</button>`).join('');
+  }
+  grid.classList.toggle('open');
+}
+
+function insertEmoji(emoji) {
+  const input = document.getElementById('chat-input');
+  input.value += emoji;
+  input.focus();
+}
+
+// Chat enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && chatOpen) {
+    const active = document.activeElement;
+    if (active && active.id === 'chat-input') {
+      e.preventDefault();
+      sendChatMsg();
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// SCOREBOARD
+// ═══════════════════════════════════════════════════════════
+let sbOpen = false;
+let scores = { p1: 0, p2: 0 };
+let sbConfirming = false;
+
+function toggleScoreboard() {
+  sbOpen = !sbOpen;
+  document.getElementById('sb-overlay').classList.toggle('open', sbOpen);
+  document.getElementById('sb-drawer').classList.toggle('open', sbOpen);
+  if (sbOpen) renderScoreboard();
+}
+
+function renderScoreboard() {
+  const body = document.getElementById('sb-body');
+  const n1 = currentRoom?.player1_name || p1Name;
+  const n2 = currentRoom?.player2_name || p2Name;
+  const s1 = scores.p1, s2 = scores.p2;
+
+  const crown = '👑';
+  const tied = s1 === s2;
+  const vsSymbol = tied ? '🤝' : 'vs';
+  const p1Crown = !tied && s1 > s2 ? crown : '';
+  const p2Crown = !tied && s2 > s1 ? crown : '';
+
+  const canControl = isPlayer1;
+
+  body.innerHTML = `
+    <div class="sb-players">
+      <div class="sb-player">
+        <div class="sb-player-name">${p1Crown} ${n1}</div>
+        <div class="sb-player-score">${s1}</div>
+        ${canControl ? `<div class="sb-controls">
+          <button class="sb-ctrl-btn" onclick="changeScore('p1',-1)">−</button>
+          <button class="sb-ctrl-btn" onclick="changeScore('p1',1)">+</button>
+        </div>` : ''}
+      </div>
+      <div class="sb-vs">${vsSymbol}</div>
+      <div class="sb-player">
+        <div class="sb-player-name">${p2Crown} ${n2}</div>
+        <div class="sb-player-score">${s2}</div>
+        ${canControl ? `<div class="sb-controls">
+          <button class="sb-ctrl-btn" onclick="changeScore('p2',-1)">−</button>
+          <button class="sb-ctrl-btn" onclick="changeScore('p2',1)">+</button>
+        </div>` : ''}
+      </div>
+    </div>
+    ${canControl ? `
+      <button class="sb-reset-btn" onclick="confirmResetScores()">Reset scores</button>
+      <div id="sb-confirm-area"></div>
+    ` : '<div style="text-align:center;font-size:12px;color:rgba(250,247,242,0.3);margin-top:8px;">Only the room host can change scores</div>'}
+  `;
+}
+
+function changeScore(player, delta) {
+  scores[player] = Math.max(0, scores[player] + delta);
+  renderScoreboard();
+  pushScores();
+}
+
+function confirmResetScores() {
+  const area = document.getElementById('sb-confirm-area');
+  area.innerHTML = `
+    <div class="sb-confirm">
+      <div class="sb-confirm-text">Are you sure you want to reset scores?</div>
+      <div class="sb-confirm-btns">
+        <button class="sb-confirm-btn sb-confirm-yes" onclick="resetScores()">Yes, reset</button>
+        <button class="sb-confirm-btn sb-confirm-no" onclick="cancelResetScores()">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function cancelResetScores() {
+  document.getElementById('sb-confirm-area').innerHTML = '';
+}
+
+function resetScores() {
+  scores = { p1: 0, p2: 0 };
+  renderScoreboard();
+  pushScores();
+}
+
+function pushScores() {
+  if (!currentRoom) return;
+  sb.from('rooms').update({ scores }).eq('id', currentRoom.id).then(() => {});
+}
+
+// ═══════════════════════════════════════════════════════════
+// SYNC CHAT & SCORES FROM REMOTE UPDATES
+// ═══════════════════════════════════════════════════════════
+// Patch applyRemoteState to also handle messages & scores
+const _origApplyRemote = applyRemoteState;
+applyRemoteState = function(gs) {
+  _origApplyRemote(gs);
+};
+
+// Patch subscribeToRoom to also handle messages/scores
+const _origSubscribe2 = subscribeToRoom;
+subscribeToRoom = function(roomId) {
+  _origSubscribe2(roomId);
+
+  // Re-subscribe with messages/scores awareness
+  // The existing channel already handles UPDATE events.
+  // We patch the handler by adding a second listener on the same channel
+  // Actually we'll override the channel callback in the existing subscription.
+};
+
+// We need a simpler approach - patch the realtime callback
+const _origSubscribeForChat = subscribeToRoom;
+subscribeToRoom = function(roomId) {
+  if (roomChannel) { sb.removeChannel(roomChannel); }
+  roomChannel = sb.channel('room-' + roomId)
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'rooms',
+      filter: 'id=eq.' + roomId
+    }, (payload) => {
+      const newRow = payload.new;
+      currentRoom = newRow;
+      updateConnectionUI();
+      // Apply game state from remote
+      if (newRow.game_state && newRow.game_state.state) {
+        applyRemoteState(newRow.game_state);
+      }
+      // Sync chat messages
+      if (newRow.messages && Array.isArray(newRow.messages)) {
+        const prevLen = chatMessages.length;
+        chatMessages = newRow.messages;
+        if (chatOpen) {
+          lastReadCount = chatMessages.length;
+          renderChatMessages();
+        } else if (chatMessages.length > prevLen) {
+          updateChatBadge();
+        }
+      }
+      // Sync scores
+      if (newRow.scores && typeof newRow.scores === 'object') {
+        scores = newRow.scores;
+        if (sbOpen) renderScoreboard();
+      }
+    })
+    .subscribe();
+
+  setupPresence();
+};
+
+// Also load initial chat/scores when joining room
+const _origJoinRoom = joinRoom;
+joinRoom = async function() {
+  await _origJoinRoom();
+  // After join, load messages and scores from currentRoom
+  if (currentRoom) {
+    if (currentRoom.messages && Array.isArray(currentRoom.messages)) {
+      chatMessages = currentRoom.messages;
+      if (chatMessages.length) updateChatBadge();
+    }
+    if (currentRoom.scores && typeof currentRoom.scores === 'object') {
+      scores = currentRoom.scores;
+    }
+  }
+};
 </script>
 </body>
 </html>
