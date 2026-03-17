@@ -1827,8 +1827,13 @@ async function joinRoom() {
   }
 
   if (data.player2_connected && data.player2_name) {
-    showToast('Room is already full');
-    return;
+    // Check if this is us rejoining - allow if our name matches
+    const myName = document.getElementById('name1').value.trim() || 'Partner';
+    if (data.player2_name !== myName) {
+      showToast('Room is already full');
+      return;
+    }
+    // Rejoin as player2
   }
 
   // Join as player 2
