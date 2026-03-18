@@ -2150,31 +2150,171 @@ function goBackToLanding() {
 }
 
 // ═══════════════════════════════════════════════════════════
-// CHAT
+// SIDE NAVIGATION
+// ═══════════════════════════════════════════════════════════
+let sideNavOpen = false;
+
+function toggleSideNav() {
+  sideNavOpen = !sideNavOpen;
+  document.getElementById('side-nav').classList.toggle('open', sideNavOpen);
+  document.getElementById('side-nav-overlay').classList.toggle('open', sideNavOpen);
+}
+
+function closeSideNav() {
+  sideNavOpen = false;
+  document.getElementById('side-nav').classList.remove('open');
+  document.getElementById('side-nav-overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCORE BAR
+// ═══════════════════════════════════════════════════════════
+let scores = { p1: 0, p2: 0 };
+
+function renderScoreBar() {
+  const bar = document.getElementById('score-bar');
+  if (!bar) return;
+  if (!currentRoom) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+
+  const n1 = currentRoom?.player1_name || p1Name;
+  const n2 = currentRoom?.player2_name || p2Name;
+  const s1 = scores.p1, s2 = scores.p2;
+  const tied = s1 === s2;
+  const canControl = isPlayer1;
+
+  let html = '';
+  html += `<span class="sb-name">${!tied && s1 > s2 ? '<span class="sb-crown">👑</span>' : ''}${n1}</span>`;
+  if (canControl) html += `<button class="sb-pm" onclick="changeScore('p1',-1)">−</button>`;
+  html += `<span class="sb-score">${s1}</span>`;
+  if (canControl) html += `<button class="sb-pm" onclick="changeScore('p1',1)">+</button>`;
+  html += `<span class="sb-sep">${tied ? '♡' : '—'}</span>`;
+  if (canControl) html += `<button class="sb-pm" onclick="changeScore('p2',-1)">−</button>`;
+  html += `<span class="sb-score">${s2}</span>`;
+  if (canControl) html += `<button class="sb-pm" onclick="changeScore('p2',1)">+</button>`;
+  html += `<span class="sb-name">${n2}${!tied && s2 > s1 ? '<span class="sb-crown">👑</span>' : ''}</span>`;
+  if (canControl) html += `<button class="sb-pm" onclick="confirmResetScores()" style="margin-left:4px;font-size:11px;" title="Reset scores">↺</button>`;
+
+  bar.innerHTML = html;
+}
+
+function changeScore(player, delta) {
+  scores[player] = Math.max(0, scores[player] + delta);
+  renderScoreBar();
+  pushScores();
+}
+
+function confirmResetScores() {
+  if (confirm('Reset both scores to 0?')) {
+    scores = { p1: 0, p2: 0 };
+    renderScoreBar();
+    pushScores();
+  }
+}
+
+function pushScores() {
+  if (!currentRoom) return;
+  sb.from('rooms').update({ scores }).eq('id', currentRoom.id).then(() => {});
+}
+
+// ═══════════════════════════════════════════════════════════
+// COUNTDOWN TIMER
+// ═══════════════════════════════════════════════════════════
+let timerSeconds = 0;
+let timerRemaining = 0;
+let timerRunning = false;
+let timerInterval = null;
+
+function toggleTimer() {
+  document.getElementById('timer-widget').classList.toggle('open');
+}
+
+function setTimer(secs) {
+  timerSeconds = secs;
+  timerRemaining = secs;
+  timerRunning = false;
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  document.getElementById('timer-start-btn').textContent = 'Start';
+  document.getElementById('timer-display').classList.remove('flash');
+}
+
+function setTimerCustom() {
+  const val = parseInt(document.getElementById('timer-custom-input').value);
+  if (val > 0) setTimer(val);
+}
+
+function toggleTimerRun() {
+  if (timerRemaining <= 0 && !timerRunning) return;
+  timerRunning = !timerRunning;
+  const btn = document.getElementById('timer-start-btn');
+  if (timerRunning) {
+    btn.textContent = 'Pause';
+    document.getElementById('timer-display').classList.remove('flash');
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      updateTimerDisplay();
+      if (timerRemaining <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        btn.textContent = 'Start';
+        document.getElementById('timer-display').classList.add('flash');
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+      }
+    }, 1000);
+  } else {
+    clearInterval(timerInterval);
+    btn.textContent = 'Start';
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerRemaining = timerSeconds;
+  updateTimerDisplay();
+  document.getElementById('timer-start-btn').textContent = 'Start';
+  document.getElementById('timer-display').classList.remove('flash');
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timerRemaining / 60);
+  const s = timerRemaining % 60;
+  document.getElementById('timer-display').textContent =
+    String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+// Close timer when clicking outside
+document.addEventListener('click', (e) => {
+  const widget = document.getElementById('timer-widget');
+  const btn = document.getElementById('timer-btn');
+  if (widget && widget.classList.contains('open') && !widget.contains(e.target) && e.target !== btn) {
+    widget.classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
+// CHAT (RIGHT SIDE PANEL)
 // ═══════════════════════════════════════════════════════════
 let chatOpen = false;
 let chatMessages = [];
 let lastReadCount = 0;
-
-const CHAT_EMOJIS = [
-  '❤️','🧡','💛','💚','💙','💜','🖤','💕','💗','💖',
-  '😍','🥰','😘','😊','😂','🤣','😭','🥺','😏','😉',
-  '🙈','🙉','🙊','👀','🔥','✨','💫','⭐','🌙','🌈',
-  '👏','🙌','💪','🤝','👋','🤞','✌️','👍','👎','💅'
-];
+let emojiPickerInitialized = false;
 
 function toggleChat() {
   chatOpen = !chatOpen;
   document.getElementById('chat-overlay').classList.toggle('open', chatOpen);
-  document.getElementById('chat-drawer').classList.toggle('open', chatOpen);
+  document.getElementById('chat-panel').classList.toggle('open', chatOpen);
   if (chatOpen) {
     lastReadCount = chatMessages.length;
     updateChatBadge();
     renderChatMessages();
     setTimeout(() => document.getElementById('chat-input')?.focus(), 300);
   }
-  // Close emoji grid when closing chat
-  if (!chatOpen) document.getElementById('emoji-grid').classList.remove('open');
+  if (!chatOpen) {
+    const wrap = document.getElementById('emoji-picker-wrap');
+    if (wrap) wrap.classList.remove('open');
+  }
 }
 
 function updateChatBadge() {
@@ -2220,25 +2360,25 @@ function sendChatMsg() {
   renderChatMessages();
   updateChatBadge();
 
-  // Push to DB
   sb.from('rooms').update({ messages: chatMessages }).eq('id', currentRoom.id).then(() => {});
-  // Close emoji grid
-  document.getElementById('emoji-grid').classList.remove('open');
+  const wrap = document.getElementById('emoji-picker-wrap');
+  if (wrap) wrap.classList.remove('open');
 }
 
-function toggleEmojiGrid() {
-  const grid = document.getElementById('emoji-grid');
-  const isOpen = grid.classList.contains('open');
-  if (!isOpen && !grid.innerHTML) {
-    grid.innerHTML = CHAT_EMOJIS.map(e => `<button onclick="insertEmoji('${e}')">${e}</button>`).join('');
+function toggleEmojiPicker() {
+  const wrap = document.getElementById('emoji-picker-wrap');
+  const isOpen = wrap.classList.contains('open');
+  if (!isOpen && !emojiPickerInitialized) {
+    const picker = document.createElement('emoji-picker');
+    picker.addEventListener('emoji-click', (e) => {
+      const input = document.getElementById('chat-input');
+      input.value += e.detail.unicode;
+      input.focus();
+    });
+    wrap.appendChild(picker);
+    emojiPickerInitialized = true;
   }
-  grid.classList.toggle('open');
-}
-
-function insertEmoji(emoji) {
-  const input = document.getElementById('chat-input');
-  input.value += emoji;
-  input.focus();
+  wrap.classList.toggle('open');
 }
 
 // Chat enter key
@@ -2253,114 +2393,8 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// SCOREBOARD
-// ═══════════════════════════════════════════════════════════
-let sbOpen = false;
-let scores = { p1: 0, p2: 0 };
-let sbConfirming = false;
-
-function toggleScoreboard() {
-  sbOpen = !sbOpen;
-  document.getElementById('sb-overlay').classList.toggle('open', sbOpen);
-  document.getElementById('sb-drawer').classList.toggle('open', sbOpen);
-  if (sbOpen) renderScoreboard();
-}
-
-function renderScoreboard() {
-  const body = document.getElementById('sb-body');
-  const n1 = currentRoom?.player1_name || p1Name;
-  const n2 = currentRoom?.player2_name || p2Name;
-  const s1 = scores.p1, s2 = scores.p2;
-
-  const crown = '👑';
-  const tied = s1 === s2;
-  const vsSymbol = tied ? '🤝' : 'vs';
-  const p1Crown = !tied && s1 > s2 ? crown : '';
-  const p2Crown = !tied && s2 > s1 ? crown : '';
-
-  const canControl = isPlayer1;
-
-  body.innerHTML = `
-    <div class="sb-players">
-      <div class="sb-player">
-        <div class="sb-player-name">${p1Crown} ${n1}</div>
-        <div class="sb-player-score">${s1}</div>
-        ${canControl ? `<div class="sb-controls">
-          <button class="sb-ctrl-btn" onclick="changeScore('p1',-1)">−</button>
-          <button class="sb-ctrl-btn" onclick="changeScore('p1',1)">+</button>
-        </div>` : ''}
-      </div>
-      <div class="sb-vs">${vsSymbol}</div>
-      <div class="sb-player">
-        <div class="sb-player-name">${p2Crown} ${n2}</div>
-        <div class="sb-player-score">${s2}</div>
-        ${canControl ? `<div class="sb-controls">
-          <button class="sb-ctrl-btn" onclick="changeScore('p2',-1)">−</button>
-          <button class="sb-ctrl-btn" onclick="changeScore('p2',1)">+</button>
-        </div>` : ''}
-      </div>
-    </div>
-    ${canControl ? `
-      <button class="sb-reset-btn" onclick="confirmResetScores()">Reset scores</button>
-      <div id="sb-confirm-area"></div>
-    ` : '<div style="text-align:center;font-size:12px;color:rgba(250,247,242,0.3);margin-top:8px;">Only the room host can change scores</div>'}
-  `;
-}
-
-function changeScore(player, delta) {
-  scores[player] = Math.max(0, scores[player] + delta);
-  renderScoreboard();
-  pushScores();
-}
-
-function confirmResetScores() {
-  const area = document.getElementById('sb-confirm-area');
-  area.innerHTML = `
-    <div class="sb-confirm">
-      <div class="sb-confirm-text">Are you sure you want to reset scores?</div>
-      <div class="sb-confirm-btns">
-        <button class="sb-confirm-btn sb-confirm-yes" onclick="resetScores()">Yes, reset</button>
-        <button class="sb-confirm-btn sb-confirm-no" onclick="cancelResetScores()">Cancel</button>
-      </div>
-    </div>`;
-}
-
-function cancelResetScores() {
-  document.getElementById('sb-confirm-area').innerHTML = '';
-}
-
-function resetScores() {
-  scores = { p1: 0, p2: 0 };
-  renderScoreboard();
-  pushScores();
-}
-
-function pushScores() {
-  if (!currentRoom) return;
-  sb.from('rooms').update({ scores }).eq('id', currentRoom.id).then(() => {});
-}
-
-// ═══════════════════════════════════════════════════════════
 // SYNC CHAT & SCORES FROM REMOTE UPDATES
 // ═══════════════════════════════════════════════════════════
-// Patch applyRemoteState to also handle messages & scores
-const _origApplyRemote = applyRemoteState;
-applyRemoteState = function(gs) {
-  _origApplyRemote(gs);
-};
-
-// Patch subscribeToRoom to also handle messages/scores
-const _origSubscribe2 = subscribeToRoom;
-subscribeToRoom = function(roomId) {
-  _origSubscribe2(roomId);
-
-  // Re-subscribe with messages/scores awareness
-  // The existing channel already handles UPDATE events.
-  // We patch the handler by adding a second listener on the same channel
-  // Actually we'll override the channel callback in the existing subscription.
-};
-
-// We need a simpler approach - patch the realtime callback
 const _origSubscribeForChat = subscribeToRoom;
 subscribeToRoom = function(roomId) {
   if (roomChannel) { sb.removeChannel(roomChannel); }
@@ -2374,7 +2408,6 @@ subscribeToRoom = function(roomId) {
       const newRow = payload.new;
       currentRoom = newRow;
       updateConnectionUI();
-      // Apply game state from remote
       if (newRow.game_state && newRow.game_state.state) {
         applyRemoteState(newRow.game_state);
       }
@@ -2392,7 +2425,7 @@ subscribeToRoom = function(roomId) {
       // Sync scores
       if (newRow.scores && typeof newRow.scores === 'object') {
         scores = newRow.scores;
-        if (sbOpen) renderScoreboard();
+        renderScoreBar();
       }
     })
     .subscribe();
