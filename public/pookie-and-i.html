@@ -1644,16 +1644,28 @@ function buildTwentyGame(game, s) {
 }
 
 function attachEvents(game, s) {
+  if (!s.allShown) s.allShown = [];
   if (game.type === 'draw' || game.type === 'fingers') {
     document.getElementById('draw-btn')?.addEventListener('click', () => {
       let avail = game.prompts.map((_,i)=>i).filter(i=>!s.drawn.includes(i));
-      if (avail.length === 0) { s.drawn = []; avail = game.prompts.map((_,i)=>i); }
+      if (avail.length === 0) {
+        s.drawn.forEach(i => { if (!s.allShown.includes(i)) s.allShown.push(i); });
+        const last5 = s.drawn.slice(-5);
+        s.drawn = []; s.histIdx = -1;
+        avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i) && !last5.includes(i));
+        if (avail.length === 0) {
+          s.allShown = [];
+          avail = game.prompts.map((_,i)=>i).filter(i => !last5.includes(i));
+          if (avail.length === 0) avail = game.prompts.map((_,i)=>i);
+        }
+        for (let i = avail.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [avail[i],avail[j]]=[avail[j],avail[i]]; }
+      }
       const idx = avail[Math.floor(Math.random()*avail.length)];
       s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
       buildMain();
     });
     document.getElementById('prev-btn')?.addEventListener('click', () => { if (s.histIdx > 0) { s.histIdx--; buildMain(); } });
-    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; buildMain(); });
+    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; s.allShown=[]; buildMain(); });
   }
   if (game.type === 'fingers') {
     document.getElementById('p1-down')?.addEventListener('click', () => { if(s.p1>0){s.p1--;buildMain();} });
