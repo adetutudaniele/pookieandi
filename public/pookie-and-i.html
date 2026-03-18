@@ -1458,17 +1458,19 @@ function showScreen(id) {
 
 // ─── NAV ────────────────────────────────────────────────
 function buildNav() {
-  const nav = document.getElementById('nav');
+  const nav = document.getElementById('side-nav-content');
   const sections = [
-    { label: 'Convo', items: extras },
+    { label: 'For You Two', items: extras },
     { label: 'Games', items: games }
   ];
   let html = '';
   sections.forEach(section => {
-    html += `<span class="nav-separator">${section.label}</span>`;
+    html += `<div class="side-nav-section">
+      <div class="side-nav-section-label">${section.label}</div>`;
     section.items.forEach(g => {
-      html += `<button class="nav-btn${g.id === activeGame ? ' active' : ''}" onclick="switchGame('${g.id}')"><span class="dot"></span>${g.name}</button>`;
+      html += `<button class="side-nav-item${g.id === activeGame ? ' active' : ''}" onclick="switchGame('${g.id}')"><span class="nav-dot"></span>${g.name}</button>`;
     });
+    html += '</div>';
   });
   nav.innerHTML = html;
 }
@@ -1477,7 +1479,7 @@ function switchGame(id) {
   activeGame = id;
   buildNav();
   buildMain();
-  document.querySelector('.nav-wrap').scrollLeft = 0;
+  if (window.innerWidth < 768) closeSideNav();
 }
 
 function getGame() { return allItems.find(g => g.id === activeGame); }
