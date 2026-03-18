@@ -1981,11 +1981,11 @@ switchGame = function(id) {
   activeGame = id;
   buildNav();
   buildMain();
-  document.querySelector('.nav-wrap').scrollLeft = 0;
+  if (window.innerWidth < 768) closeSideNav();
   pushState();
 };
 
-// Override goToApp to update connection UI
+// Override goToApp to update connection UI + score bar
 const _originalGoToApp = goToApp;
 goToApp = function() {
   if (currentRoom) {
@@ -1996,6 +1996,7 @@ goToApp = function() {
   showScreen('app');
   buildNav();
   buildMain();
+  renderScoreBar();
   if (currentRoom) updateConnectionUI();
   try {
     const visits = parseInt(localStorage.getItem('pookie_visits') || '1');
