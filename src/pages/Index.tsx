@@ -1,14 +1,17 @@
-import { useEffect } from "react";
-
 const Index = () => {
-  useEffect(() => {
-    window.location.replace("/pookie-and-i.html");
-  }, []);
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <p className="text-muted-foreground">Loading…</p>
-    </div>
+    <iframe
+      src="/pookie-and-i.html"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        border: "none",
+      }}
+      title="Pookie & I"
+    />
   );
 };
 

@@ -914,6 +914,151 @@ body {
   0%, 100% { box-shadow: 0 0 4px rgba(76,175,80,0.4); }
   50% { box-shadow: 0 0 10px rgba(76,175,80,0.8), 0 0 20px rgba(76,175,80,0.3); }
 }
+
+/* ══ TWO TRUTHS & A LIE ══ */
+.tt-input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.tt-stmt-row { display: flex; align-items: center; gap: 8px; }
+.tt-stmt-input {
+  flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; background: var(--card-bg);
+  color: var(--ink); outline: none;
+}
+.tt-stmt-input:focus { border-color: rgba(200,82,58,0.4); }
+.tt-lie-toggle {
+  display: flex; align-items: center; gap: 4px; font-size: 11px;
+  color: var(--muted); cursor: pointer; white-space: nowrap; user-select: none;
+}
+.tt-lie-toggle input { accent-color: var(--accent); }
+.tt-lie-toggle.selected { color: var(--accent); font-weight: 500; }
+.tt-card-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.tt-card {
+  background: var(--card-bg); border: 2px solid var(--border); border-radius: 12px;
+  padding: 16px 20px; cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+  font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--ink);
+  font-style: italic; text-align: center;
+}
+.tt-card:hover { border-color: var(--accent); transform: scale(1.02); }
+.tt-card.selected { border-color: var(--accent); background: var(--accent-light); }
+.tt-card.correct { border-color: #4CAF50; background: #E8F5E9; }
+.tt-card.wrong { border-color: #f44336; background: #FFEBEE; }
+.tt-card.reveal-lie { border-color: #f44336; background: #FFEBEE; }
+.tt-result-banner {
+  text-align: center; padding: 1rem; border-radius: 10px; margin-top: 10px;
+  font-size: 14px; font-weight: 500;
+}
+.tt-result-banner.win { background: #E8F5E9; color: #2E7D32; }
+.tt-result-banner.lose { background: #FFEBEE; color: #C62828; }
+
+/* ══ AUTH MODAL ══ */
+.auth-modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5); z-index: 600;
+  display: none; align-items: center; justify-content: center;
+}
+.auth-modal-overlay.open { display: flex; }
+.auth-modal {
+  background: var(--ink); border: 1px solid rgba(250,247,242,0.12);
+  border-radius: 16px; padding: 2rem; width: 90%; max-width: 380px;
+  color: var(--cream);
+}
+.auth-modal h3 {
+  font-family: 'Playfair Display', serif; font-size: 1.3rem;
+  font-weight: 600; margin-bottom: 1rem; text-align: center;
+}
+.auth-input {
+  width: 100%; background: rgba(250,247,242,0.07);
+  border: 1px solid rgba(250,247,242,0.15); border-radius: 8px;
+  padding: 10px 12px; font-family: 'DM Sans', sans-serif;
+  font-size: 14px; color: var(--cream); outline: none;
+  margin-bottom: 10px;
+}
+.auth-input::placeholder { color: rgba(250,247,242,0.25); }
+.auth-input:focus { border-color: rgba(200,82,58,0.5); }
+.auth-btn {
+  width: 100%; border-radius: 10px; padding: 11px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  font-weight: 500; cursor: pointer; border: none;
+  transition: opacity 0.15s; margin-bottom: 8px;
+}
+.auth-btn.primary { background: var(--accent); color: white; }
+.auth-btn.google { background: white; color: #333; border: 1px solid rgba(250,247,242,0.2); }
+.auth-btn:hover { opacity: 0.88; }
+.auth-divider {
+  display: flex; align-items: center; gap: 10px; margin: 12px 0;
+}
+.auth-divider-line { flex: 1; height: 1px; background: rgba(250,247,242,0.1); }
+.auth-divider-text { font-size: 12px; color: rgba(250,247,242,0.35); }
+.auth-toggle {
+  text-align: center; font-size: 13px; color: rgba(250,247,242,0.5); margin-top: 8px;
+}
+.auth-toggle a {
+  color: var(--accent); cursor: pointer; text-decoration: none;
+}
+.auth-error {
+  background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.2);
+  color: #f44336; font-size: 12px; padding: 8px 10px; border-radius: 6px;
+  margin-bottom: 10px; display: none;
+}
+.auth-close-btn {
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: none; color: rgba(250,247,242,0.4);
+  font-size: 20px; cursor: pointer;
+}
+
+/* ══ SIDE NAV AUTH & HISTORY ══ */
+.side-nav-auth {
+  padding: 1rem 1.25rem; border-top: 1px solid rgba(250,247,242,0.08);
+  margin-top: auto;
+}
+.side-nav-user {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.side-nav-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(200,82,58,0.2); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 14px; color: var(--accent);
+}
+.side-nav-user-name { font-size: 13px; color: var(--cream); font-weight: 500; }
+.side-nav-signout {
+  background: none; border: 1px solid rgba(250,247,242,0.12);
+  color: rgba(250,247,242,0.5); border-radius: 6px; padding: 5px 10px;
+  font-family: 'DM Sans', sans-serif; font-size: 11px; cursor: pointer;
+  margin-left: auto; transition: color 0.15s;
+}
+.side-nav-signout:hover { color: var(--cream); }
+.side-nav-signin-btn {
+  width: 100%; background: rgba(200,82,58,0.15); border: 1px solid rgba(200,82,58,0.3);
+  color: var(--accent); border-radius: 8px; padding: 8px 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer;
+  transition: background 0.15s;
+}
+.side-nav-signin-btn:hover { background: rgba(200,82,58,0.25); }
+.side-nav-guest-msg {
+  font-size: 11px; color: rgba(250,247,242,0.3); line-height: 1.5;
+  margin-top: 8px; font-style: italic;
+}
+
+/* History & Leaderboard panels in side nav */
+.side-nav-panel { padding: 0.75rem 1.25rem; }
+.side-nav-panel-title {
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500; margin-bottom: 8px;
+}
+.history-card {
+  background: rgba(250,247,242,0.04); border: 1px solid rgba(250,247,242,0.08);
+  border-radius: 10px; padding: 10px 12px; margin-bottom: 6px;
+}
+.history-card-date { font-size: 10px; color: rgba(250,247,242,0.35); }
+.history-card-players { font-size: 13px; color: var(--cream); font-weight: 500; margin: 2px 0; }
+.history-card-score { font-size: 12px; color: rgba(250,247,242,0.5); }
+.leaderboard-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid rgba(250,247,242,0.05);
+}
+.leaderboard-rank { font-size: 13px; font-weight: 600; color: var(--accent); min-width: 20px; }
+.leaderboard-name { font-size: 13px; color: var(--cream); flex: 1; }
+.leaderboard-pts { font-size: 13px; color: rgba(250,247,242,0.5); }
 </style>
 </head>
 <body>
@@ -981,11 +1126,18 @@ body {
       </div>
     </div>
 
-    <!-- STEP 2: Share link (appears after names, updates live) -->
+    <!-- STEP 2: Room code + share (shown inline after names) -->
+    <div id="room-code-landing" style="width:100%;display:none;margin-bottom:0.75rem;">
+      <div class="room-code-display">
+        <div class="room-code-label">Your room code</div>
+        <div class="room-code-value" id="landing-room-code">----</div>
+      </div>
+    </div>
+
     <div id="sharebox" style="width:100%;opacity:0;transform:translateY(10px);transition:opacity 0.4s ease,transform 0.4s ease;margin-bottom:0.75rem;">
       <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:8px;">Send this to <span id="sharebox-name">your pookie</span> first</div>
       <div style="background:rgba(200,82,58,0.1);border:1px solid rgba(200,82,58,0.2);border-radius:12px;padding:1rem 1.25rem;">
-        <div style="font-size:13px;color:rgba(250,247,242,0.65);line-height:1.5;margin-bottom:10px;" id="sharebox-msg">Hey pookie 🧡 I made us something for tonight — open this when we're on the call: <span style="color:var(--accent);">pookieandi.lovable.app</span></div>
+        <div style="font-size:13px;color:rgba(250,247,242,0.65);line-height:1.5;margin-bottom:10px;" id="sharebox-msg">Hey pookie 🧡 Join our date night, open pookieandi.lovable.app and enter code: ----</div>
         <div style="display:flex;gap:8px;">
           <button onclick="copyShareMsg()" id="copy-msg-btn" style="flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity 0.15s;">Copy message</button>
           <button onclick="copyShareLink()" id="copy-link-btn" style="background:rgba(250,247,242,0.08);color:var(--cream);border:1px solid rgba(250,247,242,0.15);border-radius:8px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:background 0.15s;">Copy link</button>
@@ -1085,6 +1237,8 @@ body {
       <div class="side-nav-title">Games</div>
     </div>
     <div id="side-nav-content"></div>
+    <div id="side-nav-history-leaderboard"></div>
+    <div class="side-nav-auth" id="side-nav-auth"></div>
   </div>
 
   <div class="main" id="main"></div>
@@ -1112,6 +1266,27 @@ body {
     <button class="emoji-toggle-btn" onclick="toggleEmojiPicker()">😊</button>
     <input class="chat-input" id="chat-input" placeholder="Type a message..." maxlength="500" />
     <button class="chat-send-btn" onclick="sendChatMsg()">→</button>
+  </div>
+</div>
+
+<!-- ══ AUTH MODAL ══ -->
+<div class="auth-modal-overlay" id="auth-modal-overlay" onclick="closeAuthModal(event)">
+  <div class="auth-modal" onclick="event.stopPropagation()" style="position:relative;">
+    <button class="auth-close-btn" onclick="document.getElementById('auth-modal-overlay').classList.remove('open')">✕</button>
+    <h3 id="auth-modal-title">Sign In</h3>
+    <div class="auth-error" id="auth-error"></div>
+    <input class="auth-input" id="auth-email" type="email" placeholder="Email" />
+    <input class="auth-input" id="auth-password" type="password" placeholder="Password" />
+    <button class="auth-btn primary" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
+    <div class="auth-divider">
+      <div class="auth-divider-line"></div>
+      <span class="auth-divider-text">or</span>
+      <div class="auth-divider-line"></div>
+    </div>
+    <button class="auth-btn google" onclick="signInWithGoogle()">🔵 Continue with Google</button>
+    <div class="auth-toggle" id="auth-toggle">
+      Don't have an account? <a onclick="toggleAuthMode()">Sign up</a>
+    </div>
   </div>
 </div>
 
@@ -1146,6 +1321,56 @@ const extras = [
       'What are you most afraid of losing?',
       'What\'s one small thing I do that makes you feel cared for?',
       'If you had to describe yourself in three words, what would they be?',
+      'What\'s the hardest lesson you\'ve learned so far?',
+      'When was the last time you cried and why?',
+      'What\'s your love language and do you feel I speak it?',
+      'What\'s one thing you want us to do more of?',
+      'What were you like as a teenager?',
+      'What\'s a belief you used to hold strongly but have since changed?',
+      'What\'s your earliest memory?',
+      'What do you overthink the most?',
+      'If money wasn\'t a factor, what would you do every day?',
+      'What\'s the kindest thing a stranger has ever done for you?',
+      'What does your inner critic sound like?',
+      'What makes you feel safe?',
+      'What\'s a tradition you want to start together?',
+      'What do you need most from a relationship?',
+      'How do you handle conflict, and is that something you want to change?',
+      'What\'s a song that always makes you emotional?',
+      'What would you tell your 16-year-old self?',
+      'What\'s the biggest risk you\'ve ever taken?',
+      'How do you define success for yourself?',
+      'What is your biggest regret and why?',
+      'If you could master one skill overnight, what would it be?',
+      'What\'s the most important lesson your parents taught you?',
+      'What does forgiveness mean to you?',
+      'What\'s a book, film, or show that changed how you see the world?',
+      'What do you think people misunderstand about you?',
+      'What\'s your biggest insecurity?',
+      'When do you feel most alive?',
+      'What\'s the most spontaneous thing you\'ve ever done?',
+      'What\'s a promise you\'ve made to yourself?',
+      'What does trust look like in a relationship for you?',
+      'What\'s something you need to hear more often?',
+      'What are you most grateful for right now?',
+      'What\'s one thing you\'d change about society?',
+      'What\'s your happiest memory from the last year?',
+      'What scares you about the future?',
+      'If you could live anywhere in the world, where would it be?',
+      'What did you want to be when you grew up?',
+      'What makes you feel truly loved?',
+      'What\'s something you\'ve never admitted to anyone?',
+      'What would your perfect day look like from start to finish?',
+      'How do you want to be remembered?',
+      'What\'s one thing about our relationship that makes you proud?',
+      'What part of your identity are you most proud of?',
+      'When do you feel most disconnected from me and what can we do about it?',
+      'What\'s one fear you\'d like to overcome this year?',
+      'What does "growing old together" look like to you?',
+      'What\'s a small moment between us that you\'ll never forget?',
+      'If you could ask me one question and I had to answer 100% honestly, what would it be?',
+      'What does vulnerability feel like for you?',
+      'What\'s the most beautiful thing you\'ve ever seen?',
     ]
   },
   {
@@ -1169,6 +1394,55 @@ const extras = [
       'Write each other a haiku and read it aloud. (5–7–5 syllables)',
       'Pick a recipe together and order the same takeaway from your respective areas.',
       'Each make a "this week" report — highs, lows, one thing you\'re grateful for.',
+      'Take turns playing DJ — each pick 3 songs and explain the vibe you\'re going for.',
+      'Play the Wikipedia game: pick a random article, click links and try to reach the same page.',
+      'Draw your dream house together — each draw a different room.',
+      'Make a bucket list of 20 things you want to do together. No rules.',
+      'Take a personality quiz together online and compare results.',
+      'Write a short story together — alternate sentences.',
+      'Do a 5-minute guided stretch or yoga session together.',
+      'Create a meme about your relationship using a meme generator.',
+      'Pick a language and learn 10 words in it together.',
+      'Rate each other\'s playlists honestly — play one song each and give a score out of 10.',
+      'Play "guess the Google search" — type something and guess the autocomplete.',
+      'Read each other your last 5 text messages (no cheating).',
+      'Draw each other\'s pet or dream pet. Show the results.',
+      'Pick a random country on Google Maps and explore it together virtually.',
+      'Write a letter to your future selves 1 year from now. Read them aloud.',
+      'Create a vision board together using Pinterest or Google Images.',
+      'Take a BuzzFeed quiz together and see if you get the same answer.',
+      'Each pick your top 3 films of all time and convince the other why they\'re great.',
+      'Do a wardrobe challenge — style an outfit for each other from your closets.',
+      'Play "would you eat this?" with weird food combos you find online.',
+      'Each tell a 2-minute bedtime story. Make it up on the spot.',
+      'Do a dramatic reading of a cheesy romance novel passage.',
+      'Create a couple\'s handshake over video call.',
+      'Play "finish my sentence" — start a sentence and the other finishes it.',
+      'Each share your phone\'s screen time report and discuss.',
+      'Pick an artwork online and make up a backstory for it together.',
+      'Do a talent show — each perform something for 2 minutes.',
+      'Play the emoji translation game — send a movie plot in emojis, guess the film.',
+      'Take turns being an interviewer — ask 5 serious questions, 5 silly ones.',
+      'Make a time capsule list of things happening right now that you want to remember.',
+      'Try to teach each other a TikTok dance.',
+      'Rate snacks from your country — describe them and the other scores them.',
+      'Create a couple\'s quiz — write 5 questions about yourself and test your partner.',
+      'Pick a random subreddit and browse it together, commenting on posts.',
+      'Play 20-second drawing challenge — one draws, other guesses.',
+      'Share your most-played Spotify song and explain what it means to you.',
+      'Each describe a vivid dream you\'ve had recently.',
+      'Play "two-word story" — build a story two words at a time.',
+      'Look up your horoscopes and read them to each other dramatically.',
+      'Create a shared Pinterest board for your dream life together.',
+      'Do an accent challenge — try to mimic 5 different accents.',
+      'Play "name that tune" — hum 5 songs each.',
+      'Write a joint poem — 2 lines each, alternating.',
+      'Describe your ideal weekend morning in full detail.',
+      'Try a simple origami tutorial together.',
+      'Pick a debate topic and argue opposite sides for 5 minutes.',
+      'Each write 3 predictions about the other\'s future. Compare.',
+      'Share the last meme you saved and explain why it was funny.',
+      'Do a "room tour challenge" — find the weirdest object in your room and tell its story.',
     ]
   },
   {
@@ -1192,6 +1466,56 @@ const extras = [
       'Take turns giving each other a genuine, detailed compliment for 60 seconds each.',
       'Recreate your favourite photo together as best you can from your locations.',
       'Each share one thing you\'re working on becoming. No judgment, just listening.',
+      'Stare into the camera without blinking. First to blink loses.',
+      'Do your best impression of the other person. Be kind.',
+      'In 30 seconds, list everything you know about your partner\'s favourite things.',
+      'Send a voice note right now saying what you love most about them.',
+      'Play "rap battle" — take turns freestyle rapping about each other for 30 seconds.',
+      'Make a face that describes your mood right now. Hold it for 10 seconds.',
+      'Write a limerick about the other person. Read it aloud.',
+      'Tell your best joke. The other person rates it out of 10.',
+      'Sing the chorus of the last song you listened to. No backing out.',
+      'Do your best runway walk across the room. The other person is the judge.',
+      'Name 3 things you were wrong about. Be honest.',
+      'If you had to make a dating profile for the other person, what would it say?',
+      'Say "I love you" in 5 different voices.',
+      'Give a 1-minute motivational speech to your partner. Be dramatic.',
+      'Share one thing you\'ve never googled but always wondered about.',
+      'Do a dramatic recreation of a scene from your favourite movie.',
+      'Write a tweet about your relationship. Read it aloud.',
+      'Name 5 things you\'d save in a fire (besides people and pets).',
+      'Describe your partner to a stranger as if they couldn\'t see them.',
+      'Give each other new nicknames right now. Use them for the rest of the night.',
+      'Tell the story of how you fell for each other — in 60 seconds, no pauses.',
+      'Each confess one guilty pleasure. No judgement.',
+      'Create a 10-second jingle about your relationship.',
+      'Share the most embarrassing thing that happened to you this week.',
+      'Do 10 push-ups or sit-ups together right now. No excuses.',
+      'Each tell a "roses and thorns" — best and worst moment of today.',
+      'Describe your partner\'s scent. Yes, really.',
+      'Plan a surprise for your partner out loud. They can hear but can\'t comment.',
+      'If you were both characters in a sitcom, what would the show be called?',
+      'Dance to the next song that plays on shuffle. Full commitment.',
+      'Each share a screenshot of the last text conversation you had (not with each other).',
+      'Write a one-sentence love letter. Read it dramatically.',
+      'Name one thing your partner does better than anyone you know.',
+      'Try to make the other person laugh in under 30 seconds.',
+      'If your love story was a film, what genre would it be and who would star?',
+      'Share your phone lock screen and explain why you chose it.',
+      'Each describe the other person using only food analogies.',
+      'Rate each other\'s sense of humour on a scale of 1-10. Explain your rating.',
+      'If you could only say 3 words to each other for a day, what would they be?',
+      'Each give the other person a dare to complete before tomorrow.',
+      'Tell each other one thing you\'d like to try together that you haven\'t mentioned before.',
+      'Describe the first time you realised you liked the other person.',
+      'Share something you\'re currently overthinking.',
+      'Play "finish the lyrics" — one sings, the other continues.',
+      'Send each other a selfie right now. No retakes.',
+      'If you could give each other one superpower, what would it be and why?',
+      'Play "this or that" rapid fire — 10 questions in 30 seconds.',
+      'Each describe your ideal date night in 30 seconds.',
+      'Make a promise to each other right now. Something small and meaningful.',
+      'Each write one word that describes how you feel about the other person. Reveal at the same time.',
     ]
   }
 ];
@@ -1229,8 +1553,8 @@ const games = [
   },
   {
     id: 'twenty', name: '20 Questions', badge: 'Guessing game',
-    desc: 'One person thinks of something. 20 yes/no questions to find it.',
-    rules: ['One person secretly thinks of a person, place, or thing','The other asks yes/no questions only','Allowed answers: "yes," "no," or "sort of"','Guesser wins if correct within 20 questions','Thinker wins if they stump the guesser'],
+    desc: 'One person thinks of something. The other has 20 yes/no questions to figure it out.',
+    rules: ['The thinker secretly types a person, place, or thing','The guesser asks yes/no questions one at a time','Allowed answers: "Yes," "No," or "Sort of"','Guesser wins if correct within 20 questions','After a round, swap roles'],
     type: 'twenty',
     ideas: ['A famous landmark','A childhood toy','A film character','A food dish','A country','A famous person (alive)','An animal','A household object','A song','A TV show','A sport','A famous historical figure'],
   },
@@ -1258,151 +1582,194 @@ const games = [
   },
   {
     id: 'truths', name: 'Two Truths & a Lie', badge: 'Bluffing game',
-    desc: 'Can you spot the lie? The goal is to be convincing.',
-    rules: ['Each person writes 3 statements about themselves','2 must be true, 1 must be false','Read them out in any order — keep a poker face','Partner guesses which one is the lie','Score a point if you fool them'],
-    type: 'draw',
-    prompts: [
-      'Starter: tell a story about something embarrassing that happened to you',
-      'Starter: share a skill or talent most people don\'t know you have',
-      'Starter: something about where you grew up',
-      'Starter: a first — first job, first kiss, first trip abroad',
-      'Starter: a habit you have that you\'re slightly ashamed of',
-      'Starter: something about your family or childhood',
-      'Starter: a fear or phobia you have (or once had)',
-      'Starter: something you\'ve never told anyone before',
-    ]
+    desc: 'Can you spot the lie? Write three statements — two true, one false. Fool your partner.',
+    rules: ['One person writes 3 statements — 2 true, 1 false','Mark which one is the lie (only you can see)','Send them to your partner','Your partner picks which one they think is the lie','Score a point if you fool them, they score if they guess right','Swap roles after each round'],
+    type: 'truths',
+    prompts: []
   },
   {
     id: 'emoji', name: 'Emoji Story', badge: 'Creative · take turns',
-    desc: 'Tell a story in 5 emojis. No words allowed.',
-    rules: ['One person sends exactly 5 emojis — no words','The other narrates the story those emojis tell','The more creative the combo, the harder (and funnier) it is','Take turns — swap after each story','Rate each story out of 5 for drama'],
+    desc: 'Tell a story using emojis. No words allowed. Use as many or as few as you want.',
+    rules: ['One person sends emojis — as many or as few as they want — no words','The other narrates the story those emojis tell','The more creative the combo, the harder (and funnier) it is','Take turns — swap after each story','Rate each story out of 5 for drama'],
     type: 'draw',
     prompts: [
-      'Try: a love story in 5 emojis','Try: your morning routine in 5 emojis',
-      'Try: a horror movie plot in 5 emojis','Try: how you two met — in 5 emojis',
-      'Try: your ideal holiday in 5 emojis','Try: a heist movie in 5 emojis',
-      'Try: your biggest fear in 5 emojis','Try: a fairytale ending in 5 emojis',
-      'Try: a cooking disaster in 5 emojis','Try: your dream job in 5 emojis',
+      'Your morning routine',
+      'A bad day',
+      'Falling in love',
+      'A road trip',
+      'Being really hungry',
+      'Your dream holiday',
+      'A lazy Sunday',
+      'Getting lost',
+      'A surprise',
+      'A first date',
+      'Feeling homesick',
+      'A celebration',
+      'Running late',
+      'A phone call you didn\'t want to answer',
+      'Your favourite memory',
+      'A horror movie plot',
+      'How you two met',
+      'Your biggest fear',
+      'A fairytale ending',
+      'A cooking disaster',
+      'Your dream job',
+      'A heist movie',
+      'Moving to a new city',
+      'A wedding',
+      'A breakup',
+      'Your last holiday',
+      'A night out with friends',
+      'Waking up late for something important',
+      'A childhood memory',
+      'Your ideal future',
+      'A rainy day indoors',
+      'Meeting someone famous',
+      'Learning something new',
+      'A long flight',
+      'Your guilty pleasure',
+      'An awkward moment',
+      'Getting a pet',
+      'A beach day',
+      'Your morning coffee routine',
+      'A plot twist',
+      'A secret mission',
+      'Your best birthday ever',
+      'A scary encounter',
+      'Going shopping',
+      'A video call gone wrong',
+      'Your dream house',
+      'A music festival',
+      'A sports event',
+      'Cooking together',
+      'A midnight snack run',
+      'Your typical Monday',
+      'A snowstorm',
+      'Winning something',
+      'A family gathering',
+      'Your last argument',
+      'A spa day',
+      'Packing for a trip',
+      'Your favourite food',
+      'A power outage',
+      'The story of your name',
     ]
   },
   {
     id: 'song', name: 'Name That Song', badge: 'Music · 5 points to win',
-    desc: 'Hum it. Don\'t sing the words. Can they guess?',
-    rules: ['One person hums a melody — no words allowed','Set a 30-second timer per round','Partner guesses: song title + artist for full point','Title only = half a point','First to 5 points wins'],
+    desc: 'Hum or sing a line. Can they guess the song?',
+    rules: ['One person hums the melody or sings a line from the song','Set a 30-second timer per round','Partner guesses: song title + artist for full point','Title only = half a point','First to 5 points wins'],
     type: 'draw',
     prompts: [
       'Category: a song from your childhood','Category: a song from a film',
       'Category: a number one hit from any year','Category: a song you know your partner loves',
       'Category: a song you\'re embarrassed you know all the words to',
-      'Category: a song from before you were born','Category: a song that makes you emotional',
-      'Category: a song you\'d play at a party','Category: a love song',
-      'Category: the last song stuck in your head',
+      'Category: a love song','Category: a hip-hop or R&B track',
+      'Category: a song released this year','Category: a song with a one-word title',
+      'Category: a song from a Disney movie',
     ]
   },
   {
-    id: 'word', name: 'Word Association', badge: 'Fast · no pausing',
-    desc: 'Instant responses only. First to hesitate loses.',
-    rules: ['One person says a word','The other responds immediately with any related word','Keep going back and forth — no pausing allowed','You lose if you: pause too long, repeat a word, or say something unrelated','Play 3 rounds. Best of 3 wins'],
+    id: 'word', name: 'Word Association', badge: 'Speed · think fast',
+    desc: 'Say the first word that comes to mind. No hesitation.',
+    rules: ['One person says a word','The other says the first word that comes to mind','Keep going — no pausing longer than 3 seconds','If you pause, repeat, or say something unrelated, you lose the round','Play 3 rounds, best of 3 wins'],
     type: 'draw',
     prompts: [
-      'Start word: "Summer"','Start word: "Home"','Start word: "Dream"',
-      'Start word: "Adventure"','Start word: "Food"','Start word: "Childhood"',
-      'Start word: "Future"','Start word: "Music"','Start word: "Travel"',
-      'Start word: "Love"','Start word: "Money"','Start word: "Fear"',
+      'Start word: Love','Start word: Home','Start word: Fire','Start word: Ocean',
+      'Start word: Dream','Start word: Secret','Start word: Night','Start word: Gold',
+      'Start word: Cloud','Start word: Kiss','Start word: Storm','Start word: Music',
+      'Start word: Time','Start word: Memory','Start word: Adventure',
     ]
   }
 ];
 
 const allItems = [...extras, ...games];
+
+// ─── STATE ──────────────────────────────────────────────
+let p1Name = '', p2Name = '';
+let activeGame = 'questions';
+let sessionStartTime = Date.now();
+let totalRoundsPlayed = 0;
+
 const state = {};
-allItems.forEach(g => { state[g.id] = { drawn: [], histIdx: -1, p1: 10, p2: 10, qLog: [], qCount: 0 }; });
+function initState() {
+  allItems.forEach(g => {
+    if (g.type === 'fingers') state[g.id] = { drawn: [], histIdx: -1, p1: 10, p2: 10, allShown: [] };
+    else if (g.type === 'twenty') state[g.id] = { subject: '', thinkerRole: 'p1', phase: 'setup', qLog: [], qCount: 0, currentQuestion: '', guessCorrect: false };
+    else if (g.type === 'truths') state[g.id] = { writerRole: 'p1', phase: 'writing', statements: ['','',''], lieIndex: -1, guess: -1, p1Score: 0, p2Score: 0 };
+    else state[g.id] = { drawn: [], histIdx: -1, allShown: [] };
+  });
+}
+initState();
 
-let activeGame = extras[0].id;
-let p1Name = 'You', p2Name = 'Partner';
+// Pre-generate room code for landing page
+let pendingRoomCode = String(Math.floor(1000 + Math.random() * 9000));
 
-// ─── LANDING ANIMATIONS ─────────────────────────────────
+// ─── LANDING ANIMATIONS ────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  // Reliable JS-controlled screen visibility
-  document.getElementById('landing').style.display = 'flex';
-  document.getElementById('landing').style.flexDirection = 'column';
-  document.getElementById('invite').style.display = 'none';
-  document.getElementById('app').style.display = 'none';
+  showScreen('landing');
+  setTimeout(() => document.getElementById('s1')?.classList.add('visible'), 200);
+  setTimeout(() => document.getElementById('s2')?.classList.add('visible'), 500);
+  setTimeout(() => document.getElementById('s3')?.classList.add('visible'), 800);
+  setTimeout(() => document.getElementById('s4')?.classList.add('visible'), 1100);
+  setTimeout(() => document.getElementById('sdiv')?.classList.add('visible'), 1200);
+  setTimeout(() => document.getElementById('namesetup')?.classList.add('visible'), 1200);
+  setTimeout(() => {
+    document.getElementById('startBtn')?.classList.add('visible');
+    document.getElementById('joinDivider')?.classList.add('visible');
+    document.getElementById('joinSection')?.classList.add('visible');
+    document.getElementById('footernote')?.classList.add('visible');
+  }, 1400);
 
-  // Story animations
-  setTimeout(() => document.getElementById('s1').classList.add('visible'), 300);
-  setTimeout(() => document.getElementById('s2').classList.add('visible'), 700);
-  setTimeout(() => document.getElementById('s3').classList.add('visible'), 1100);
-  setTimeout(() => document.getElementById('s4').classList.add('visible'), 1500);
-  setTimeout(() => document.getElementById('sdiv').classList.add('visible'), 1800);
-  setTimeout(() => document.getElementById('namesetup').classList.add('visible'), 2100);
-  setTimeout(() => {
-    document.getElementById('startBtn').classList.add('visible');
-    document.getElementById('footernote').classList.add('visible');
-  }, 2400);
-  setTimeout(() => {
-    document.getElementById('joinDivider').classList.add('visible');
-    document.getElementById('joinSection').classList.add('visible');
-  }, 2700);
+  // Check URL for room code
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code && code.length === 4) {
+    const input = document.getElementById('joinCodeInput');
+    if (input) input.value = code;
+  }
+
+  // Show pending room code
+  document.getElementById('landing-room-code').textContent = pendingRoomCode;
+
+  // Check auth state
+  checkAuthState();
 });
 
-// Live-update the share box as names are typed
 function updateShareBox() {
-  const n2 = document.getElementById('name2').value.trim();
-  const label = n2 || 'your pookie';
-  const url = window.location.href.startsWith('http') ? window.location.href.split('?')[0] : 'pookieandi.lovable.app';
-
-  // Update label
-  const nameEl = document.getElementById('sharebox-name');
-  if (nameEl) nameEl.textContent = label;
-
-  // Update message
-  const msgEl = document.getElementById('sharebox-msg');
-  if (msgEl) msgEl.innerHTML = `Hey ${label} 🧡 I made us something for tonight — open this when we're on the call: <span style="color:var(--accent);">${url}</span>`;
-
-  // Show the share box once either name is typed
   const n1 = document.getElementById('name1').value.trim();
+  const n2 = document.getElementById('name2').value.trim();
   const box = document.getElementById('sharebox');
-  if (box && (n1 || n2)) {
+  const rcBox = document.getElementById('room-code-landing');
+
+  if (n1 && n2) {
     box.style.opacity = '1';
     box.style.transform = 'translateY(0)';
+    rcBox.style.display = 'block';
+    document.getElementById('sharebox-name').textContent = n2;
+    document.getElementById('sharebox-msg').textContent = `Hey ${n2}, 🧡 Join our date night, open pookieandi.lovable.app and enter code: ${pendingRoomCode}`;
+    document.getElementById('landing-room-code').textContent = pendingRoomCode;
+  } else {
+    box.style.opacity = '0';
+    box.style.transform = 'translateY(10px)';
+    rcBox.style.display = 'none';
   }
 }
 
 function copyShareMsg() {
-  const n2 = document.getElementById('name2').value.trim() || 'pookie';
-  const url = window.location.href.startsWith('http') ? window.location.href.split('?')[0] : 'pookieandi.lovable.app';
-  const msg = `Hey ${n2} 🧡 I made us something for tonight — open this when we're on the call: ${url}`;
-  navigator.clipboard.writeText(msg).then(() => {
-    const btn = document.getElementById('copy-msg-btn');
-    if (btn) { btn.textContent = 'Copied! 🧡'; setTimeout(() => btn.textContent = 'Copy message', 2000); }
-  }).catch(() => showToast('Copy failed — try selecting manually'));
+  const msg = document.getElementById('sharebox-msg').textContent;
+  navigator.clipboard.writeText(msg).then(() => showToast('Message copied! 🧡'));
 }
-
 function copyShareLink() {
-  const url = window.location.href.startsWith('http') ? window.location.href.split('?')[0] : 'pookieandi.lovable.app';
-  navigator.clipboard.writeText(url).then(() => {
-    const btn = document.getElementById('copy-link-btn');
-    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy link', 2000); }
-  }).catch(() => showToast('Copy failed — try selecting manually'));
+  navigator.clipboard.writeText('pookieandi.lovable.app').then(() => showToast('Link copied!'));
 }
 
-function startApp() {
-  p1Name = document.getElementById('name1').value.trim() || 'You';
-  p2Name = document.getElementById('name2').value.trim() || 'Partner';
-  // Track visit count
-  try {
-    let visits = parseInt(localStorage.getItem('pookie_visits') || '0') + 1;
-    localStorage.setItem('pookie_visits', visits);
-    localStorage.setItem('pookie_last', new Date().toISOString());
-  } catch(e) {}
-  // Go straight to the app
-  goToApp();
-}
+// ─── START APP (create room) ────────────────────────────
+function startApp() {}
 
-// ─── INVITE SCREEN (used from Share button inside the app) ──────────────────
+// ─── INVITE SCREEN ──────────────────────────────────────
 function showInviteScreen() {
-  let url = window.location.href.split('?')[0];
-  if (!url.startsWith('http')) url = 'pookieandi.lovable.app';
+  let url = 'pookieandi.lovable.app';
   const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
   document.getElementById('invite-name').textContent = name;
   document.getElementById('invite-url').textContent = url;
@@ -1417,9 +1784,7 @@ function showInviteScreen() {
 }
 
 function copyLink() {
-  let url = window.location.href.split('?')[0];
-  if (!url.startsWith('http')) url = 'pookieandi.lovable.app';
-  navigator.clipboard.writeText(url).then(() => showToast('Link copied! 🧡'));
+  navigator.clipboard.writeText('pookieandi.lovable.app').then(() => showToast('Link copied! 🧡'));
 }
 function copyMsg() {
   navigator.clipboard.writeText(document.getElementById('invite-msg').textContent).then(() => showToast('Message copied!'));
@@ -1430,7 +1795,6 @@ function goToApp() {
   showScreen('app');
   buildNav();
   buildMain();
-  // Show local visit count in footer
   try {
     const visits = parseInt(localStorage.getItem('pookie_visits') || '1');
     const note = document.getElementById('app-visit-note');
@@ -1473,6 +1837,8 @@ function buildNav() {
     html += '</div>';
   });
   nav.innerHTML = html;
+  renderSideNavAuth();
+  renderHistoryLeaderboard();
 }
 
 function switchGame(id) {
@@ -1505,6 +1871,7 @@ function buildMain() {
 
   if (game.type === 'fingers') html += buildFingersGame(game, s);
   else if (game.type === 'twenty') html += buildTwentyGame(game, s);
+  else if (game.type === 'truths') html += buildTruthsGame(game, s);
   else html += buildDrawGame(game, s);
 
   main.innerHTML = html;
@@ -1604,52 +1971,206 @@ function buildFingersGame(game, s) {
     </div>`;
 }
 
+// ─── 20 QUESTIONS (REDESIGNED) ───────────────────────────
 function buildTwentyGame(game, s) {
-  const idea = game.ideas[Math.floor(Math.random() * game.ideas.length)];
+  const myRole = isPlayer1 ? 'p1' : 'p2';
+  const isThinker = s.thinkerRole === myRole;
   const remaining = 20 - s.qCount;
-  const winner = s.qCount >= 20 ? '🎉 Thinker wins — questions used up!' : '';
+
   const logHtml = s.qLog.map((q,i)=>`
     <div class="qa-item">
       <span class="qa-num">${i+1}.</span>
-      <span class="qa-q">${q.q}</span>
-      <span class="qa-a ${q.a}">${q.a==='sortof'?'sort of':q.a}</span>
+      <span class="qa-q">${escapeHtml(q.q)}</span>
+      ${q.a ? `<span class="qa-a ${q.a}">${q.a==='sortof'?'sort of':q.a}</span>` : '<span class="qa-a" style="background:#FFF8E1;color:#F57F17;">waiting...</span>'}
     </div>`).join('');
 
-  return `
-    <div class="draw-area">
-      <div class="draw-top" style="align-items:flex-start;text-align:left;padding:1.25rem;">
+  let contentHtml = '';
+
+  if (s.phase === 'setup') {
+    if (isThinker) {
+      contentHtml = `
+        <div style="text-align:center;padding:1.5rem;">
+          <div class="card-number">You are the thinker</div>
+          <p style="font-size:14px;color:var(--muted);margin-bottom:12px;">Think of a person, place, or thing and type it below. Only you can see this.</p>
+          <input class="qa-input" id="twenty-subject-input" placeholder="Type your secret subject..." style="margin-bottom:10px;text-align:center;" />
+          <button class="btn-primary" id="twenty-ready-btn" style="width:100%;">I'm ready — let them guess!</button>
+          <div style="margin-top:12px;">
+            <div class="score-label">Need an idea?</div>
+            <p style="font-size:13px;color:var(--muted);">Suggestion: <em>${game.ideas[Math.floor(Math.random() * game.ideas.length)]}</em></p>
+          </div>
+        </div>`;
+    } else {
+      contentHtml = `
+        <div style="text-align:center;padding:2rem;">
+          <div style="font-size:24px;margin-bottom:10px;">🤔</div>
+          <div class="card-content" style="font-size:1.1rem;color:var(--muted);">Your partner is thinking of something...</div>
+          <p style="font-size:13px;color:var(--muted);margin-top:8px;">Get ready to ask yes/no questions!</p>
+        </div>`;
+    }
+  } else if (s.phase === 'playing') {
+    const lastQ = s.qLog.length ? s.qLog[s.qLog.length - 1] : null;
+    const waitingForAnswer = lastQ && !lastQ.a;
+
+    contentHtml = `
+      <div style="padding:1.25rem;">
         <div class="card-number" style="margin-bottom:8px;">Questions remaining: <strong style="color:${remaining<=5?'var(--accent)':'var(--ink)'};">${remaining}</strong></div>
         <div style="width:100%;height:3px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:12px;">
           <div style="height:100%;background:var(--accent);width:${Math.round((s.qCount/20)*100)}%;transition:width 0.3s;border-radius:99px;"></div>
         </div>
-        ${winner ? `<div class="winner-banner" style="width:100%;margin-bottom:10px;">${winner}</div>` : ''}
-        <div class="qa-log">${logHtml || '<span style="color:var(--muted);font-size:13px;">Ask your first question below</span>'}</div>
-      </div>
-      <div class="draw-bottom" style="flex-direction:column;align-items:stretch;gap:8px;padding:1rem;">
-        <div class="qa-input-row">
-          <input class="qa-input" id="q-input" placeholder="Type a yes/no question..." />
+        ${isThinker ? `<div style="background:rgba(200,82,58,0.08);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--accent);">Your secret: <strong>${escapeHtml(s.subject)}</strong></div>` : ''}
+        <div class="qa-log">${logHtml || '<span style="color:var(--muted);font-size:13px;">Waiting for the first question...</span>'}</div>
+      </div>`;
+
+    if (!isThinker && !waitingForAnswer && remaining > 0) {
+      contentHtml += `
+        <div style="border-top:1px solid var(--border);padding:1rem;">
+          <div class="qa-input-row">
+            <input class="qa-input" id="q-input" placeholder="Type a yes/no question..." />
+            <button class="btn-primary" id="qa-ask" style="font-size:13px;flex:none;">Ask</button>
+          </div>
+        </div>`;
+    } else if (isThinker && waitingForAnswer) {
+      contentHtml += `
+        <div style="border-top:1px solid var(--border);padding:1rem;">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:8px;">Answer: "${escapeHtml(lastQ.q)}"</p>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-primary" id="qa-yes" style="font-size:13px;">Yes</button>
+            <button class="btn-secondary" id="qa-no" style="font-size:13px;">No</button>
+            <button class="btn-secondary" id="qa-sort" style="font-size:13px;">Sort of</button>
+          </div>
+        </div>`;
+    } else if (remaining <= 0) {
+      contentHtml += `<div class="winner-banner" style="margin:0 1rem 1rem;">🎉 20 questions used up! The subject was: "${escapeHtml(s.subject)}"</div>`;
+    }
+  } else if (s.phase === 'result') {
+    contentHtml = `
+      <div style="text-align:center;padding:1.5rem;">
+        <div style="font-size:28px;margin-bottom:8px;">${s.guessCorrect ? '🎉' : '🤔'}</div>
+        <div class="card-content" style="margin-bottom:8px;">${s.guessCorrect ? 'Correct guess!' : 'Round over!'}</div>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:12px;">The subject was: <strong>"${escapeHtml(s.subject)}"</strong></p>
+        <div class="qa-log" style="max-height:140px;margin-bottom:12px;">${logHtml}</div>
+        <button class="btn-primary" id="twenty-swap-btn" style="width:100%;">Swap roles & play again</button>
+      </div>`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top" style="align-items:stretch;text-align:left;padding:0;">${contentHtml}</div>
+    </div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn-secondary" id="qa-reset" style="font-size:13px;">Reset game</button>
+    </div>`;
+}
+
+// ─── TWO TRUTHS & A LIE (REDESIGNED) ─────────────────────
+function buildTruthsGame(game, s) {
+  const myRole = isPlayer1 ? 'p1' : 'p2';
+  const isWriter = s.writerRole === myRole;
+  const writerName = s.writerRole === 'p1' ? (currentRoom?.player1_name || p1Name) : (currentRoom?.player2_name || p2Name);
+  const guesserName = s.writerRole === 'p1' ? (currentRoom?.player2_name || p2Name) : (currentRoom?.player1_name || p1Name);
+
+  let contentHtml = '';
+
+  if (s.phase === 'writing') {
+    if (isWriter) {
+      contentHtml = `
+        <div style="padding:1.25rem;">
+          <div class="card-number">Your turn to write</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Write 3 statements. Mark which one is the lie — only you can see the toggle.</p>
+          <div class="tt-input-group">
+            ${[0,1,2].map(i => `
+              <div class="tt-stmt-row">
+                <input class="tt-stmt-input" id="tt-stmt-${i}" placeholder="Statement ${i+1}" value="${escapeHtml(s.statements[i] || '')}" />
+                <label class="tt-lie-toggle${s.lieIndex===i?' selected':''}" id="tt-lie-label-${i}">
+                  <input type="radio" name="tt-lie" value="${i}" ${s.lieIndex===i?'checked':''} style="margin:0;" /> Lie
+                </label>
+              </div>
+            `).join('')}
+          </div>
+          <button class="btn-primary" id="tt-send-btn" style="width:100%;">Send to partner</button>
+        </div>`;
+    } else {
+      contentHtml = `
+        <div style="text-align:center;padding:2rem;">
+          <div style="font-size:24px;margin-bottom:10px;">✍️</div>
+          <div class="card-content" style="font-size:1.1rem;color:var(--muted);">${writerName} is writing their statements...</div>
+          <p style="font-size:13px;color:var(--muted);margin-top:8px;">Get ready to spot the lie!</p>
+        </div>`;
+    }
+  } else if (s.phase === 'guessing') {
+    if (!isWriter) {
+      contentHtml = `
+        <div style="padding:1.25rem;">
+          <div class="card-number">${writerName}'s statements</div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Tap the one you think is the lie:</p>
+          <div class="tt-card-grid">
+            ${s.statements.map((st,i) => `
+              <div class="tt-card${s.guess===i?' selected':''}" id="tt-guess-${i}" onclick="makeTruthsGuess(${i})">"${escapeHtml(st)}"</div>
+            `).join('')}
+          </div>
+          ${s.guess >= 0 ? `<button class="btn-primary" id="tt-confirm-guess" style="width:100%;">Lock in my guess</button>` : ''}
+        </div>`;
+    } else {
+      contentHtml = `
+        <div style="text-align:center;padding:2rem;">
+          <div style="font-size:24px;margin-bottom:10px;">🤔</div>
+          <div class="card-content" style="font-size:1.1rem;color:var(--muted);">${guesserName} is choosing...</div>
+          <p style="font-size:13px;color:var(--muted);margin-top:8px;">Your statements:</p>
+          <div class="tt-card-grid" style="margin-top:10px;">
+            ${s.statements.map((st,i) => `<div class="tt-card" style="cursor:default;${i===s.lieIndex?'border-color:var(--accent);':''}">"${escapeHtml(st)}" ${i===s.lieIndex?'<span style="font-size:10px;color:var(--accent);">(the lie)</span>':''}</div>`).join('')}
+          </div>
+        </div>`;
+    }
+  } else if (s.phase === 'result') {
+    const correct = s.guess === s.lieIndex;
+    contentHtml = `
+      <div style="text-align:center;padding:1.5rem;">
+        <div style="font-size:32px;margin-bottom:8px;">${correct ? '✅' : '❌'}</div>
+        <div class="card-content" style="margin-bottom:8px;">${correct ? `${guesserName} spotted the lie!` : `${writerName} fooled ${guesserName}!`}</div>
+        <div class="tt-card-grid" style="margin:12px 0;">
+          ${s.statements.map((st,i) => `<div class="tt-card ${i===s.lieIndex?'reveal-lie':''} ${i===s.guess&&i!==s.lieIndex?'wrong':''} ${i===s.guess&&i===s.lieIndex?'correct':''}" style="cursor:default;">"${escapeHtml(st)}" ${i===s.lieIndex?'<span style="font-size:11px;"> ← THE LIE</span>':''}</div>`).join('')}
         </div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn-primary" id="qa-yes" style="font-size:13px;">Yes</button>
-          <button class="btn-secondary" id="qa-no" style="font-size:13px;">No</button>
-          <button class="btn-secondary" id="qa-sort" style="font-size:13px;">Sort of</button>
-          <button class="btn-secondary" id="qa-reset" style="font-size:13px;">Reset</button>
-        </div>
-      </div>
+        <div class="tt-result-banner ${correct?'win':'lose'}">${correct ? `+1 point to ${guesserName}` : `+1 point to ${writerName}`}</div>
+        <div style="margin-top:10px;font-size:13px;color:var(--muted);">${p1Name}: ${s.p1Score} · ${p2Name}: ${s.p2Score}</div>
+        <button class="btn-primary" id="tt-next-round" style="width:100%;margin-top:12px;">Swap roles & play again</button>
+      </div>`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top" style="align-items:stretch;text-align:left;padding:0;">${contentHtml}</div>
+    </div>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn-secondary" id="tt-reset" style="font-size:13px;">Reset game</button>
     </div>
     <div class="score-section" style="margin-top:1rem;">
-      <div class="score-label">Need an idea for your subject?</div>
-      <p style="font-size:13px;color:var(--muted);">Suggestion: <em>${idea}</em></p>
+      <div class="score-label">Score</div>
+      <div class="score-grid">
+        <div class="score-player"><div class="score-name">${p1Name}</div><div class="score-count" style="font-size:1.2rem;font-weight:600;">${s.p1Score}</div></div>
+        <div class="score-player"><div class="score-name">${p2Name}</div><div class="score-count" style="font-size:1.2rem;font-weight:600;">${s.p2Score}</div></div>
+      </div>
     </div>`;
+}
+
+let truthsGuessTemp = -1;
+function makeTruthsGuess(idx) {
+  truthsGuessTemp = idx;
+  const cards = document.querySelectorAll('.tt-card');
+  cards.forEach((c,i) => c.classList.toggle('selected', i === idx));
+  // Show confirm button
+  const s = getState();
+  s.guess = idx;
+  buildMain();
 }
 
 function attachEvents(game, s) {
   if (!s.allShown) s.allShown = [];
+
   if (game.type === 'draw' || game.type === 'fingers') {
     document.getElementById('draw-btn')?.addEventListener('click', () => {
       let avail = game.prompts.map((_,i)=>i).filter(i=>!s.drawn.includes(i));
       if (avail.length === 0) {
-        s.drawn.forEach(i => { if (!s.allShown.includes(i)) s.allShown.push(i); });
+        s.drawn.forEach(i => { if (!s.allShown) s.allShown = []; if (!s.allShown.includes(i)) s.allShown.push(i); });
         const last5 = s.drawn.slice(-5);
         s.drawn = []; s.histIdx = -1;
         avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i) && !last5.includes(i));
@@ -1662,31 +2183,161 @@ function attachEvents(game, s) {
       }
       const idx = avail[Math.floor(Math.random()*avail.length)];
       s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      totalRoundsPlayed++;
       buildMain();
+      pushState();
+      saveShownPrompts(game.id, s.drawn);
     });
-    document.getElementById('prev-btn')?.addEventListener('click', () => { if (s.histIdx > 0) { s.histIdx--; buildMain(); } });
-    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; s.allShown=[]; buildMain(); });
+    document.getElementById('prev-btn')?.addEventListener('click', () => { if (s.histIdx > 0) { s.histIdx--; buildMain(); pushState(); } });
+    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; s.allShown=[]; buildMain(); pushState(); });
   }
+
   if (game.type === 'fingers') {
-    document.getElementById('p1-down')?.addEventListener('click', () => { if(s.p1>0){s.p1--;buildMain();} });
-    document.getElementById('p1-up')?.addEventListener('click', () => { if(s.p1<10){s.p1++;buildMain();} });
-    document.getElementById('p2-down')?.addEventListener('click', () => { if(s.p2>0){s.p2--;buildMain();} });
-    document.getElementById('p2-up')?.addEventListener('click', () => { if(s.p2<10){s.p2++;buildMain();} });
-    document.getElementById('reset-fingers')?.addEventListener('click', () => { s.p1=10;s.p2=10;buildMain(); });
+    document.getElementById('p1-down')?.addEventListener('click', () => { if(s.p1>0){s.p1--;buildMain();pushState();} });
+    document.getElementById('p1-up')?.addEventListener('click', () => { if(s.p1<10){s.p1++;buildMain();pushState();} });
+    document.getElementById('p2-down')?.addEventListener('click', () => { if(s.p2>0){s.p2--;buildMain();pushState();} });
+    document.getElementById('p2-up')?.addEventListener('click', () => { if(s.p2<10){s.p2++;buildMain();pushState();} });
+    document.getElementById('reset-fingers')?.addEventListener('click', () => { s.p1=10;s.p2=10;buildMain();pushState(); });
   }
+
   if (game.type === 'twenty') {
-    function addQ(ans) {
-      const input = document.getElementById('q-input');
-      const q = input.value.trim();
-      if (!q || s.qCount >= 20) return;
-      s.qLog.push({q,a:ans}); s.qCount++;
+    document.getElementById('twenty-ready-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('twenty-subject-input');
+      const subject = input?.value.trim();
+      if (!subject) { showToast('Type a subject first!'); return; }
+      s.subject = subject;
+      s.phase = 'playing';
+      s.qLog = [];
+      s.qCount = 0;
       buildMain();
-    }
-    document.getElementById('qa-yes')?.addEventListener('click', () => addQ('yes'));
-    document.getElementById('qa-no')?.addEventListener('click', () => addQ('no'));
-    document.getElementById('qa-sort')?.addEventListener('click', () => addQ('sortof'));
-    document.getElementById('qa-reset')?.addEventListener('click', () => { s.qLog=[]; s.qCount=0; buildMain(); });
-    document.getElementById('q-input')?.addEventListener('keydown', e => { if(e.key==='Enter') addQ('yes'); });
+      pushState();
+    });
+
+    document.getElementById('qa-ask')?.addEventListener('click', () => {
+      const input = document.getElementById('q-input');
+      const q = input?.value.trim();
+      if (!q || s.qCount >= 20) return;
+      s.qLog.push({q, a: ''});
+      s.qCount++;
+      totalRoundsPlayed++;
+      buildMain();
+      pushState();
+    });
+
+    document.getElementById('q-input')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const q = e.target.value.trim();
+        if (!q || s.qCount >= 20) return;
+        s.qLog.push({q, a: ''});
+        s.qCount++;
+        totalRoundsPlayed++;
+        buildMain();
+        pushState();
+      }
+    });
+
+    ['qa-yes','qa-no','qa-sort'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        const ans = id === 'qa-yes' ? 'yes' : id === 'qa-no' ? 'no' : 'sortof';
+        const lastQ = s.qLog[s.qLog.length - 1];
+        if (lastQ) { lastQ.a = ans; }
+        if (s.qCount >= 20) {
+          s.phase = 'result';
+          s.guessCorrect = false;
+        }
+        buildMain();
+        pushState();
+      });
+    });
+
+    document.getElementById('twenty-swap-btn')?.addEventListener('click', () => {
+      s.thinkerRole = s.thinkerRole === 'p1' ? 'p2' : 'p1';
+      s.phase = 'setup';
+      s.subject = '';
+      s.qLog = [];
+      s.qCount = 0;
+      s.guessCorrect = false;
+      buildMain();
+      pushState();
+    });
+
+    document.getElementById('qa-reset')?.addEventListener('click', () => {
+      s.phase = 'setup';
+      s.subject = '';
+      s.qLog = [];
+      s.qCount = 0;
+      s.thinkerRole = 'p1';
+      s.guessCorrect = false;
+      buildMain();
+      pushState();
+    });
+  }
+
+  if (game.type === 'truths') {
+    // Writer: send statements
+    document.getElementById('tt-send-btn')?.addEventListener('click', () => {
+      const stmts = [0,1,2].map(i => document.getElementById('tt-stmt-'+i)?.value.trim() || '');
+      const lieRadio = document.querySelector('input[name="tt-lie"]:checked');
+      if (stmts.some(x => !x)) { showToast('Fill in all 3 statements'); return; }
+      if (!lieRadio) { showToast('Mark which one is the lie'); return; }
+      s.statements = stmts;
+      s.lieIndex = parseInt(lieRadio.value);
+      s.phase = 'guessing';
+      s.guess = -1;
+      buildMain();
+      pushState();
+    });
+
+    // Update lie toggle styling
+    [0,1,2].forEach(i => {
+      const radio = document.querySelector(`#tt-lie-label-${i} input`);
+      radio?.addEventListener('change', () => {
+        [0,1,2].forEach(j => document.getElementById('tt-lie-label-'+j)?.classList.toggle('selected', j===i));
+      });
+    });
+
+    // Guesser: confirm guess
+    document.getElementById('tt-confirm-guess')?.addEventListener('click', () => {
+      if (s.guess < 0) return;
+      const correct = s.guess === s.lieIndex;
+      if (correct) {
+        // Guesser gets the point
+        if (s.writerRole === 'p1') s.p2Score++;
+        else s.p1Score++;
+      } else {
+        // Writer gets the point
+        if (s.writerRole === 'p1') s.p1Score++;
+        else s.p2Score++;
+      }
+      s.phase = 'result';
+      totalRoundsPlayed++;
+      buildMain();
+      pushState();
+    });
+
+    // Next round
+    document.getElementById('tt-next-round')?.addEventListener('click', () => {
+      s.writerRole = s.writerRole === 'p1' ? 'p2' : 'p1';
+      s.phase = 'writing';
+      s.statements = ['','',''];
+      s.lieIndex = -1;
+      s.guess = -1;
+      buildMain();
+      pushState();
+    });
+
+    // Reset
+    document.getElementById('tt-reset')?.addEventListener('click', () => {
+      s.writerRole = 'p1';
+      s.phase = 'writing';
+      s.statements = ['','',''];
+      s.lieIndex = -1;
+      s.guess = -1;
+      s.p1Score = 0;
+      s.p2Score = 0;
+      buildMain();
+      pushState();
+    });
   }
 }
 
@@ -1698,6 +2349,12 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t || '';
+  return d.innerHTML;
+}
+
 // ═══════════════════════════════════════════════════════════
 // MULTIPLAYER SYNC (Supabase Realtime)
 // ═══════════════════════════════════════════════════════════
@@ -1705,11 +2362,11 @@ const SUPABASE_URL = 'https://xeounxqeitbirvfjfgrb.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhlb3VueHFlaXRiaXJ2ZmpmZ3JiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2MDE3NDIsImV4cCI6MjA4OTE3Nzc0Mn0.hEPG1OPhUUKmllrqpvTz4epPUpnJS8BY4OmAR8f_Xf4';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentRoom = null;    // room row from DB
-let isPlayer1 = false;     // am I player 1?
-let roomChannel = null;    // realtime subscription
-let syncPaused = false;    // prevent echo loops
-let syncTimer = null;      // debounce timer
+let currentRoom = null;
+let isPlayer1 = false;
+let roomChannel = null;
+let syncPaused = false;
+let syncTimer = null;
 
 function generateRoomCode() {
   return String(Math.floor(1000 + Math.random() * 9000));
@@ -1722,7 +2379,6 @@ function getFullState() {
 function applyRemoteState(gs) {
   if (!gs || !gs.state) return;
   syncPaused = true;
-  // Apply all game states
   Object.keys(gs.state).forEach(k => {
     if (state[k]) {
       Object.assign(state[k], gs.state[k]);
@@ -1797,30 +2453,45 @@ function subscribeToRoom(roomId) {
       const newRow = payload.new;
       currentRoom = newRow;
       updateConnectionUI();
-      // Apply game state from remote
       if (newRow.game_state && newRow.game_state.state) {
         applyRemoteState(newRow.game_state);
       }
+      // Sync chat messages
+      if (newRow.messages && Array.isArray(newRow.messages)) {
+        const prevLen = chatMessages.length;
+        chatMessages = newRow.messages;
+        if (chatOpen) {
+          lastReadCount = chatMessages.length;
+          renderChatMessages();
+        } else if (chatMessages.length > prevLen) {
+          updateChatBadge();
+        }
+      }
+      // Sync scores
+      if (newRow.scores && typeof newRow.scores === 'object') {
+        scores = newRow.scores;
+        renderScoreBar();
+      }
     })
     .subscribe();
+
+  setupPresence();
 }
 
-// Modify startApp to create a room
-const _originalStartApp = startApp;
+// Override startApp to create room
 startApp = async function() {
   p1Name = document.getElementById('name1').value.trim() || 'You';
   p2Name = document.getElementById('name2').value.trim() || 'Partner';
   isPlayer1 = true;
+  sessionStartTime = Date.now();
 
-  // Track visits
   try {
     let visits = parseInt(localStorage.getItem('pookie_visits') || '0') + 1;
     localStorage.setItem('pookie_visits', visits);
     localStorage.setItem('pookie_last', new Date().toISOString());
   } catch(e) {}
 
-  // Create room
-  const code = generateRoomCode();
+  const code = pendingRoomCode;
   const { data, error } = await sb.from('rooms').insert({
     room_code: code,
     player1_name: p1Name,
@@ -1840,11 +2511,9 @@ startApp = async function() {
 
   currentRoom = data;
   subscribeToRoom(data.id);
-
-  // Store room ID for disconnect cleanup
   try { localStorage.setItem('pookie_room_id', data.id); } catch(e) {}
 
-  // Show room code on invite screen
+  // Show invite screen with room code
   showRoomInvite(code);
 };
 
@@ -1853,11 +2522,9 @@ function showRoomInvite(code) {
   const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
   document.getElementById('invite-name').textContent = name;
   document.getElementById('invite-url').textContent = url;
-  document.getElementById('invite-msg').textContent = `Join our date night 🧡 Go to ${url} and enter code: ${code}`;
+  document.getElementById('invite-msg').textContent = `Hey ${name}, 🧡 Join our date night, open ${url} and enter code: ${code}`;
 
-  // Add room code display to invite screen
   const inviteInner = document.querySelector('.invite-inner');
-  // Remove existing room code display if any
   const existing = document.getElementById('invite-room-code');
   if (existing) existing.remove();
 
@@ -1870,19 +2537,16 @@ function showRoomInvite(code) {
     <button class="room-code-share-btn" onclick="copyRoomCode('${code}')">Share room code</button>
     <div class="room-waiting" id="invite-waiting" style="margin-top:10px;">Waiting for your partner to join...</div>
   `;
-  // Insert before the invite card
   const inviteCard = document.querySelector('.invite-card');
   inviteInner.insertBefore(rcDiv, inviteCard);
 
   showScreen('invite');
-
-  // Poll for partner join
   pollForPartner();
 }
 
 function copyRoomCode(code) {
   const url = 'pookieandi.lovable.app';
-  const msg = `Join our date night 🧡 Go to ${url} and enter code: ${code}`;
+  const msg = `Hey ${p2Name}, 🧡 Join our date night, open ${url} and enter code: ${code}`;
   navigator.clipboard.writeText(msg).then(() => showToast('Room code copied! 🧡'));
 }
 
@@ -1902,7 +2566,6 @@ async function pollForPartner() {
       }
     }
   }, 2000);
-  // Stop polling after 5 minutes
   setTimeout(() => clearInterval(checkInterval), 300000);
 }
 
@@ -1914,7 +2577,6 @@ async function joinRoom() {
     return;
   }
 
-  // Get your name
   const myName = document.getElementById('name1').value.trim() || 'Partner';
 
   const { data, error } = await sb.from('rooms')
@@ -1929,17 +2591,14 @@ async function joinRoom() {
   }
 
   if (data.player2_connected && data.player2_name) {
-    // Check if this is us rejoining - allow if our name matches
-    const myName = document.getElementById('name1').value.trim() || 'Partner';
     if (data.player2_name !== myName) {
       showToast('Room is already full');
       return;
     }
-    // Rejoin as player2
   }
 
-  // Join as player 2
   isPlayer1 = false;
+  sessionStartTime = Date.now();
   const { data: updated, error: updateErr } = await sb.from('rooms').update({
     player2_name: myName,
     player2_connected: true
@@ -1954,7 +2613,6 @@ async function joinRoom() {
   p1Name = myName;
   p2Name = updated.player1_name;
 
-  // Apply existing game state from room
   if (updated.game_state && updated.game_state.state) {
     applyRemoteState(updated.game_state);
   }
@@ -1962,7 +2620,6 @@ async function joinRoom() {
   subscribeToRoom(updated.id);
   try { localStorage.setItem('pookie_room_id', updated.id); } catch(e) {}
 
-  // Load initial chat/scores
   if (updated.messages && Array.isArray(updated.messages)) {
     chatMessages = updated.messages;
     if (chatMessages.length) updateChatBadge();
@@ -1974,16 +2631,6 @@ async function joinRoom() {
   showToast(`Joined ${updated.player1_name}'s room! 🧡`);
   goToApp();
 }
-
-// Override switchGame to sync
-const _originalSwitchGame = switchGame;
-switchGame = function(id) {
-  activeGame = id;
-  buildNav();
-  buildMain();
-  if (window.innerWidth < 768) closeSideNav();
-  pushState();
-};
 
 // Override goToApp to update connection UI + score bar
 const _originalGoToApp = goToApp;
@@ -2005,60 +2652,11 @@ goToApp = function() {
   } catch(e) {}
 };
 
-// Override attachEvents to add sync on every state mutation
-const _originalAttachEvents = attachEvents;
-attachEvents = function(game, s) {
-  if (!s.allShown) s.allShown = [];
-  if (game.type === 'draw' || game.type === 'fingers') {
-    document.getElementById('draw-btn')?.addEventListener('click', () => {
-      let avail = game.prompts.map((_,i)=>i).filter(i=>!s.drawn.includes(i));
-      if (avail.length === 0) {
-        s.drawn.forEach(i => { if (!s.allShown.includes(i)) s.allShown.push(i); });
-        const last5 = s.drawn.slice(-5);
-        s.drawn = []; s.histIdx = -1;
-        avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i) && !last5.includes(i));
-        if (avail.length === 0) {
-          s.allShown = [];
-          avail = game.prompts.map((_,i)=>i).filter(i => !last5.includes(i));
-          if (avail.length === 0) avail = game.prompts.map((_,i)=>i);
-        }
-        for (let i = avail.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [avail[i],avail[j]]=[avail[j],avail[i]]; }
-      }
-      const idx = avail[Math.floor(Math.random()*avail.length)];
-      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
-      buildMain();
-      pushState();
-    });
-    document.getElementById('prev-btn')?.addEventListener('click', () => { if (s.histIdx > 0) { s.histIdx--; buildMain(); pushState(); } });
-    document.getElementById('reset-btn')?.addEventListener('click', () => { s.drawn=[]; s.histIdx=-1; s.allShown=[]; buildMain(); pushState(); });
-  }
-  if (game.type === 'fingers') {
-    document.getElementById('p1-down')?.addEventListener('click', () => { if(s.p1>0){s.p1--;buildMain();pushState();} });
-    document.getElementById('p1-up')?.addEventListener('click', () => { if(s.p1<10){s.p1++;buildMain();pushState();} });
-    document.getElementById('p2-down')?.addEventListener('click', () => { if(s.p2>0){s.p2--;buildMain();pushState();} });
-    document.getElementById('p2-up')?.addEventListener('click', () => { if(s.p2<10){s.p2++;buildMain();pushState();} });
-    document.getElementById('reset-fingers')?.addEventListener('click', () => { s.p1=10;s.p2=10;buildMain();pushState(); });
-  }
-  if (game.type === 'twenty') {
-    function addQ(ans) {
-      const input = document.getElementById('q-input');
-      const q = input.value.trim();
-      if (!q || s.qCount >= 20) return;
-      s.qLog.push({q,a:ans}); s.qCount++;
-      buildMain();
-      pushState();
-    }
-    document.getElementById('qa-yes')?.addEventListener('click', () => addQ('yes'));
-    document.getElementById('qa-no')?.addEventListener('click', () => addQ('no'));
-    document.getElementById('qa-sort')?.addEventListener('click', () => addQ('sortof'));
-    document.getElementById('qa-reset')?.addEventListener('click', () => { s.qLog=[]; s.qCount=0; buildMain(); pushState(); });
-    document.getElementById('q-input')?.addEventListener('keydown', e => { if(e.key==='Enter') addQ('yes'); });
-  }
-};
-
-// Handle page unload — mark disconnected via sendBeacon
+// Handle page unload
 window.addEventListener('beforeunload', () => {
   if (!currentRoom) return;
+  // Save session history if authenticated
+  saveSessionHistory();
   const field = isPlayer1 ? 'player1_connected' : 'player2_connected';
   const url = `${SUPABASE_URL}/rest/v1/rooms?id=eq.${currentRoom.id}`;
   const body = JSON.stringify({ [field]: false });
@@ -2074,7 +2672,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// PRESENCE — heartbeat-based slot release
+// PRESENCE
 // ═══════════════════════════════════════════════════════════
 let presenceChannel = null;
 let heartbeatInterval = null;
@@ -2092,18 +2690,12 @@ function setupPresence() {
     const p1Online = !!presState['player1']?.length;
     const p2Online = !!presState['player2']?.length;
 
-    // Update connected fields if they differ
     if (currentRoom) {
       const updates = {};
       if (currentRoom.player1_connected !== p1Online) updates.player1_connected = p1Online;
       if (currentRoom.player2_connected !== p2Online) updates.player2_connected = p2Online;
-      // Also release slot if player left
-      if (!p2Online && currentRoom.player2_connected) {
-        updates.player2_connected = false;
-      }
-      if (!p1Online && currentRoom.player1_connected) {
-        updates.player1_connected = false;
-      }
+      if (!p2Online && currentRoom.player2_connected) updates.player2_connected = false;
+      if (!p1Online && currentRoom.player1_connected) updates.player1_connected = false;
       if (Object.keys(updates).length) {
         sb.from('rooms').update(updates).eq('id', currentRoom.id).then(() => {});
       }
@@ -2116,7 +2708,6 @@ function setupPresence() {
     }
   });
 
-  // Heartbeat every 10 seconds
   clearInterval(heartbeatInterval);
   heartbeatInterval = setInterval(() => {
     if (presenceChannel) {
@@ -2125,27 +2716,11 @@ function setupPresence() {
   }, 10000);
 }
 
-// Patch subscribeToRoom to also setup presence
-const _origSubscribe = subscribeToRoom;
-subscribeToRoom = function(roomId) {
-  _origSubscribe(roomId);
-  setupPresence();
-};
-
-// On page load, check URL for room code parameter
-window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get('code');
-  if (code && code.length === 4) {
-    const input = document.getElementById('joinCodeInput');
-    if (input) input.value = code;
-  }
-});
-
 // ═══════════════════════════════════════════════════════════
 // GO BACK TO LANDING
 // ═══════════════════════════════════════════════════════════
 function goBackToLanding() {
+  pendingRoomCode = generateRoomCode();
   showScreen('landing');
 }
 
@@ -2284,7 +2859,6 @@ function updateTimerDisplay() {
     String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
 }
 
-// Close timer when clicking outside
 document.addEventListener('click', (e) => {
   const widget = document.getElementById('timer-widget');
   const btn = document.getElementById('timer-btn');
@@ -2342,12 +2916,6 @@ function renderChatMessages() {
   container.scrollTop = container.scrollHeight;
 }
 
-function escapeHtml(t) {
-  const d = document.createElement('div');
-  d.textContent = t;
-  return d.innerHTML;
-}
-
 function sendChatMsg() {
   const input = document.getElementById('chat-input');
   const text = input.value.trim();
@@ -2381,7 +2949,6 @@ function toggleEmojiPicker() {
   wrap.classList.toggle('open');
 }
 
-// Chat enter key
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && chatOpen) {
     const active = document.activeElement;
@@ -2393,45 +2960,261 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══════════════════════════════════════════════════════════
-// SYNC CHAT & SCORES FROM REMOTE UPDATES
+// SHOWN PROMPTS TRACKING (Supabase)
 // ═══════════════════════════════════════════════════════════
-const _origSubscribeForChat = subscribeToRoom;
-subscribeToRoom = function(roomId) {
-  if (roomChannel) { sb.removeChannel(roomChannel); }
-  roomChannel = sb.channel('room-' + roomId)
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'rooms',
-      filter: 'id=eq.' + roomId
-    }, (payload) => {
-      const newRow = payload.new;
-      currentRoom = newRow;
-      updateConnectionUI();
-      if (newRow.game_state && newRow.game_state.state) {
-        applyRemoteState(newRow.game_state);
-      }
-      // Sync chat messages
-      if (newRow.messages && Array.isArray(newRow.messages)) {
-        const prevLen = chatMessages.length;
-        chatMessages = newRow.messages;
-        if (chatOpen) {
-          lastReadCount = chatMessages.length;
-          renderChatMessages();
-        } else if (chatMessages.length > prevLen) {
-          updateChatBadge();
-        }
-      }
-      // Sync scores
-      if (newRow.scores && typeof newRow.scores === 'object') {
-        scores = newRow.scores;
-        renderScoreBar();
-      }
-    })
-    .subscribe();
+async function saveShownPrompts(gameId, drawnIndices) {
+  if (!currentRoom) return;
+  try {
+    const { data } = await sb.from('rooms').select('shown_prompts').eq('id', currentRoom.id).single();
+    const shown = data?.shown_prompts || {};
+    if (!shown[gameId]) shown[gameId] = [];
+    drawnIndices.forEach(i => { if (!shown[gameId].includes(i)) shown[gameId].push(i); });
+    await sb.from('rooms').update({ shown_prompts: shown }).eq('id', currentRoom.id);
+  } catch(e) {}
+}
 
-  setupPresence();
-};
+async function loadShownPrompts() {
+  if (!currentRoom) return;
+  try {
+    const { data } = await sb.from('rooms').select('shown_prompts').eq('id', currentRoom.id).single();
+    if (data?.shown_prompts) {
+      Object.keys(data.shown_prompts).forEach(gameId => {
+        if (state[gameId] && state[gameId].allShown !== undefined) {
+          state[gameId].allShown = data.shown_prompts[gameId] || [];
+        }
+      });
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTHENTICATION (Optional)
+// ═══════════════════════════════════════════════════════════
+let currentUser = null;
+let authMode = 'signin'; // 'signin' or 'signup'
+
+async function checkAuthState() {
+  try {
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.user) {
+      currentUser = data.session.user;
+    }
+    sb.auth.onAuthStateChange((event, session) => {
+      currentUser = session?.user || null;
+      renderSideNavAuth();
+      renderHistoryLeaderboard();
+    });
+  } catch(e) {}
+}
+
+function openAuthModal() {
+  authMode = 'signin';
+  renderAuthModal();
+  document.getElementById('auth-modal-overlay').classList.add('open');
+  closeSideNav();
+}
+
+function closeAuthModal(e) {
+  if (e && e.target !== e.currentTarget) return;
+  document.getElementById('auth-modal-overlay').classList.remove('open');
+}
+
+function renderAuthModal() {
+  const title = document.getElementById('auth-modal-title');
+  const btn = document.getElementById('auth-submit-btn');
+  const toggle = document.getElementById('auth-toggle');
+  if (authMode === 'signin') {
+    title.textContent = 'Sign In';
+    btn.textContent = 'Sign In';
+    toggle.innerHTML = 'Don\'t have an account? <a onclick="toggleAuthMode()">Sign up</a>';
+  } else {
+    title.textContent = 'Create Account';
+    btn.textContent = 'Create Account';
+    toggle.innerHTML = 'Already have an account? <a onclick="toggleAuthMode()">Sign in</a>';
+  }
+  document.getElementById('auth-error').style.display = 'none';
+}
+
+function toggleAuthMode() {
+  authMode = authMode === 'signin' ? 'signup' : 'signin';
+  renderAuthModal();
+}
+
+async function submitAuth() {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+
+  if (!email || !password) {
+    errEl.textContent = 'Please fill in both fields';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    let result;
+    if (authMode === 'signup') {
+      result = await sb.auth.signUp({ email, password });
+    } else {
+      result = await sb.auth.signInWithPassword({ email, password });
+    }
+    if (result.error) {
+      errEl.textContent = result.error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+    currentUser = result.data?.user || null;
+    document.getElementById('auth-modal-overlay').classList.remove('open');
+    showToast(authMode === 'signup' ? 'Account created! 🧡' : 'Signed in! 🧡');
+    renderSideNavAuth();
+    renderHistoryLeaderboard();
+  } catch(e) {
+    errEl.textContent = 'Something went wrong';
+    errEl.style.display = 'block';
+  }
+}
+
+async function signInWithGoogle() {
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    });
+    if (error) {
+      const errEl = document.getElementById('auth-error');
+      errEl.textContent = error.message;
+      errEl.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  currentUser = null;
+  renderSideNavAuth();
+  renderHistoryLeaderboard();
+  showToast('Signed out');
+}
+
+function renderSideNavAuth() {
+  const container = document.getElementById('side-nav-auth');
+  if (!container) return;
+
+  if (currentUser) {
+    const displayName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
+    container.innerHTML = `
+      <div class="side-nav-user">
+        <div class="side-nav-user-avatar">👤</div>
+        <span class="side-nav-user-name">${escapeHtml(displayName)}</span>
+        <button class="side-nav-signout" onclick="signOut()">Sign out</button>
+      </div>`;
+  } else {
+    container.innerHTML = `
+      <button class="side-nav-signin-btn" onclick="openAuthModal()">Sign in / Create account</button>
+      <div class="side-nav-guest-msg">Playing as guest — sign in to save your history and appear on the leaderboard.</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// HISTORY & LEADERBOARD
+// ═══════════════════════════════════════════════════════════
+async function renderHistoryLeaderboard() {
+  const container = document.getElementById('side-nav-history-leaderboard');
+  if (!container) return;
+
+  if (!currentUser) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+
+  // Fetch history
+  try {
+    const { data: history } = await sb.from('session_history')
+      .select('*')
+      .eq('user_id', currentUser.id)
+      .order('played_at', { ascending: false })
+      .limit(10);
+
+    html += `<div class="side-nav-panel">
+      <div class="side-nav-panel-title">📜 Your History</div>`;
+
+    if (history && history.length) {
+      history.forEach(h => {
+        const date = new Date(h.played_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+        const sc = h.final_scores || { p1: 0, p2: 0 };
+        html += `<div class="history-card">
+          <div class="history-card-date">${date} · ${h.duration_minutes}min · ${h.rounds_played} rounds</div>
+          <div class="history-card-players">vs ${escapeHtml(h.partner_name)}</div>
+          <div class="history-card-score">${sc.p1} — ${sc.p2}</div>
+        </div>`;
+      });
+    } else {
+      html += `<div style="font-size:12px;color:rgba(250,247,242,0.3);font-style:italic;">No sessions yet</div>`;
+    }
+    html += '</div>';
+  } catch(e) {}
+
+  // Fetch leaderboard
+  try {
+    const { data: lb } = await sb.from('session_history')
+      .select('user_id, final_scores')
+      .limit(200);
+
+    if (lb && lb.length) {
+      // Aggregate scores by user
+      const userScores = {};
+      lb.forEach(row => {
+        const uid = row.user_id;
+        const sc = row.final_scores || { p1: 0, p2: 0 };
+        if (!userScores[uid]) userScores[uid] = 0;
+        userScores[uid] += (sc.p1 || 0);
+      });
+
+      // Fetch display names
+      const userIds = Object.keys(userScores);
+      const { data: profiles } = await sb.from('profiles')
+        .select('id, display_name')
+        .in('id', userIds);
+
+      const ranked = userIds.map(uid => ({
+        uid,
+        name: profiles?.find(p => p.id === uid)?.display_name || 'Player',
+        pts: userScores[uid]
+      })).sort((a,b) => b.pts - a.pts).slice(0, 10);
+
+      html += `<div class="side-nav-panel">
+        <div class="side-nav-panel-title">🏆 Leaderboard</div>`;
+      ranked.forEach((r, i) => {
+        html += `<div class="leaderboard-row">
+          <span class="leaderboard-rank">${i === 0 ? '👑' : '#'+(i+1)}</span>
+          <span class="leaderboard-name">${escapeHtml(r.name)}</span>
+          <span class="leaderboard-pts">${r.pts} pts</span>
+        </div>`;
+      });
+      html += '</div>';
+    }
+  } catch(e) {}
+
+  container.innerHTML = html;
+}
+
+async function saveSessionHistory() {
+  if (!currentUser || !currentRoom) return;
+  const duration = Math.round((Date.now() - sessionStartTime) / 60000);
+  const partnerName = isPlayer1 ? (currentRoom.player2_name || p2Name) : (currentRoom.player1_name || p1Name);
+  try {
+    await sb.from('session_history').insert({
+      user_id: currentUser.id,
+      partner_name: partnerName || 'Partner',
+      final_scores: scores,
+      rounds_played: totalRoundsPlayed,
+      duration_minutes: Math.max(1, duration),
+    });
+  } catch(e) {}
+}
 
 </script>
 </body>
