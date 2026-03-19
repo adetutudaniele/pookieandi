@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
       rooms: {
         Row: {
           active_game: string
@@ -28,6 +46,7 @@ export type Database = {
           player2_name: string | null
           room_code: string
           scores: Json
+          shown_prompts: Json
           updated_at: string
         }
         Insert: {
@@ -43,6 +62,7 @@ export type Database = {
           player2_name?: string | null
           room_code: string
           scores?: Json
+          shown_prompts?: Json
           updated_at?: string
         }
         Update: {
@@ -58,7 +78,38 @@ export type Database = {
           player2_name?: string | null
           room_code?: string
           scores?: Json
+          shown_prompts?: Json
           updated_at?: string
+        }
+        Relationships: []
+      }
+      session_history: {
+        Row: {
+          duration_minutes: number
+          final_scores: Json
+          id: string
+          partner_name: string
+          played_at: string
+          rounds_played: number
+          user_id: string
+        }
+        Insert: {
+          duration_minutes?: number
+          final_scores?: Json
+          id?: string
+          partner_name?: string
+          played_at?: string
+          rounds_played?: number
+          user_id: string
+        }
+        Update: {
+          duration_minutes?: number
+          final_scores?: Json
+          id?: string
+          partner_name?: string
+          played_at?: string
+          rounds_played?: number
+          user_id?: string
         }
         Relationships: []
       }
