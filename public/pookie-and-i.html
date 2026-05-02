@@ -1220,9 +1220,9 @@ body {
         </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;position:relative;">
-        <button class="app-share-btn" id="timer-btn" onclick="toggleTimer()" style="padding:6px 8px;font-size:16px;">⏱</button>
-        <button class="app-share-btn" id="chat-btn" onclick="toggleChat()" style="position:relative;padding:6px 8px;font-size:16px;">💬<span class="chat-unread-dot" id="chat-badge"></span></button>
-        <button class="app-share-btn" onclick="showInvite()">Share ↗</button>
+        <button class="app-share-btn" id="timer-btn" onclick="toggleTimer()" aria-label="Open countdown timer" style="padding:6px 8px;font-size:16px;"><span aria-hidden="true">⏱</span></button>
+        <button class="app-share-btn" id="chat-btn" onclick="toggleChat()" aria-label="Open chat" style="position:relative;padding:6px 8px;font-size:16px;"><span aria-hidden="true">💬</span><span class="chat-unread-dot" id="chat-badge" aria-hidden="true"></span></button>
+        <button class="app-share-btn" onclick="showInvite()" aria-label="Share room">Share ↗</button>
         <div class="timer-widget" id="timer-widget">
           <div class="timer-display" id="timer-display">00:00</div>
           <div class="timer-presets">
