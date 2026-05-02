@@ -740,9 +740,24 @@ body {
 }
 .side-nav-item.active .nav-dot { opacity: 1; background: var(--accent); }
 .hamburger-btn {
-  background: none; border: none; color: var(--cream); font-size: 22px;
-  cursor: pointer; padding: 2px 6px; margin-right: 8px; line-height: 1;
+  background: none; border: none; color: var(--cream);
+  cursor: pointer; padding: 6px; margin-right: 8px;
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px; transition: background 0.15s;
 }
+.hamburger-btn:hover { background: rgba(250,247,242,0.08); }
+.hamburger-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hamburger-btn .hb-icon {
+  position: relative; width: 20px; height: 14px; display: inline-block;
+}
+.hamburger-btn .hb-icon span {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: currentColor; border-radius: 2px;
+}
+.hamburger-btn .hb-icon span:nth-child(1) { top: 0; }
+.hamburger-btn .hb-icon span:nth-child(2) { top: 6px; }
+.hamburger-btn .hb-icon span:nth-child(3) { top: 12px; }
 
 /* ══ SCORE BAR ══ */
 .score-bar {
