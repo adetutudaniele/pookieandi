@@ -1211,7 +1211,7 @@ body {
     <div class="score-bar" id="score-bar" style="display:none;"></div>
     <div class="app-header" style="position:static;">
       <div class="app-header-left" style="display:flex;align-items:center;gap:4px;">
-        <button class="hamburger-btn" onclick="toggleSideNav()">☰</button>
+        <button class="hamburger-btn" onclick="toggleSideNav()" aria-label="Toggle navigation menu" aria-controls="side-nav" aria-expanded="true"><span class="hb-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
         <div>
           <div class="app-header-title" style="cursor:pointer;" onclick="goBackToLanding()">Pookie <em>&</em> I</div>
           <div class="app-header-names" id="header-names">your date night companion</div>
