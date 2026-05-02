@@ -2742,19 +2742,27 @@ function goBackToLanding() {
 // ═══════════════════════════════════════════════════════════
 // SIDE NAVIGATION
 // ═══════════════════════════════════════════════════════════
-let sideNavOpen = false;
+let sideNavOpen = true;
+
+function _syncSideNav() {
+  document.getElementById('side-nav').classList.toggle('open', sideNavOpen);
+  document.getElementById('side-nav-overlay').classList.toggle('open', sideNavOpen);
+  const btn = document.querySelector('.hamburger-btn');
+  if (btn) btn.setAttribute('aria-expanded', sideNavOpen ? 'true' : 'false');
+}
 
 function toggleSideNav() {
   sideNavOpen = !sideNavOpen;
-  document.getElementById('side-nav').classList.toggle('open', sideNavOpen);
-  document.getElementById('side-nav-overlay').classList.toggle('open', sideNavOpen);
+  _syncSideNav();
 }
 
 function closeSideNav() {
   sideNavOpen = false;
-  document.getElementById('side-nav').classList.remove('open');
-  document.getElementById('side-nav-overlay').classList.remove('open');
+  _syncSideNav();
 }
+
+// Open side nav by default on load
+document.addEventListener('DOMContentLoaded', () => { _syncSideNav(); });
 
 // ═══════════════════════════════════════════════════════════
 // SCORE BAR
