@@ -1271,23 +1271,23 @@ body {
 <div class="chat-panel" id="chat-panel">
   <div class="chat-panel-header">
     <span class="chat-panel-title">Chat</span>
-    <button class="chat-panel-close" onclick="toggleChat()">✕</button>
+    <button class="chat-panel-close" onclick="toggleChat()" aria-label="Close chat">✕</button>
   </div>
   <div class="chat-messages" id="chat-messages">
     <div class="chat-empty">No messages yet — say hi! 👋</div>
   </div>
   <div class="emoji-picker-wrap" id="emoji-picker-wrap"></div>
   <div class="chat-input-row">
-    <button class="emoji-toggle-btn" onclick="toggleEmojiPicker()">😊</button>
+    <button class="emoji-toggle-btn" onclick="toggleEmojiPicker()" aria-label="Toggle emoji picker"><span aria-hidden="true">😊</span></button>
     <input class="chat-input" id="chat-input" placeholder="Type a message..." maxlength="500" />
-    <button class="chat-send-btn" onclick="sendChatMsg()">→</button>
+    <button class="chat-send-btn" onclick="sendChatMsg()" aria-label="Send message">→</button>
   </div>
 </div>
 
 <!-- ══ AUTH MODAL ══ -->
 <div class="auth-modal-overlay" id="auth-modal-overlay" onclick="closeAuthModal(event)">
   <div class="auth-modal" onclick="event.stopPropagation()" style="position:relative;">
-    <button class="auth-close-btn" onclick="document.getElementById('auth-modal-overlay').classList.remove('open')">✕</button>
+    <button class="auth-close-btn" onclick="document.getElementById('auth-modal-overlay').classList.remove('open')" aria-label="Close sign-in dialog">✕</button>
     <h3 id="auth-modal-title">Sign In</h3>
     <div class="auth-error" id="auth-error"></div>
     <input class="auth-input" id="auth-email" type="email" placeholder="Email" />
