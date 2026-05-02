@@ -1921,6 +1921,11 @@ function initState() {
     if (g.type === 'fingers') state[g.id] = { drawn: [], histIdx: -1, p1: 10, p2: 10, allShown: [] };
     else if (g.type === 'twenty') state[g.id] = { subject: '', thinkerRole: 'p1', phase: 'setup', qLog: [], qCount: 0, currentQuestion: '', guessCorrect: false };
     else if (g.type === 'truths') state[g.id] = { writerRole: 'p1', phase: 'writing', statements: ['','',''], lieIndex: -1, guess: -1, p1Score: 0, p2Score: 0 };
+    else if (g.type === 'rateus') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'rating', p1Rating: 0, p2Rating: 0 };
+    else if (g.type === 'confessdare') state[g.id] = { drawn: [], histIdx: -1, allShown: [], cardType: 'confess', swapUsed: false, swapped: false };
+    else if (g.type === 'hottakes') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '' };
+    else if (g.type === 'finishsentence') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', p1Answer: '', p2Answer: '', p1Ready: false, p2Ready: false };
+    else if (g.type === 'kma') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'assigning', p1Picks: ['','',''], p2Picks: ['','',''], p1Locked: false, p2Locked: false };
     else state[g.id] = { drawn: [], histIdx: -1, allShown: [] };
   });
 }
