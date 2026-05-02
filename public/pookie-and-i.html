@@ -1711,7 +1711,203 @@ const games = [
   }
 ];
 
-const allItems = [...extras, ...games];
+// ─── SPICY & FLIRTY GAMES ──────────────────────────────
+const spicy = [
+  {
+    id: 'rateus', name: 'Rate Us', badge: 'Both players · simultaneous reveal',
+    desc: 'A scenario appears. Both of you rate it privately 1–10. The gap between your scores is where the fun begins.',
+    rules: ['A scenario appears on screen','Both players privately rate it 1–10','Ratings reveal simultaneously','Neither person has to explain unless they want to','The bigger the gap between scores, the more interesting the conversation'],
+    type: 'rateus',
+    prompts: [
+      "Surprise weekend trip with no destination revealed until you're at the airport",
+      'Cooking a full meal together in the same kitchen',
+      'Reading the same book and discussing it chapter by chapter',
+      'One person plans the entire date — the other knows nothing until it happens',
+      'Dancing together with no music on',
+      'Spending a full day with no phones',
+      'Writing each other letters and posting them',
+      'Watching the sunrise together',
+      'Taking a spontaneous road trip with no map',
+      'Learning something new together — a language, a skill, a recipe',
+      'Spending an entire weekend without leaving the house',
+      'Going to a concert of a band neither of you know',
+      'Cooking a meal from a country neither of you have visited',
+      'Spending a night in a place with no WiFi',
+      'Making a short film together',
+      "Visiting each other's hometown for the first time",
+      'Going on a silent walk together for 30 minutes',
+      'Writing a song together even if neither of you can sing',
+      'Planning a trip where the other person chooses everything',
+      'Spending one week only communicating by voice notes',
+      'Making a scrapbook of your relationship so far',
+      'Doing a full photoshoot together just for fun',
+      "Watching every film on a director's filmography together",
+      'Taking a class together — cooking, pottery, dance',
+      "Spending New Year's Eve together no matter what it takes"
+    ]
+  },
+  {
+    id: 'confessdare', name: 'Confess or Dare', badge: 'Brave souls only · take turns',
+    desc: 'Confess something real or take the dare. You can swap once per game — but only once.',
+    rules: ['A card appears with either a confession prompt or a dare','You must do whichever appears — confess or dare','You may swap (take the dare instead of confessing or vice versa) but only once per game','Dares must be completed on camera right now','No skipping'],
+    type: 'confessdare',
+    confessions: [
+      'Confess: the last time you were jealous and said nothing',
+      "Confess: something you find attractive about your partner that you've never said out loud",
+      'Confess: a text you typed, almost sent, then deleted',
+      "Confess: the last time you were annoyed at your partner but pretended you weren't",
+      "Confess: something you googled that you'd be embarrassed to share",
+      "Confess: the most irrational thing you've ever been jealous of",
+      'Confess: something you pretend to like because your partner likes it',
+      "Confess: a moment you were secretly proud of yourself but didn't say so",
+      'Confess: the last lie you told, even a small one',
+      'Confess: something you want but feel awkward asking for',
+      "Confess: a habit you have that you hope your partner hasn't noticed",
+      "Confess: the most embarrassing thing you've done for someone you liked",
+      'Confess: something your partner does that you find annoying but have never mentioned',
+      'Confess: a moment you felt really insecure but acted confident',
+      'Confess: the first thing you noticed about your partner'
+    ],
+    dares: [
+      'Dare: send your partner the most unflattering photo of yourself from your camera roll right now',
+      'Dare: do your best impression of your partner for 30 seconds',
+      'Dare: read your last 5 Google searches out loud',
+      'Dare: show your most recently played song without skipping',
+      'Dare: open your camera, no filter, and hold it there for 10 seconds',
+      'Dare: show the last meme you saved',
+      'Dare: read the last text you sent to your best friend out loud',
+      'Dare: show your screen time from this week',
+      "Dare: do a 30-second sales pitch convincing your partner you're the best thing that happened to them",
+      'Dare: show the oldest photo of yourself on your phone',
+      'Dare: read your most recent notes app entry out loud',
+      'Dare: show your most used emoji and explain why',
+      'Dare: demonstrate how you walk when you think no one is watching',
+      'Dare: show the last thing you bought online',
+      'Dare: do your best catwalk strut on camera for 20 seconds'
+    ]
+  },
+  {
+    id: 'hottakes', name: 'Hot Takes', badge: 'Agree · Disagree · Argue',
+    desc: 'A wild opinion appears. Vote simultaneously. If you match — explain why. If you don\u2019t — you have 2 minutes to change each other\u2019s minds.',
+    rules: ['A hot take appears on screen','Both players simultaneously vote Agree or Disagree','If you match — share why you both think that way',"If you don't match — 2 minutes to convince each other","No one wins, no one loses — it's about the conversation",'Set the countdown timer to 2 minutes for disagreements'],
+    type: 'hottakes',
+    prompts: [
+      'Pineapple on pizza is actually good',
+      'Long-distance relationships are harder than in-person ones',
+      'The person who texts first cares more',
+      'Being fashionably late is actually rude',
+      'Jealousy in a relationship is a green flag',
+      "You should be able to go through your partner's phone",
+      "People who don't like animals are suspicious",
+      'Birthdays are overrated',
+      'Men should always pay on the first date',
+      'Social media is ruining relationships',
+      'You can love someone and still not be compatible',
+      "The situationship era is mostly men's fault",
+      'Staying friends with an ex is always a bad idea',
+      'People who post their relationship online constantly are insecure',
+      'Ghosting is sometimes the kindest option',
+      'You should tell your partner everything — no secrets',
+      'Long-distance relationships almost never work long term',
+      'People change too much in their 20s to stay with one person',
+      "Saying 'I love you' too early ruins things",
+      'You can tell everything about a person by how they treat waiters',
+      "Having a 'type' is a red flag",
+      'Couples who argue a lot are actually healthier',
+      'Marriage is an outdated concept',
+      'You should never go to sleep angry',
+      "If someone cheats once they'll cheat again",
+      'Love at first sight is real',
+      'Couples should share finances completely',
+      'Having separate friend groups in a relationship is healthy',
+      "You don't choose who you fall in love with",
+      'Moving in together before marriage is essential',
+      'Everyone has a soulmate',
+      'The talking stage is more stressful than dating itself',
+      'You should never date someone your friend liked first',
+      'Couples therapy should be mandatory before marriage',
+      'Love is a choice, not a feeling',
+      'Your partner should be your best friend',
+      'Age gaps in relationships are always problematic',
+      'You can tell if a relationship will work within the first 3 months',
+      "People who say they don't need anyone are lying",
+      'A relationship without conflict is a red flag'
+    ]
+  },
+  {
+    id: 'finishsentence', name: 'Finish My Sentence', badge: 'Simultaneous reveal · no peeking',
+    desc: 'A sentence starter appears. Both of you complete it privately. Reveal at the same time and react.',
+    rules: ['A sentence starter appears on screen',"Both players type their ending privately without seeing the other's",'Reveal simultaneously','No scoring — just react honestly',"You cannot edit your answer after it's revealed"],
+    type: 'finishsentence',
+    prompts: [
+      'The thing I find most attractive about you is...',
+      'If I could change one thing about our relationship it would be...',
+      'When I imagine us in 5 years I see...',
+      "The most romantic thing you've ever done for me is...",
+      'I knew I liked you when...',
+      'My love language is probably... but I wish it was...',
+      "The version of me you haven't met yet is...",
+      'If our relationship was a film it would be called...',
+      "The thing I'll never say first is...",
+      "When I'm having a bad day what I really want from you is...",
+      'The way you make me feel when...',
+      'I feel most loved when you...',
+      "Something I've never told you is...",
+      'If I wrote you a letter right now it would start with...',
+      'The best thing about us is...',
+      'I get nervous when...',
+      'The thing you do that I find secretly hilarious is...',
+      'If I could give you one thing it would be...',
+      'The memory of us I replay the most is...',
+      'I feel closest to you when...',
+      'Something that always makes me think of you is...',
+      'The thing I was most wrong about when I first met you is...',
+      'What I want our life to look like in 10 years is...',
+      'The thing I respect most about you is...',
+      'The last time I really missed you was...',
+      "If you could read my mind right now you'd see...",
+      'The thing that makes you different from everyone else is...',
+      'My favourite small moment with you was...',
+      "What I'm most grateful for about you is...",
+      'If I could relive one moment with you it would be...'
+    ]
+  },
+  {
+    id: 'kma', name: 'Kiss, Marry, Avoid', badge: 'Silly · zero stakes',
+    desc: 'Three options appear. Assign Kiss, Marry or Avoid to each one. Compare answers and argue.',
+    rules: ['Three options appear on screen','Each player assigns Kiss, Marry or Avoid to all three','Each label can only be used once per round','Compare answers and explain your reasoning','Take turns presenting the next round'],
+    type: 'kma',
+    prompts: [
+      ['Your partner in the 80s','Your partner in the 90s','Your partner in the 2000s'],
+      ["A chef who can't clean","A cleaner who can't cook",'Someone who orders takeaway every night'],
+      ['Early bird who wakes you at 6am','Night owl who keeps you up till 4am','Someone who sleeps exactly 8 hours no matter what'],
+      ['The workaholic','The adventurer','The homebody'],
+      ['Someone who sings everywhere','Someone who hums constantly','Someone who whistles'],
+      ['Your partner as a lawyer','Your partner as an artist','Your partner as a chef'],
+      ['A person who is always cold','A person who is always hot','A person who is always hungry'],
+      ['Someone who never uses social media','Someone who posts everything','Someone who only uses LinkedIn'],
+      ['A morning person','An afternoon person','A night person'],
+      ['Your partner as a teenager','Your partner now','Your partner in 20 years'],
+      ['Someone who cries at everything','Someone who never cries',"Someone who only cries at football"],
+      ['A person who loves surprises','A person who hates surprises','A person who plans everything 6 months ahead'],
+      ['Someone who reads every night','Someone who games every night','Someone who watches documentaries every night'],
+      ['A person who never argues','A person who argues about everything',"A person who argues only when they're right"],
+      ['Your partner with unlimited money','Your partner with unlimited time','Your partner with unlimited energy'],
+      ['Someone who loves PDA','Someone who hates PDA',"Someone who only does PDA when they're jealous"],
+      ['A person who texts back in seconds','A person who texts back in days','A person who only calls, never texts'],
+      ['Your partner as a doctor','Your partner as a teacher','Your partner as a musician'],
+      ['Someone who is always early','Someone who is always late','Someone who arrives exactly on time every time'],
+      ['A person who over-explains everything','A person who under-explains everything','A person who communicates only in memes'],
+      ['Your partner with a different accent','Your partner speaking a different language','Your partner with a completely different name'],
+      ['Someone who loves horror films','Someone who only watches romcoms','Someone who only watches documentaries'],
+      ['A person who cooks every day','A person who orders in every day','A person who only eats cereal'],
+      ['Your partner as a cat person','Your partner as a dog person','Your partner as a plant person'],
+      ['Someone who is brutally honest','Someone who tells white lies to protect feelings','Someone who avoids all difficult conversations']
+    ]
+  }
+];
+
+const allItems = [...extras, ...games, ...spicy];
 
 // ─── STATE ──────────────────────────────────────────────
 let p1Name = '', p2Name = '';
@@ -1725,6 +1921,11 @@ function initState() {
     if (g.type === 'fingers') state[g.id] = { drawn: [], histIdx: -1, p1: 10, p2: 10, allShown: [] };
     else if (g.type === 'twenty') state[g.id] = { subject: '', thinkerRole: 'p1', phase: 'setup', qLog: [], qCount: 0, currentQuestion: '', guessCorrect: false };
     else if (g.type === 'truths') state[g.id] = { writerRole: 'p1', phase: 'writing', statements: ['','',''], lieIndex: -1, guess: -1, p1Score: 0, p2Score: 0 };
+    else if (g.type === 'rateus') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'rating', p1Rating: 0, p2Rating: 0 };
+    else if (g.type === 'confessdare') state[g.id] = { drawn: [], histIdx: -1, allShown: [], cardType: 'confess', swapUsed: false, swapped: false };
+    else if (g.type === 'hottakes') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '' };
+    else if (g.type === 'finishsentence') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', p1Answer: '', p2Answer: '', p1Ready: false, p2Ready: false };
+    else if (g.type === 'kma') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'assigning', p1Picks: ['','',''], p2Picks: ['','',''], p1Locked: false, p2Locked: false };
     else state[g.id] = { drawn: [], histIdx: -1, allShown: [] };
   });
 }
@@ -1853,7 +2054,8 @@ function buildNav() {
   const nav = document.getElementById('side-nav-content');
   const sections = [
     { label: 'For You Two', items: extras },
-    { label: 'Games', items: games }
+    { label: 'Games', items: games },
+    { label: '🌶️ Spicy & Flirty', items: spicy }
   ];
   let html = '';
   sections.forEach(section => {
@@ -1900,6 +2102,11 @@ function buildMain() {
   if (game.type === 'fingers') html += buildFingersGame(game, s);
   else if (game.type === 'twenty') html += buildTwentyGame(game, s);
   else if (game.type === 'truths') html += buildTruthsGame(game, s);
+  else if (game.type === 'rateus') html += buildRateUsGame(game, s);
+  else if (game.type === 'confessdare') html += buildConfessDareGame(game, s);
+  else if (game.type === 'hottakes') html += buildHotTakesGame(game, s);
+  else if (game.type === 'finishsentence') html += buildFinishSentenceGame(game, s);
+  else if (game.type === 'kma') html += buildKMAGame(game, s);
   else html += buildDrawGame(game, s);
 
   main.innerHTML = html;
@@ -2191,6 +2398,261 @@ function makeTruthsGuess(idx) {
   buildMain();
 }
 
+// ─── SPICY & FLIRTY BUILDERS ─────────────────────────────
+function _spicyProgressBar(s, total) {
+  const drawn = s.drawn.length;
+  const pct = total ? Math.round((drawn/total)*100) : 0;
+  return `<div class="draw-bottom">
+    <span class="progress-text">${drawn}/${total}</span>
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <span class="progress-text">${pct}%</span>
+  </div>`;
+}
+
+function buildRateUsGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myRole = isPlayer1 ? 'p1' : 'p2';
+  const myRating = isPlayer1 ? s.p1Rating : s.p2Rating;
+  const partnerRated = isPlayer1 ? s.p2Rating > 0 : s.p1Rating > 0;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first scenario</span></div>`;
+  } else if (s.phase === 'revealed') {
+    const gap = Math.abs(s.p1Rating - s.p2Rating);
+    const reaction = gap <= 1 ? 'Perfectly aligned 🧡' : gap <= 3 ? 'Pretty close ✨' : gap <= 6 ? 'Interesting gap 👀' : 'You two need to talk 😂';
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);">${s.p1Rating}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);">${s.p2Rating}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:6px;">${gap} points apart 👀</div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;">${reaction}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myRating > 0
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You rated <strong style="color:var(--accent);">${myRating}</strong> — waiting for partner...</div>`
+        : `<div style="margin-top:14px;padding:0 4px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;"><span>1</span><span id="ru-slider-val" style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);">5</span><span>10</span></div>
+            <input type="range" min="1" max="10" value="5" id="ru-slider" style="width:100%;accent-color:var(--accent);" aria-label="Your rating from 1 to 10" />
+            <button class="btn-primary" id="ru-submit" style="width:100%;margin-top:10px;">Lock in my rating</button>
+          </div>`
+      }
+      ${partnerRated && myRating === 0 ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner has rated — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="ru-draw-btn">${cur ? 'Next scenario' : 'Draw a scenario'}</button>
+      <button class="btn-secondary" id="ru-reset">Reset</button>
+    </div>`;
+}
+
+function buildConfessDareGame(game, s) {
+  const total = game.confessions.length + game.dares.length;
+  const cur = s.histIdx >= 0 ? s.drawn[s.histIdx] : null;
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first card</span></div>`;
+  } else {
+    const text = cur.type === 'confess' ? game.confessions[cur.idx] : game.dares[cur.idx];
+    const labelColor = cur.type === 'confess' ? 'rgba(200,82,58,0.15)' : 'rgba(200,82,58,0.85)';
+    const labelText = cur.type === 'confess' ? 'CONFESS' : 'DARE';
+    const labelFg = cur.type === 'confess' ? 'var(--accent)' : '#FAF7F2';
+    cardHtml = `
+      <div style="display:flex;justify-content:center;margin-bottom:10px;">
+        <span style="background:${labelColor};color:${labelFg};padding:4px 14px;border-radius:99px;font-size:11px;letter-spacing:1.5px;font-weight:600;">${labelText}</span>
+      </div>
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(text)}"</div>
+      ${s.swapped ? `<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--accent);">Swap used 🔄</div>` : ''}`;
+  }
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">${s.drawn.length} drawn</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${total ? Math.round((s.allShown.length/total)*100) : 0}%"></div></div>
+        <span class="progress-text">${total ? Math.round((s.allShown.length/total)*100) : 0}%</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="cd-draw-btn">${cur ? 'Next card' : 'Draw a card'}</button>
+      <button class="btn-secondary" id="cd-swap-btn" ${s.swapUsed ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Use my one swap 🔄</button>
+      <button class="btn-secondary" id="cd-reset">Reset</button>
+    </div>`;
+}
+
+function buildHotTakesGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myVote = isPlayer1 ? s.p1Vote : s.p2Vote;
+  const partnerVoted = isPlayer1 ? !!s.p2Vote : !!s.p1Vote;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first hot take</span></div>`;
+  } else if (s.phase === 'revealed') {
+    const matched = s.p1Vote === s.p2Vote;
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);text-transform:uppercase;">${s.p1Vote}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);text-transform:uppercase;">${s.p2Vote}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.1rem;">${matched ? 'Matched ✨ — share why' : 'Debate time 🥊 — 2 minutes on the clock'}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myVote
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You voted <strong style="color:var(--accent);text-transform:uppercase;">${myVote}</strong> — waiting for partner${partnerVoted ? '' : '...'}</div>`
+        : `<div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-primary" id="ht-agree" style="min-width:120px;">AGREE</button>
+            <button class="btn-secondary" id="ht-disagree" style="min-width:120px;">DISAGREE</button>
+          </div>`
+      }
+      ${partnerVoted && !myVote ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner has voted — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="ht-draw-btn">${cur ? 'Next take' : 'Draw a hot take'}</button>
+      <button class="btn-secondary" id="ht-reset">Reset</button>
+    </div>`;
+}
+
+function buildFinishSentenceGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myReady = isPlayer1 ? s.p1Ready : s.p2Ready;
+  const partnerReady = isPlayer1 ? s.p2Ready : s.p1Ready;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first sentence</span></div>`;
+  } else if (s.phase === 'revealed') {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:grid;gap:10px;margin-top:14px;grid-template-columns:1fr 1fr;">
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p1Answer)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p2Answer)}</div>
+        </div>
+      </div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myReady
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Locked in — waiting for partner${partnerReady ? '' : '...'}</div>`
+        : `<div style="margin-top:14px;">
+            <textarea id="fs-answer" class="qa-input" placeholder="Finish the sentence privately..." rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your private answer"></textarea>
+            <button class="btn-primary" id="fs-ready-btn" style="width:100%;margin-top:10px;">Ready — lock in</button>
+          </div>`
+      }
+      ${partnerReady && !myReady ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner is ready — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="fs-draw-btn">${cur ? 'Next sentence' : 'Draw a sentence'}</button>
+      <button class="btn-secondary" id="fs-reset">Reset</button>
+    </div>`;
+}
+
+function buildKMAGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myPicks = isPlayer1 ? s.p1Picks : s.p2Picks;
+  const myLocked = isPlayer1 ? s.p1Locked : s.p2Locked;
+  const partnerLocked = isPlayer1 ? s.p2Locked : s.p1Locked;
+  const labelEmoji = { kiss:'💋', marry:'💍', avoid:'🚫' };
+  const labelText = { kiss:'Kiss', marry:'Marry', avoid:'Avoid' };
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first round</span></div>`;
+  } else if (s.phase === 'revealed') {
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div style="display:grid;gap:10px;margin-top:10px;">
+        ${cur.map((opt,i) => `
+          <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <div style="font-family:'Playfair Display',serif;font-style:italic;margin-bottom:6px;">${escapeHtml(opt)}</div>
+            <div style="display:flex;gap:10px;font-size:12px;">
+              <span style="color:var(--muted);">${escapeHtml(p1Name||'P1')}: <strong style="color:var(--accent);">${labelEmoji[s.p1Picks[i]]||''} ${labelText[s.p1Picks[i]]||''}</strong></span>
+              <span style="color:var(--muted);">${escapeHtml(p2Name||'P2')}: <strong style="color:var(--accent);">${labelEmoji[s.p2Picks[i]]||''} ${labelText[s.p2Picks[i]]||''}</strong></span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div style="display:grid;gap:10px;margin-top:10px;">
+        ${cur.map((opt,i) => `
+          <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;${myLocked?'opacity:0.7;':''}">
+            <div style="font-family:'Playfair Display',serif;font-style:italic;margin-bottom:8px;">${escapeHtml(opt)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${['kiss','marry','avoid'].map(lab => `
+                <button id="km-${i}-${lab}" class="${myPicks[i]===lab?'btn-primary':'btn-secondary'}" style="font-size:12px;padding:6px 12px;" ${myLocked?'disabled':''} aria-label="${labelText[lab]} ${escapeHtml(opt)}">${labelEmoji[lab]} ${labelText[lab]}</button>
+              `).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+      ${myLocked
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Locked in — waiting for partner${partnerLocked ? '' : '...'}</div>`
+        : `<button class="btn-primary" id="km-lock" style="width:100%;margin-top:12px;">Lock in my picks</button>`
+      }
+      ${partnerLocked && !myLocked ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner has locked in — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top" style="align-items:stretch;text-align:left;">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="km-draw-btn">${cur ? 'Next round' : 'Draw a round'}</button>
+      <button class="btn-secondary" id="km-reset">Reset</button>
+    </div>`;
+}
+
 function attachEvents(game, s) {
   if (!s.allShown) s.allShown = [];
 
@@ -2365,6 +2827,167 @@ function attachEvents(game, s) {
       s.p2Score = 0;
       buildMain();
       pushState();
+    });
+  }
+
+  // ─── RATE US ──────────────────────────────────────────
+  if (game.type === 'rateus') {
+    document.getElementById('ru-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'rating'; s.p1Rating = 0; s.p2Rating = 0;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    document.getElementById('ru-slider')?.addEventListener('input', e => {
+      const v = parseInt(e.target.value) || 0;
+      const out = document.getElementById('ru-slider-val'); if (out) out.textContent = v;
+    });
+    document.getElementById('ru-submit')?.addEventListener('click', () => {
+      const v = parseInt(document.getElementById('ru-slider')?.value) || 0;
+      if (v < 1) { showToast('Slide to rate first'); return; }
+      if (isPlayer1) s.p1Rating = v; else s.p2Rating = v;
+      if (s.p1Rating > 0 && s.p2Rating > 0) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('ru-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='rating'; s.p1Rating=0; s.p2Rating=0;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── CONFESS OR DARE ──────────────────────────────────
+  if (game.type === 'confessdare') {
+    document.getElementById('cd-draw-btn')?.addEventListener('click', () => {
+      const pickConfess = Math.random() < 0.5;
+      s.cardType = pickConfess ? 'confess' : 'dare';
+      const pool = pickConfess ? game.confessions : game.dares;
+      const key = (pickConfess ? 'c:' : 'd:');
+      const used = s.allShown.filter(x => x.startsWith(key)).map(x => parseInt(x.slice(2)));
+      let avail = pool.map((_,i)=>i).filter(i => !used.includes(i));
+      if (avail.length === 0) {
+        s.allShown = s.allShown.filter(x => !x.startsWith(key));
+        avail = pool.map((_,i)=>i);
+      }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(key + idx);
+      s.drawn.push({ type: s.cardType, idx });
+      s.histIdx = s.drawn.length - 1;
+      s.swapped = false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    document.getElementById('cd-swap-btn')?.addEventListener('click', () => {
+      if (s.swapUsed) return;
+      const cur = s.drawn[s.histIdx]; if (!cur) return;
+      const newType = cur.type === 'confess' ? 'dare' : 'confess';
+      const pool = newType === 'confess' ? game.confessions : game.dares;
+      const key = newType === 'confess' ? 'c:' : 'd:';
+      const used = s.allShown.filter(x => x.startsWith(key)).map(x => parseInt(x.slice(2)));
+      let avail = pool.map((_,i)=>i).filter(i => !used.includes(i));
+      if (avail.length === 0) { s.allShown = s.allShown.filter(x => !x.startsWith(key)); avail = pool.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(key + idx);
+      s.drawn[s.histIdx] = { type: newType, idx };
+      s.cardType = newType;
+      s.swapUsed = true;
+      s.swapped = true;
+      buildMain(); pushState();
+    });
+    document.getElementById('cd-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.swapUsed=false; s.swapped=false;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── HOT TAKES ────────────────────────────────────────
+  if (game.type === 'hottakes') {
+    document.getElementById('ht-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'voting'; s.p1Vote = ''; s.p2Vote = '';
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    ['ht-agree','ht-disagree'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        const v = id === 'ht-agree' ? 'agree' : 'disagree';
+        if (isPlayer1) s.p1Vote = v; else s.p2Vote = v;
+        if (s.p1Vote && s.p2Vote) s.phase = 'revealed';
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('ht-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='voting'; s.p1Vote=''; s.p2Vote='';
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── FINISH MY SENTENCE ───────────────────────────────
+  if (game.type === 'finishsentence') {
+    document.getElementById('fs-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    document.getElementById('fs-ready-btn')?.addEventListener('click', () => {
+      const v = (document.getElementById('fs-answer')?.value || '').trim();
+      if (!v) { showToast('Type your answer first'); return; }
+      if (isPlayer1) { s.p1Answer = v; s.p1Ready = true; } else { s.p2Answer = v; s.p2Ready = true; }
+      if (s.p1Ready && s.p2Ready) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('fs-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── KISS, MARRY, AVOID ───────────────────────────────
+  if (game.type === 'kma') {
+    document.getElementById('km-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'assigning'; s.p1Picks=['','','']; s.p2Picks=['','','']; s.p1Locked=false; s.p2Locked=false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    [0,1,2].forEach(i => {
+      ['kiss','marry','avoid'].forEach(label => {
+        document.getElementById(`km-${i}-${label}`)?.addEventListener('click', () => {
+          const picks = isPlayer1 ? s.p1Picks : s.p2Picks;
+          // Remove this label from any other slot (each label used once)
+          picks.forEach((v,j) => { if (v === label && j !== i) picks[j] = ''; });
+          picks[i] = label;
+          buildMain(); pushState();
+        });
+      });
+    });
+    document.getElementById('km-lock')?.addEventListener('click', () => {
+      const picks = isPlayer1 ? s.p1Picks : s.p2Picks;
+      const set = new Set(picks);
+      if (picks.some(x => !x) || set.size !== 3) { showToast('Assign Kiss, Marry & Avoid (each once)'); return; }
+      if (isPlayer1) s.p1Locked = true; else s.p2Locked = true;
+      if (s.p1Locked && s.p2Locked) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('km-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='assigning'; s.p1Picks=['','','']; s.p2Picks=['','','']; s.p1Locked=false; s.p2Locked=false;
+      buildMain(); pushState();
     });
   }
 }
