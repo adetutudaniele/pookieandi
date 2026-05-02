@@ -14,6 +14,19 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Accessibility: visible focus indicator (WCAG 2.4.7) */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
 :root {
   --cream: #FAF7F2;
   --warm-white: #FFFDF9;
@@ -740,9 +753,24 @@ body {
 }
 .side-nav-item.active .nav-dot { opacity: 1; background: var(--accent); }
 .hamburger-btn {
-  background: none; border: none; color: var(--cream); font-size: 22px;
-  cursor: pointer; padding: 2px 6px; margin-right: 8px; line-height: 1;
+  background: none; border: none; color: var(--cream);
+  cursor: pointer; padding: 6px; margin-right: 8px;
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 6px; transition: background 0.15s;
 }
+.hamburger-btn:hover { background: rgba(250,247,242,0.08); }
+.hamburger-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hamburger-btn .hb-icon {
+  position: relative; width: 20px; height: 14px; display: inline-block;
+}
+.hamburger-btn .hb-icon span {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: currentColor; border-radius: 2px;
+}
+.hamburger-btn .hb-icon span:nth-child(1) { top: 0; }
+.hamburger-btn .hb-icon span:nth-child(2) { top: 6px; }
+.hamburger-btn .hb-icon span:nth-child(3) { top: 12px; }
 
 /* ══ SCORE BAR ══ */
 .score-bar {
@@ -1117,11 +1145,11 @@ body {
       <div class="name-row">
         <div class="name-input-wrap">
           <label>Your name</label>
-          <input class="name-input" id="name1" placeholder="e.g. Adetutu" maxlength="20" oninput="updateShareBox()" />
+          <input class="name-input" id="name1" placeholder="e.g. Adetutu" maxlength="20" oninput="updateShareBox()" aria-label="Your name" />
         </div>
         <div class="name-input-wrap">
           <label>Your pookie's name</label>
-          <input class="name-input" id="name2" placeholder="e.g. Daniel" maxlength="20" oninput="updateShareBox()" />
+          <input class="name-input" id="name2" placeholder="e.g. Daniel" maxlength="20" oninput="updateShareBox()" aria-label="Partner's name" />
         </div>
       </div>
     </div>
@@ -1157,7 +1185,7 @@ body {
     <div class="join-section" id="joinSection">
       <div class="join-section-label">Have a room code?</div>
       <div class="join-code-row">
-        <input class="join-code-input" id="joinCodeInput" placeholder="Enter 4-digit code" maxlength="4" inputmode="numeric" />
+        <input class="join-code-input" id="joinCodeInput" placeholder="Enter 4-digit code" maxlength="4" inputmode="numeric" aria-label="Room code" />
         <button class="join-code-btn" id="joinCodeBtn" onclick="joinRoom()">Join</button>
       </div>
     </div>
@@ -1196,7 +1224,7 @@ body {
     <div class="score-bar" id="score-bar" style="display:none;"></div>
     <div class="app-header" style="position:static;">
       <div class="app-header-left" style="display:flex;align-items:center;gap:4px;">
-        <button class="hamburger-btn" onclick="toggleSideNav()">☰</button>
+        <button class="hamburger-btn" onclick="toggleSideNav()" aria-label="Toggle navigation menu" aria-controls="side-nav" aria-expanded="true"><span class="hb-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
         <div>
           <div class="app-header-title" style="cursor:pointer;" onclick="goBackToLanding()">Pookie <em>&</em> I</div>
           <div class="app-header-names" id="header-names">your date night companion</div>
@@ -1205,9 +1233,9 @@ body {
         </div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;position:relative;">
-        <button class="app-share-btn" id="timer-btn" onclick="toggleTimer()" style="padding:6px 8px;font-size:16px;">⏱</button>
-        <button class="app-share-btn" id="chat-btn" onclick="toggleChat()" style="position:relative;padding:6px 8px;font-size:16px;">💬<span class="chat-unread-dot" id="chat-badge"></span></button>
-        <button class="app-share-btn" onclick="showInvite()">Share ↗</button>
+        <button class="app-share-btn" id="timer-btn" onclick="toggleTimer()" aria-label="Open countdown timer" style="padding:6px 8px;font-size:16px;"><span aria-hidden="true">⏱</span></button>
+        <button class="app-share-btn" id="chat-btn" onclick="toggleChat()" aria-label="Open chat" style="position:relative;padding:6px 8px;font-size:16px;"><span aria-hidden="true">💬</span><span class="chat-unread-dot" id="chat-badge" aria-hidden="true"></span></button>
+        <button class="app-share-btn" onclick="showInvite()" aria-label="Share room">Share ↗</button>
         <div class="timer-widget" id="timer-widget">
           <div class="timer-display" id="timer-display">00:00</div>
           <div class="timer-presets">
@@ -1217,7 +1245,7 @@ body {
             <button class="timer-preset" onclick="setTimer(180)">3min</button>
           </div>
           <div class="timer-custom">
-            <input type="number" id="timer-custom-input" min="1" max="999" placeholder="sec" />
+            <input type="number" id="timer-custom-input" min="1" max="999" placeholder="sec" aria-label="Custom timer seconds" />
             <label>seconds</label>
             <button class="timer-preset" onclick="setTimerCustom()" style="flex:none;padding:6px 10px;">Set</button>
           </div>
@@ -1256,27 +1284,27 @@ body {
 <div class="chat-panel" id="chat-panel">
   <div class="chat-panel-header">
     <span class="chat-panel-title">Chat</span>
-    <button class="chat-panel-close" onclick="toggleChat()">✕</button>
+    <button class="chat-panel-close" onclick="toggleChat()" aria-label="Close chat">✕</button>
   </div>
   <div class="chat-messages" id="chat-messages">
     <div class="chat-empty">No messages yet — say hi! 👋</div>
   </div>
   <div class="emoji-picker-wrap" id="emoji-picker-wrap"></div>
   <div class="chat-input-row">
-    <button class="emoji-toggle-btn" onclick="toggleEmojiPicker()">😊</button>
-    <input class="chat-input" id="chat-input" placeholder="Type a message..." maxlength="500" />
-    <button class="chat-send-btn" onclick="sendChatMsg()">→</button>
+    <button class="emoji-toggle-btn" onclick="toggleEmojiPicker()" aria-label="Toggle emoji picker"><span aria-hidden="true">😊</span></button>
+    <input class="chat-input" id="chat-input" placeholder="Type a message..." maxlength="500" aria-label="Chat message" />
+    <button class="chat-send-btn" onclick="sendChatMsg()" aria-label="Send message">→</button>
   </div>
 </div>
 
 <!-- ══ AUTH MODAL ══ -->
 <div class="auth-modal-overlay" id="auth-modal-overlay" onclick="closeAuthModal(event)">
   <div class="auth-modal" onclick="event.stopPropagation()" style="position:relative;">
-    <button class="auth-close-btn" onclick="document.getElementById('auth-modal-overlay').classList.remove('open')">✕</button>
+    <button class="auth-close-btn" onclick="document.getElementById('auth-modal-overlay').classList.remove('open')" aria-label="Close sign-in dialog">✕</button>
     <h3 id="auth-modal-title">Sign In</h3>
     <div class="auth-error" id="auth-error"></div>
-    <input class="auth-input" id="auth-email" type="email" placeholder="Email" />
-    <input class="auth-input" id="auth-password" type="password" placeholder="Password" />
+    <input class="auth-input" id="auth-email" type="email" placeholder="Email" aria-label="Email" autocomplete="email" />
+    <input class="auth-input" id="auth-password" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" />
     <button class="auth-btn primary" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
     <div class="auth-divider">
       <div class="auth-divider-line"></div>
@@ -2727,19 +2755,27 @@ function goBackToLanding() {
 // ═══════════════════════════════════════════════════════════
 // SIDE NAVIGATION
 // ═══════════════════════════════════════════════════════════
-let sideNavOpen = false;
+let sideNavOpen = true;
+
+function _syncSideNav() {
+  document.getElementById('side-nav').classList.toggle('open', sideNavOpen);
+  document.getElementById('side-nav-overlay').classList.toggle('open', sideNavOpen);
+  const btn = document.querySelector('.hamburger-btn');
+  if (btn) btn.setAttribute('aria-expanded', sideNavOpen ? 'true' : 'false');
+}
 
 function toggleSideNav() {
   sideNavOpen = !sideNavOpen;
-  document.getElementById('side-nav').classList.toggle('open', sideNavOpen);
-  document.getElementById('side-nav-overlay').classList.toggle('open', sideNavOpen);
+  _syncSideNav();
 }
 
 function closeSideNav() {
   sideNavOpen = false;
-  document.getElementById('side-nav').classList.remove('open');
-  document.getElementById('side-nav-overlay').classList.remove('open');
+  _syncSideNav();
 }
+
+// Open side nav by default on load
+document.addEventListener('DOMContentLoaded', () => { _syncSideNav(); });
 
 // ═══════════════════════════════════════════════════════════
 // SCORE BAR
