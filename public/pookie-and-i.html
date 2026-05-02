@@ -2398,6 +2398,261 @@ function makeTruthsGuess(idx) {
   buildMain();
 }
 
+// ─── SPICY & FLIRTY BUILDERS ─────────────────────────────
+function _spicyProgressBar(s, total) {
+  const drawn = s.drawn.length;
+  const pct = total ? Math.round((drawn/total)*100) : 0;
+  return `<div class="draw-bottom">
+    <span class="progress-text">${drawn}/${total}</span>
+    <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
+    <span class="progress-text">${pct}%</span>
+  </div>`;
+}
+
+function buildRateUsGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myRole = isPlayer1 ? 'p1' : 'p2';
+  const myRating = isPlayer1 ? s.p1Rating : s.p2Rating;
+  const partnerRated = isPlayer1 ? s.p2Rating > 0 : s.p1Rating > 0;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first scenario</span></div>`;
+  } else if (s.phase === 'revealed') {
+    const gap = Math.abs(s.p1Rating - s.p2Rating);
+    const reaction = gap <= 1 ? 'Perfectly aligned 🧡' : gap <= 3 ? 'Pretty close ✨' : gap <= 6 ? 'Interesting gap 👀' : 'You two need to talk 😂';
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);">${s.p1Rating}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);">${s.p2Rating}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:6px;">${gap} points apart 👀</div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;">${reaction}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myRating > 0
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You rated <strong style="color:var(--accent);">${myRating}</strong> — waiting for partner...</div>`
+        : `<div style="margin-top:14px;padding:0 4px;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;"><span>1</span><span id="ru-slider-val" style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);">5</span><span>10</span></div>
+            <input type="range" min="1" max="10" value="5" id="ru-slider" style="width:100%;accent-color:var(--accent);" aria-label="Your rating from 1 to 10" />
+            <button class="btn-primary" id="ru-submit" style="width:100%;margin-top:10px;">Lock in my rating</button>
+          </div>`
+      }
+      ${partnerRated && myRating === 0 ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner has rated — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="ru-draw-btn">${cur ? 'Next scenario' : 'Draw a scenario'}</button>
+      <button class="btn-secondary" id="ru-reset">Reset</button>
+    </div>`;
+}
+
+function buildConfessDareGame(game, s) {
+  const total = game.confessions.length + game.dares.length;
+  const cur = s.histIdx >= 0 ? s.drawn[s.histIdx] : null;
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first card</span></div>`;
+  } else {
+    const text = cur.type === 'confess' ? game.confessions[cur.idx] : game.dares[cur.idx];
+    const labelColor = cur.type === 'confess' ? 'rgba(200,82,58,0.15)' : 'rgba(200,82,58,0.85)';
+    const labelText = cur.type === 'confess' ? 'CONFESS' : 'DARE';
+    const labelFg = cur.type === 'confess' ? 'var(--accent)' : '#FAF7F2';
+    cardHtml = `
+      <div style="display:flex;justify-content:center;margin-bottom:10px;">
+        <span style="background:${labelColor};color:${labelFg};padding:4px 14px;border-radius:99px;font-size:11px;letter-spacing:1.5px;font-weight:600;">${labelText}</span>
+      </div>
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(text)}"</div>
+      ${s.swapped ? `<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--accent);">Swap used 🔄</div>` : ''}`;
+  }
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">${s.drawn.length} drawn</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${total ? Math.round((s.allShown.length/total)*100) : 0}%"></div></div>
+        <span class="progress-text">${total ? Math.round((s.allShown.length/total)*100) : 0}%</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="cd-draw-btn">${cur ? 'Next card' : 'Draw a card'}</button>
+      <button class="btn-secondary" id="cd-swap-btn" ${s.swapUsed ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : ''}>Use my one swap 🔄</button>
+      <button class="btn-secondary" id="cd-reset">Reset</button>
+    </div>`;
+}
+
+function buildHotTakesGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myVote = isPlayer1 ? s.p1Vote : s.p2Vote;
+  const partnerVoted = isPlayer1 ? !!s.p2Vote : !!s.p1Vote;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first hot take</span></div>`;
+  } else if (s.phase === 'revealed') {
+    const matched = s.p1Vote === s.p2Vote;
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);text-transform:uppercase;">${s.p1Vote}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);text-transform:uppercase;">${s.p2Vote}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.1rem;">${matched ? 'Matched ✨ — share why' : 'Debate time 🥊 — 2 minutes on the clock'}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myVote
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You voted <strong style="color:var(--accent);text-transform:uppercase;">${myVote}</strong> — waiting for partner${partnerVoted ? '' : '...'}</div>`
+        : `<div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-primary" id="ht-agree" style="min-width:120px;">AGREE</button>
+            <button class="btn-secondary" id="ht-disagree" style="min-width:120px;">DISAGREE</button>
+          </div>`
+      }
+      ${partnerVoted && !myVote ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner has voted — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="ht-draw-btn">${cur ? 'Next take' : 'Draw a hot take'}</button>
+      <button class="btn-secondary" id="ht-reset">Reset</button>
+    </div>`;
+}
+
+function buildFinishSentenceGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myReady = isPlayer1 ? s.p1Ready : s.p2Ready;
+  const partnerReady = isPlayer1 ? s.p2Ready : s.p1Ready;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first sentence</span></div>`;
+  } else if (s.phase === 'revealed') {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:grid;gap:10px;margin-top:14px;grid-template-columns:1fr 1fr;">
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p1Answer)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p2Answer)}</div>
+        </div>
+      </div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myReady
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Locked in — waiting for partner${partnerReady ? '' : '...'}</div>`
+        : `<div style="margin-top:14px;">
+            <textarea id="fs-answer" class="qa-input" placeholder="Finish the sentence privately..." rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your private answer"></textarea>
+            <button class="btn-primary" id="fs-ready-btn" style="width:100%;margin-top:10px;">Ready — lock in</button>
+          </div>`
+      }
+      ${partnerReady && !myReady ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner is ready — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="fs-draw-btn">${cur ? 'Next sentence' : 'Draw a sentence'}</button>
+      <button class="btn-secondary" id="fs-reset">Reset</button>
+    </div>`;
+}
+
+function buildKMAGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myPicks = isPlayer1 ? s.p1Picks : s.p2Picks;
+  const myLocked = isPlayer1 ? s.p1Locked : s.p2Locked;
+  const partnerLocked = isPlayer1 ? s.p2Locked : s.p1Locked;
+  const labelEmoji = { kiss:'💋', marry:'💍', avoid:'🚫' };
+  const labelText = { kiss:'Kiss', marry:'Marry', avoid:'Avoid' };
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first round</span></div>`;
+  } else if (s.phase === 'revealed') {
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div style="display:grid;gap:10px;margin-top:10px;">
+        ${cur.map((opt,i) => `
+          <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;">
+            <div style="font-family:'Playfair Display',serif;font-style:italic;margin-bottom:6px;">${escapeHtml(opt)}</div>
+            <div style="display:flex;gap:10px;font-size:12px;">
+              <span style="color:var(--muted);">${escapeHtml(p1Name||'P1')}: <strong style="color:var(--accent);">${labelEmoji[s.p1Picks[i]]||''} ${labelText[s.p1Picks[i]]||''}</strong></span>
+              <span style="color:var(--muted);">${escapeHtml(p2Name||'P2')}: <strong style="color:var(--accent);">${labelEmoji[s.p2Picks[i]]||''} ${labelText[s.p2Picks[i]]||''}</strong></span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div style="display:grid;gap:10px;margin-top:10px;">
+        ${cur.map((opt,i) => `
+          <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;${myLocked?'opacity:0.7;':''}">
+            <div style="font-family:'Playfair Display',serif;font-style:italic;margin-bottom:8px;">${escapeHtml(opt)}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${['kiss','marry','avoid'].map(lab => `
+                <button id="km-${i}-${lab}" class="${myPicks[i]===lab?'btn-primary':'btn-secondary'}" style="font-size:12px;padding:6px 12px;" ${myLocked?'disabled':''} aria-label="${labelText[lab]} ${escapeHtml(opt)}">${labelEmoji[lab]} ${labelText[lab]}</button>
+              `).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+      ${myLocked
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Locked in — waiting for partner${partnerLocked ? '' : '...'}</div>`
+        : `<button class="btn-primary" id="km-lock" style="width:100%;margin-top:12px;">Lock in my picks</button>`
+      }
+      ${partnerLocked && !myLocked ? `<div style="text-align:center;margin-top:8px;font-size:12px;color:var(--accent);">Your partner has locked in — your turn!</div>` : ''}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top" style="align-items:stretch;text-align:left;">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="km-draw-btn">${cur ? 'Next round' : 'Draw a round'}</button>
+      <button class="btn-secondary" id="km-reset">Reset</button>
+    </div>`;
+}
+
 function attachEvents(game, s) {
   if (!s.allShown) s.allShown = [];
 
