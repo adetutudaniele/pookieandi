@@ -2574,6 +2574,167 @@ function attachEvents(game, s) {
       pushState();
     });
   }
+
+  // ─── RATE US ──────────────────────────────────────────
+  if (game.type === 'rateus') {
+    document.getElementById('ru-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'rating'; s.p1Rating = 0; s.p2Rating = 0;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    document.getElementById('ru-slider')?.addEventListener('input', e => {
+      const v = parseInt(e.target.value) || 0;
+      const out = document.getElementById('ru-slider-val'); if (out) out.textContent = v;
+    });
+    document.getElementById('ru-submit')?.addEventListener('click', () => {
+      const v = parseInt(document.getElementById('ru-slider')?.value) || 0;
+      if (v < 1) { showToast('Slide to rate first'); return; }
+      if (isPlayer1) s.p1Rating = v; else s.p2Rating = v;
+      if (s.p1Rating > 0 && s.p2Rating > 0) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('ru-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='rating'; s.p1Rating=0; s.p2Rating=0;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── CONFESS OR DARE ──────────────────────────────────
+  if (game.type === 'confessdare') {
+    document.getElementById('cd-draw-btn')?.addEventListener('click', () => {
+      const pickConfess = Math.random() < 0.5;
+      s.cardType = pickConfess ? 'confess' : 'dare';
+      const pool = pickConfess ? game.confessions : game.dares;
+      const key = (pickConfess ? 'c:' : 'd:');
+      const used = s.allShown.filter(x => x.startsWith(key)).map(x => parseInt(x.slice(2)));
+      let avail = pool.map((_,i)=>i).filter(i => !used.includes(i));
+      if (avail.length === 0) {
+        s.allShown = s.allShown.filter(x => !x.startsWith(key));
+        avail = pool.map((_,i)=>i);
+      }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(key + idx);
+      s.drawn.push({ type: s.cardType, idx });
+      s.histIdx = s.drawn.length - 1;
+      s.swapped = false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    document.getElementById('cd-swap-btn')?.addEventListener('click', () => {
+      if (s.swapUsed) return;
+      const cur = s.drawn[s.histIdx]; if (!cur) return;
+      const newType = cur.type === 'confess' ? 'dare' : 'confess';
+      const pool = newType === 'confess' ? game.confessions : game.dares;
+      const key = newType === 'confess' ? 'c:' : 'd:';
+      const used = s.allShown.filter(x => x.startsWith(key)).map(x => parseInt(x.slice(2)));
+      let avail = pool.map((_,i)=>i).filter(i => !used.includes(i));
+      if (avail.length === 0) { s.allShown = s.allShown.filter(x => !x.startsWith(key)); avail = pool.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(key + idx);
+      s.drawn[s.histIdx] = { type: newType, idx };
+      s.cardType = newType;
+      s.swapUsed = true;
+      s.swapped = true;
+      buildMain(); pushState();
+    });
+    document.getElementById('cd-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.swapUsed=false; s.swapped=false;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── HOT TAKES ────────────────────────────────────────
+  if (game.type === 'hottakes') {
+    document.getElementById('ht-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'voting'; s.p1Vote = ''; s.p2Vote = '';
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    ['ht-agree','ht-disagree'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        const v = id === 'ht-agree' ? 'agree' : 'disagree';
+        if (isPlayer1) s.p1Vote = v; else s.p2Vote = v;
+        if (s.p1Vote && s.p2Vote) s.phase = 'revealed';
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('ht-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='voting'; s.p1Vote=''; s.p2Vote='';
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── FINISH MY SENTENCE ───────────────────────────────
+  if (game.type === 'finishsentence') {
+    document.getElementById('fs-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    document.getElementById('fs-ready-btn')?.addEventListener('click', () => {
+      const v = (document.getElementById('fs-answer')?.value || '').trim();
+      if (!v) { showToast('Type your answer first'); return; }
+      if (isPlayer1) { s.p1Answer = v; s.p1Ready = true; } else { s.p2Answer = v; s.p2Ready = true; }
+      if (s.p1Ready && s.p2Ready) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('fs-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── KISS, MARRY, AVOID ───────────────────────────────
+  if (game.type === 'kma') {
+    document.getElementById('km-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'assigning'; s.p1Picks=['','','']; s.p2Picks=['','','']; s.p1Locked=false; s.p2Locked=false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    [0,1,2].forEach(i => {
+      ['kiss','marry','avoid'].forEach(label => {
+        document.getElementById(`km-${i}-${label}`)?.addEventListener('click', () => {
+          const picks = isPlayer1 ? s.p1Picks : s.p2Picks;
+          // Remove this label from any other slot (each label used once)
+          picks.forEach((v,j) => { if (v === label && j !== i) picks[j] = ''; });
+          picks[i] = label;
+          buildMain(); pushState();
+        });
+      });
+    });
+    document.getElementById('km-lock')?.addEventListener('click', () => {
+      const picks = isPlayer1 ? s.p1Picks : s.p2Picks;
+      const set = new Set(picks);
+      if (picks.some(x => !x) || set.size !== 3) { showToast('Assign Kiss, Marry & Avoid (each once)'); return; }
+      if (isPlayer1) s.p1Locked = true; else s.p2Locked = true;
+      if (s.p1Locked && s.p2Locked) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('km-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='assigning'; s.p1Picks=['','','']; s.p2Picks=['','','']; s.p1Locked=false; s.p2Locked=false;
+      buildMain(); pushState();
+    });
+  }
 }
 
 // ─── TOAST ──────────────────────────────────────────────
