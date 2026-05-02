@@ -2102,6 +2102,11 @@ function buildMain() {
   if (game.type === 'fingers') html += buildFingersGame(game, s);
   else if (game.type === 'twenty') html += buildTwentyGame(game, s);
   else if (game.type === 'truths') html += buildTruthsGame(game, s);
+  else if (game.type === 'rateus') html += buildRateUsGame(game, s);
+  else if (game.type === 'confessdare') html += buildConfessDareGame(game, s);
+  else if (game.type === 'hottakes') html += buildHotTakesGame(game, s);
+  else if (game.type === 'finishsentence') html += buildFinishSentenceGame(game, s);
+  else if (game.type === 'kma') html += buildKMAGame(game, s);
   else html += buildDrawGame(game, s);
 
   main.innerHTML = html;
