@@ -2006,6 +2006,11 @@ function initState() {
     else if (g.type === 'hottakes') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '' };
     else if (g.type === 'finishsentence') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', p1Answer: '', p2Answer: '', p1Ready: false, p2Ready: false };
     else if (g.type === 'kma') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'assigning', p1Picks: ['','',''], p2Picks: ['','',''], p1Locked: false, p2Locked: false };
+    else if (g.type === 'unpopular') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', writerRole: 'p1', opinion: '', reaction: '', p1Shocked: 0, p2Shocked: 0, round: 0 };
+    else if (g.type === 'mostlikely') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '', p1Score: 0, p2Score: 0 };
+    else if (g.type === 'scenario') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', p1Answer: '', p2Answer: '', p1Ready: false, p2Ready: false };
+    else if (g.type === 'redgreen') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '' };
+    else if (g.type === 'assumptions') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', guesserRole: 'p1', assumption: '', response: '', round: 0 };
     else state[g.id] = { drawn: [], histIdx: -1, allShown: [] };
   });
 }
@@ -2136,6 +2141,7 @@ function buildNav() {
     { label: 'For You Two', items: extras },
     { label: 'Games', items: games },
     { label: '🌶️ Spicy & Flirty', items: spicy }
+    ,{ label: '🎮 Just For Fun', items: justforfun }
   ];
   let html = '';
   sections.forEach(section => {
@@ -2187,6 +2193,11 @@ function buildMain() {
   else if (game.type === 'hottakes') html += buildHotTakesGame(game, s);
   else if (game.type === 'finishsentence') html += buildFinishSentenceGame(game, s);
   else if (game.type === 'kma') html += buildKMAGame(game, s);
+  else if (game.type === 'unpopular') html += buildUnpopularGame(game, s);
+  else if (game.type === 'mostlikely') html += buildMostLikelyGame(game, s);
+  else if (game.type === 'scenario') html += buildScenarioGame(game, s);
+  else if (game.type === 'redgreen') html += buildRedGreenGame(game, s);
+  else if (game.type === 'assumptions') html += buildAssumptionsGame(game, s);
   else html += buildDrawGame(game, s);
 
   main.innerHTML = html;
