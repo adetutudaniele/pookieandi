@@ -1907,7 +1907,87 @@ const spicy = [
   }
 ];
 
-const allItems = [...extras, ...games, ...spicy];
+// ─── JUST FOR FUN GAMES ─────────────────────────────────
+const justforfun = [
+  {
+    id: 'unpopular', name: 'Unpopular Opinions', badge: 'Type your own · no filter',
+    desc: 'Share your most unpopular opinion on anything. The other person reacts — shocked, agree, or cancel. Most outrageous opinion wins.',
+    rules: ['Each player types their most unpopular opinion on any topic','No prompts — pure free will','The other player reacts by tapping Shocked 😱 · Agree 👀 · Cancel 🚫','Take turns — 5 rounds each','The player who gets the most Shocked reactions wins'],
+    type: 'unpopular'
+  },
+  {
+    id: 'mostlikely', name: 'Most Likely To', badge: 'Point at someone · lovingly',
+    desc: "A statement appears. Both of you point — at yourself or your partner. If you agree, score a point. If you disagree, explain yourself.",
+    rules: ["A 'most likely to...' statement appears",'Both players simultaneously tap Me 👆 or Them 👆','If you both point at the same person — that person scores a point','If you disagree — the person being pointed at has 30 seconds to defend themselves','15 rounds total'],
+    type: 'mostlikely',
+    prompts: [
+      'Most likely to cry at a Disney film','Most likely to get lost with Google Maps open','Most likely to start a business','Most likely to befriend a stranger on a flight','Most likely to stay up until 4am for no reason','Most likely to go viral on TikTok','Most likely to move to another country on a whim',"Most likely to win an argument they're actually wrong about",'Most likely to spend their last money on food','Most likely to become famous','Most likely to forget an anniversary','Most likely to impulse buy something ridiculous','Most likely to cry at an advert','Most likely to talk to animals like they understand','Most likely to be on a reality TV show','Most likely to have a secret talent nobody knows about','Most likely to fall asleep during a film','Most likely to be the loudest person in a restaurant','Most likely to apologise first after an argument','Most likely to know everyone at a party','Most likely to give the best advice','Most likely to panic at the last minute','Most likely to try an extreme sport','Most likely to accidentally start a rumour','Most likely to be a morning person in 10 years','Most likely to write a book','Most likely to adopt five pets','Most likely to learn a random skill just for fun','Most likely to be overdressed for a casual event','Most likely to make friends with the elderly neighbour','Most likely to forget where they put their phone while holding it','Most likely to laugh at the wrong moment','Most likely to quote a film in a serious conversation','Most likely to survive a zombie apocalypse','Most likely to become a morning person','Most likely to end up on the news',"Most likely to give a speech at a stranger's wedding",'Most likely to invent something','Most likely to still be dancing at the end of a party','Most likely to have the most children'
+    ]
+  },
+  {
+    id: 'scenario', name: 'Scenario Spinner', badge: 'Wild hypotheticals · 60 seconds',
+    desc: "A wild scenario appears. Both of you have 60 seconds to decide what you'd do. Compare answers — there's no right or wrong.",
+    rules: ['A hypothetical scenario appears on screen','Both players have 60 seconds to think and type what they\'d do','Reveal answers simultaneously','React to each other\'s answers — no judging','Automatically triggers the countdown timer'],
+    type: 'scenario',
+    prompts: [
+      "You wake up and you've swapped bodies with your partner for 24 hours. What's the first thing you do?",
+      'You win £50,000 but you have to spend it all in 48 hours. What do you buy?',
+      'You can only eat one cuisine for the rest of your life. What is it and why?',
+      "You're offered a role in a film but you have to move to another country for 6 months. Do you take it?",
+      "Your partner's family doesn't like you for no real reason. How do you handle it?",
+      'You find out your best friend has been talking badly about your relationship. What do you do?',
+      'You can be famous for one thing. What is it?',
+      "You wake up 10 years in the future. What's the first thing you check?",
+      'You can only keep 3 apps on your phone. Which ones?',
+      'You\'re given one superpower but your partner gets the opposite. What do you pick?',
+      'You have to leave your country tomorrow and never return. Where do you go?',
+      'You can bring one person from history to dinner. Who and what do you ask them?',
+      "You're given a week completely alone with no responsibilities. What do you do?",
+      'You can change one decision you made in the last 5 years. What is it?',
+      'You wake up and social media has been deleted forever. How does your life change?',
+      'You can only listen to one album for the rest of your life. What is it?',
+      "You're told you have to change careers tomorrow. What do you do?",
+      'You win a free trip anywhere in the world but you have to leave in 2 hours. Where do you go?',
+      'You can make one thing permanently free for everyone in the world. What is it?',
+      'You can speak every language fluently but lose the ability to use technology. Worth it?',
+      "You're given a TV show with unlimited budget. What is it about?",
+      'You can relive one day of your life with full memory of everything that happens. Which day?',
+      'You have to rename yourself. What do you choose?',
+      'You can only wear one colour for the rest of your life. What do you pick?',
+      "You're offered to know exactly when you'll die. Do you want to know?",
+      'You have to delete all photos on your phone except 5. Which 5 do you keep?',
+      'You can add one subject to every school curriculum worldwide. What is it?',
+      "You wake up and you're the most famous person in the world. What's your first move?",
+      'You find a bag with £100,000 cash and no ID inside. What do you do?',
+      'You can live in any era of history for one year. When do you go and why?',
+      'You have 24 hours to do anything you want with no consequences. What happens?',
+      'You can only watch films from one decade for the rest of your life. Which decade?',
+      "You're given the ability to talk to animals. What's the first animal you speak to?",
+      'You have to teach a class on something tomorrow with no preparation. What\'s the subject?',
+      'You can instantly master one skill. What do you choose?'
+    ]
+  },
+  {
+    id: 'redgreen', name: 'Red Flag or Green Flag', badge: 'Vote simultaneously · then debate',
+    desc: 'A behaviour appears. Both of you vote — red flag or green flag. If you disagree, the red flag person has 60 seconds to make their case.',
+    rules: ['A behaviour or situation appears on screen','Both players simultaneously vote Red Flag 🚩 or Green Flag 🟢','If you match — move on',"If you don't match — the person who said red flag has 60 seconds to explain",'No changing your vote after it\'s revealed'],
+    type: 'redgreen',
+    prompts: [
+      'Someone who has no friends from childhood','A person who is very close to their ex','Someone who splits every bill exactly, always','A person who cries easily at films','Someone who has never been in a long-term relationship','A person who talks to their parents every single day',"Someone who doesn't use social media at all",'A person who is always the last to reply to messages','Someone who has a very regimented daily routine','A person who is very close to their family','Someone who always needs to be right','A person who has a lot of friends of the opposite gender','Someone who never posts their partner on social media','A person who always posts their partner on social media','Someone who still talks to every ex',"A person who doesn't drink alcohol at all",'Someone who loves to be the centre of attention','A person who hates surprises','Someone who still lives with their parents at 30','A person who has never had their heart broken','Someone who is best friends with their boss','A person who never apologises first',"Someone who always apologises even when they're right",'A person who loves planning everything in advance','Someone who hates making plans and prefers to be spontaneous always','A person who cooks elaborate meals for themselves when alone',"Someone who doesn't have any hobbies outside of work",'A person who has very strong opinions about everything','Someone who has no opinions about anything','A person who is extremely close to their siblings','Someone who tracks their calories every single day','A person who has never lived alone','Someone who talks about their therapist constantly','A person who has never been to therapy','Someone who reads self-help books obsessively','A person who spends a lot of money on their appearance','Someone who saves every single penny and never spends on fun','A person who changes their mind about big life decisions frequently','Someone who is extremely independent and rarely asks for help','A person who needs constant reassurance'
+    ]
+  },
+  {
+    id: 'assumptions', name: 'Assumptions', badge: 'Take turns · confirm or deny',
+    desc: 'One player makes an assumption about their partner. The partner responds — true, false, or complicated. Then swap.',
+    rules: ['One player is the Guesser, the other is the Responder — swap each round','The Guesser types an assumption about their partner','The Responder taps True ✅ · False ❌ · Complicated 🤔','If True or False — move on','If Complicated — the Responder has 60 seconds to explain','10 rounds each — 20 total'],
+    type: 'assumptions',
+    prompts: [
+      'I think your biggest insecurity is...','I think you secretly want to...','I think you find it hard to...','I think the thing you\'re most proud of is...','I think your love language is actually...','I think the thing you want most right now is...','I think you pretend to be okay when...','I think the thing you miss most is...','I think you\'re most afraid of...','I think what you need more of in your life is...','I think the thing you judge people for most is...','I think your happiest memory is...','I think the thing you find hardest to say out loud is...','I think you feel most yourself when...','I think what you want from me that you haven\'t asked for is...'
+    ]
+  }
+];
+
+const allItems = [...extras, ...games, ...spicy, ...justforfun];
 
 // ─── STATE ──────────────────────────────────────────────
 let p1Name = '', p2Name = '';
