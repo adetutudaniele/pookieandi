@@ -1907,7 +1907,87 @@ const spicy = [
   }
 ];
 
-const allItems = [...extras, ...games, ...spicy];
+// ─── JUST FOR FUN GAMES ─────────────────────────────────
+const justforfun = [
+  {
+    id: 'unpopular', name: 'Unpopular Opinions', badge: 'Type your own · no filter',
+    desc: 'Share your most unpopular opinion on anything. The other person reacts — shocked, agree, or cancel. Most outrageous opinion wins.',
+    rules: ['Each player types their most unpopular opinion on any topic','No prompts — pure free will','The other player reacts by tapping Shocked 😱 · Agree 👀 · Cancel 🚫','Take turns — 5 rounds each','The player who gets the most Shocked reactions wins'],
+    type: 'unpopular'
+  },
+  {
+    id: 'mostlikely', name: 'Most Likely To', badge: 'Point at someone · lovingly',
+    desc: "A statement appears. Both of you point — at yourself or your partner. If you agree, score a point. If you disagree, explain yourself.",
+    rules: ["A 'most likely to...' statement appears",'Both players simultaneously tap Me 👆 or Them 👆','If you both point at the same person — that person scores a point','If you disagree — the person being pointed at has 30 seconds to defend themselves','15 rounds total'],
+    type: 'mostlikely',
+    prompts: [
+      'Most likely to cry at a Disney film','Most likely to get lost with Google Maps open','Most likely to start a business','Most likely to befriend a stranger on a flight','Most likely to stay up until 4am for no reason','Most likely to go viral on TikTok','Most likely to move to another country on a whim',"Most likely to win an argument they're actually wrong about",'Most likely to spend their last money on food','Most likely to become famous','Most likely to forget an anniversary','Most likely to impulse buy something ridiculous','Most likely to cry at an advert','Most likely to talk to animals like they understand','Most likely to be on a reality TV show','Most likely to have a secret talent nobody knows about','Most likely to fall asleep during a film','Most likely to be the loudest person in a restaurant','Most likely to apologise first after an argument','Most likely to know everyone at a party','Most likely to give the best advice','Most likely to panic at the last minute','Most likely to try an extreme sport','Most likely to accidentally start a rumour','Most likely to be a morning person in 10 years','Most likely to write a book','Most likely to adopt five pets','Most likely to learn a random skill just for fun','Most likely to be overdressed for a casual event','Most likely to make friends with the elderly neighbour','Most likely to forget where they put their phone while holding it','Most likely to laugh at the wrong moment','Most likely to quote a film in a serious conversation','Most likely to survive a zombie apocalypse','Most likely to become a morning person','Most likely to end up on the news',"Most likely to give a speech at a stranger's wedding",'Most likely to invent something','Most likely to still be dancing at the end of a party','Most likely to have the most children'
+    ]
+  },
+  {
+    id: 'scenario', name: 'Scenario Spinner', badge: 'Wild hypotheticals · 60 seconds',
+    desc: "A wild scenario appears. Both of you have 60 seconds to decide what you'd do. Compare answers — there's no right or wrong.",
+    rules: ['A hypothetical scenario appears on screen','Both players have 60 seconds to think and type what they\'d do','Reveal answers simultaneously','React to each other\'s answers — no judging','Automatically triggers the countdown timer'],
+    type: 'scenario',
+    prompts: [
+      "You wake up and you've swapped bodies with your partner for 24 hours. What's the first thing you do?",
+      'You win £50,000 but you have to spend it all in 48 hours. What do you buy?',
+      'You can only eat one cuisine for the rest of your life. What is it and why?',
+      "You're offered a role in a film but you have to move to another country for 6 months. Do you take it?",
+      "Your partner's family doesn't like you for no real reason. How do you handle it?",
+      'You find out your best friend has been talking badly about your relationship. What do you do?',
+      'You can be famous for one thing. What is it?',
+      "You wake up 10 years in the future. What's the first thing you check?",
+      'You can only keep 3 apps on your phone. Which ones?',
+      'You\'re given one superpower but your partner gets the opposite. What do you pick?',
+      'You have to leave your country tomorrow and never return. Where do you go?',
+      'You can bring one person from history to dinner. Who and what do you ask them?',
+      "You're given a week completely alone with no responsibilities. What do you do?",
+      'You can change one decision you made in the last 5 years. What is it?',
+      'You wake up and social media has been deleted forever. How does your life change?',
+      'You can only listen to one album for the rest of your life. What is it?',
+      "You're told you have to change careers tomorrow. What do you do?",
+      'You win a free trip anywhere in the world but you have to leave in 2 hours. Where do you go?',
+      'You can make one thing permanently free for everyone in the world. What is it?',
+      'You can speak every language fluently but lose the ability to use technology. Worth it?',
+      "You're given a TV show with unlimited budget. What is it about?",
+      'You can relive one day of your life with full memory of everything that happens. Which day?',
+      'You have to rename yourself. What do you choose?',
+      'You can only wear one colour for the rest of your life. What do you pick?',
+      "You're offered to know exactly when you'll die. Do you want to know?",
+      'You have to delete all photos on your phone except 5. Which 5 do you keep?',
+      'You can add one subject to every school curriculum worldwide. What is it?',
+      "You wake up and you're the most famous person in the world. What's your first move?",
+      'You find a bag with £100,000 cash and no ID inside. What do you do?',
+      'You can live in any era of history for one year. When do you go and why?',
+      'You have 24 hours to do anything you want with no consequences. What happens?',
+      'You can only watch films from one decade for the rest of your life. Which decade?',
+      "You're given the ability to talk to animals. What's the first animal you speak to?",
+      'You have to teach a class on something tomorrow with no preparation. What\'s the subject?',
+      'You can instantly master one skill. What do you choose?'
+    ]
+  },
+  {
+    id: 'redgreen', name: 'Red Flag or Green Flag', badge: 'Vote simultaneously · then debate',
+    desc: 'A behaviour appears. Both of you vote — red flag or green flag. If you disagree, the red flag person has 60 seconds to make their case.',
+    rules: ['A behaviour or situation appears on screen','Both players simultaneously vote Red Flag 🚩 or Green Flag 🟢','If you match — move on',"If you don't match — the person who said red flag has 60 seconds to explain",'No changing your vote after it\'s revealed'],
+    type: 'redgreen',
+    prompts: [
+      'Someone who has no friends from childhood','A person who is very close to their ex','Someone who splits every bill exactly, always','A person who cries easily at films','Someone who has never been in a long-term relationship','A person who talks to their parents every single day',"Someone who doesn't use social media at all",'A person who is always the last to reply to messages','Someone who has a very regimented daily routine','A person who is very close to their family','Someone who always needs to be right','A person who has a lot of friends of the opposite gender','Someone who never posts their partner on social media','A person who always posts their partner on social media','Someone who still talks to every ex',"A person who doesn't drink alcohol at all",'Someone who loves to be the centre of attention','A person who hates surprises','Someone who still lives with their parents at 30','A person who has never had their heart broken','Someone who is best friends with their boss','A person who never apologises first',"Someone who always apologises even when they're right",'A person who loves planning everything in advance','Someone who hates making plans and prefers to be spontaneous always','A person who cooks elaborate meals for themselves when alone',"Someone who doesn't have any hobbies outside of work",'A person who has very strong opinions about everything','Someone who has no opinions about anything','A person who is extremely close to their siblings','Someone who tracks their calories every single day','A person who has never lived alone','Someone who talks about their therapist constantly','A person who has never been to therapy','Someone who reads self-help books obsessively','A person who spends a lot of money on their appearance','Someone who saves every single penny and never spends on fun','A person who changes their mind about big life decisions frequently','Someone who is extremely independent and rarely asks for help','A person who needs constant reassurance'
+    ]
+  },
+  {
+    id: 'assumptions', name: 'Assumptions', badge: 'Take turns · confirm or deny',
+    desc: 'One player makes an assumption about their partner. The partner responds — true, false, or complicated. Then swap.',
+    rules: ['One player is the Guesser, the other is the Responder — swap each round','The Guesser types an assumption about their partner','The Responder taps True ✅ · False ❌ · Complicated 🤔','If True or False — move on','If Complicated — the Responder has 60 seconds to explain','10 rounds each — 20 total'],
+    type: 'assumptions',
+    prompts: [
+      'I think your biggest insecurity is...','I think you secretly want to...','I think you find it hard to...','I think the thing you\'re most proud of is...','I think your love language is actually...','I think the thing you want most right now is...','I think you pretend to be okay when...','I think the thing you miss most is...','I think you\'re most afraid of...','I think what you need more of in your life is...','I think the thing you judge people for most is...','I think your happiest memory is...','I think the thing you find hardest to say out loud is...','I think you feel most yourself when...','I think what you want from me that you haven\'t asked for is...'
+    ]
+  }
+];
+
+const allItems = [...extras, ...games, ...spicy, ...justforfun];
 
 // ─── STATE ──────────────────────────────────────────────
 let p1Name = '', p2Name = '';
@@ -1926,6 +2006,11 @@ function initState() {
     else if (g.type === 'hottakes') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '' };
     else if (g.type === 'finishsentence') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', p1Answer: '', p2Answer: '', p1Ready: false, p2Ready: false };
     else if (g.type === 'kma') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'assigning', p1Picks: ['','',''], p2Picks: ['','',''], p1Locked: false, p2Locked: false };
+    else if (g.type === 'unpopular') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', writerRole: 'p1', opinion: '', reaction: '', p1Shocked: 0, p2Shocked: 0, round: 0 };
+    else if (g.type === 'mostlikely') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '', p1Score: 0, p2Score: 0 };
+    else if (g.type === 'scenario') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', p1Answer: '', p2Answer: '', p1Ready: false, p2Ready: false };
+    else if (g.type === 'redgreen') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'voting', p1Vote: '', p2Vote: '' };
+    else if (g.type === 'assumptions') state[g.id] = { drawn: [], histIdx: -1, allShown: [], phase: 'writing', guesserRole: 'p1', assumption: '', response: '', round: 0 };
     else state[g.id] = { drawn: [], histIdx: -1, allShown: [] };
   });
 }
@@ -2056,6 +2141,7 @@ function buildNav() {
     { label: 'For You Two', items: extras },
     { label: 'Games', items: games },
     { label: '🌶️ Spicy & Flirty', items: spicy }
+    ,{ label: '🎮 Just For Fun', items: justforfun }
   ];
   let html = '';
   sections.forEach(section => {
@@ -2107,6 +2193,11 @@ function buildMain() {
   else if (game.type === 'hottakes') html += buildHotTakesGame(game, s);
   else if (game.type === 'finishsentence') html += buildFinishSentenceGame(game, s);
   else if (game.type === 'kma') html += buildKMAGame(game, s);
+  else if (game.type === 'unpopular') html += buildUnpopularGame(game, s);
+  else if (game.type === 'mostlikely') html += buildMostLikelyGame(game, s);
+  else if (game.type === 'scenario') html += buildScenarioGame(game, s);
+  else if (game.type === 'redgreen') html += buildRedGreenGame(game, s);
+  else if (game.type === 'assumptions') html += buildAssumptionsGame(game, s);
   else html += buildDrawGame(game, s);
 
   main.innerHTML = html;
@@ -2653,6 +2744,292 @@ function buildKMAGame(game, s) {
     </div>`;
 }
 
+// ─── JUST FOR FUN BUILDERS ───────────────────────────────
+function buildUnpopularGame(game, s) {
+  const totalRounds = 10; // 5 each
+  const writerName = s.writerRole === 'p1' ? (p1Name||'P1') : (p2Name||'P2');
+  const reactorName = s.writerRole === 'p1' ? (p2Name||'P2') : (p1Name||'P1');
+  const iAmWriter = (isPlayer1 && s.writerRole === 'p1') || (!isPlayer1 && s.writerRole === 'p2');
+  const reactionEmoji = { shocked:'😱', agree:'👀', cancel:'🚫' };
+  const reactionLabel = { shocked:'Shocked', agree:'Agree', cancel:'Cancel' };
+
+  let cardHtml = '';
+  if (s.round >= totalRounds && s.phase !== 'writing') {
+    const winner = s.p1Shocked > s.p2Shocked ? (p1Name||'P1') : s.p2Shocked > s.p1Shocked ? (p2Name||'P2') : null;
+    cardHtml = `
+      <div class="card-content italic" style="text-align:center;">Game over 🎉</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--accent);">${s.p1Shocked} 😱</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--accent);">${s.p2Shocked} 😱</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.1rem;">${winner ? escapeHtml(winner) + ' wins most outrageous 🔥' : "It's a tie 🤝"}</div>`;
+  } else if (s.phase === 'reacted') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(writerName)}'s opinion</div>
+      <div class="card-content italic">"${escapeHtml(s.opinion)}"</div>
+      <div style="text-align:center;margin-top:12px;font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);">${reactionEmoji[s.reaction]||''} ${reactionLabel[s.reaction]||''}</div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:4px;">— ${escapeHtml(reactorName)}</div>`;
+  } else if (s.phase === 'reacting') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(writerName)}'s opinion</div>
+      <div class="card-content italic">"${escapeHtml(s.opinion)}"</div>
+      ${iAmWriter
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Waiting for ${escapeHtml(reactorName)} to react...</div>`
+        : `<div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="up-shocked" style="min-width:110px;">😱 Shocked</button>
+            <button class="btn-secondary" id="up-agree" style="min-width:110px;">👀 Agree</button>
+            <button class="btn-secondary" id="up-cancel" style="min-width:110px;">🚫 Cancel</button>
+          </div>`}`;
+  } else {
+    // writing
+    cardHtml = `
+      <div class="card-number">Round ${s.round + 1} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(writerName)}'s turn</div>
+      ${iAmWriter
+        ? `<textarea id="up-input" class="qa-input" placeholder="Type your most unpopular opinion..." rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your unpopular opinion"></textarea>
+           <button class="btn-primary" id="up-send" style="width:100%;margin-top:10px;">Send to ${escapeHtml(reactorName)}</button>`
+        : `<div style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px;">${escapeHtml(writerName)} is typing their opinion...</div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">${escapeHtml(p1Name||'P1')}: ${s.p1Shocked} 😱</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.round((s.round/totalRounds)*100)}%"></div></div>
+        <span class="progress-text">${escapeHtml(p2Name||'P2')}: ${s.p2Shocked} 😱</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="up-reset">Reset</button>
+    </div>`;
+}
+
+function buildMostLikelyGame(game, s) {
+  const totalRounds = 15;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myVote = isPlayer1 ? s.p1Vote : s.p2Vote;
+  const partnerVoted = isPlayer1 ? !!s.p2Vote : !!s.p1Vote;
+  const meLabel = (n) => n || 'partner';
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first round</span></div>`;
+  } else if (s.phase === 'revealed') {
+    // Resolve who each vote points to in absolute terms
+    const p1Target = s.p1Vote === 'me' ? (p1Name||'P1') : (p2Name||'P2');
+    const p2Target = s.p2Vote === 'me' ? (p2Name||'P2') : (p1Name||'P1');
+    const matched = p1Target === p2Target;
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${totalRounds}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')} pointed at</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${escapeHtml(p1Target)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')} pointed at</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${escapeHtml(p2Target)}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;">${matched ? `Agreed — point to ${escapeHtml(p1Target)} 🎉` : `Disagreement — 30 seconds to defend 🥊`}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${totalRounds}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myVote
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You pointed at <strong style="color:var(--accent);">${myVote === 'me' ? 'yourself' : meLabel(isPlayer1 ? p2Name : p1Name)}</strong> — waiting for partner${partnerVoted ? '' : '...'}</div>`
+        : `<div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-primary" id="ml-me" style="min-width:130px;">Me 👆</button>
+            <button class="btn-secondary" id="ml-them" style="min-width:130px;">Them 👆</button>
+          </div>`}`;
+  }
+
+  const done = s.drawn.length >= totalRounds && s.phase === 'revealed';
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">${escapeHtml(p1Name||'P1')}: ${s.p1Score}</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.round((s.drawn.length/totalRounds)*100)}%"></div></div>
+        <span class="progress-text">${escapeHtml(p2Name||'P2')}: ${s.p2Score}</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="ml-draw-btn" ${done ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>${cur ? 'Next round' : 'Draw a round'}</button>
+      <button class="btn-secondary" id="ml-reset">Reset</button>
+    </div>`;
+}
+
+function buildScenarioGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myReady = isPlayer1 ? s.p1Ready : s.p2Ready;
+  const partnerReady = isPlayer1 ? s.p2Ready : s.p1Ready;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Spin your first scenario</span></div>`;
+  } else if (s.phase === 'revealed') {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:grid;gap:10px;margin-top:14px;grid-template-columns:1fr 1fr;">
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p1Answer)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p2Answer)}</div>
+        </div>
+      </div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myReady
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Locked in — waiting for partner${partnerReady ? '' : '...'}</div>`
+        : `<div style="margin-top:14px;">
+            <textarea id="sc-answer" class="qa-input" placeholder="60 seconds — what would you do?" rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your private answer"></textarea>
+            <button class="btn-primary" id="sc-ready-btn" style="width:100%;margin-top:10px;">Ready — lock in</button>
+          </div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="sc-draw-btn">${cur ? 'Spin again' : 'Spin a scenario'}</button>
+      <button class="btn-secondary" id="sc-reset">Reset</button>
+    </div>`;
+}
+
+function buildRedGreenGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myVote = isPlayer1 ? s.p1Vote : s.p2Vote;
+  const partnerVoted = isPlayer1 ? !!s.p2Vote : !!s.p1Vote;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first behaviour</span></div>`;
+  } else if (s.phase === 'revealed') {
+    const matched = s.p1Vote === s.p2Vote;
+    const flagText = (v) => v === 'red' ? '🚩 Red flag' : '🟢 Green flag';
+    let footer;
+    if (matched) {
+      footer = `You agree 🧡`;
+    } else {
+      const redName = s.p1Vote === 'red' ? (p1Name||'P1') : (p2Name||'P2');
+      footer = `${escapeHtml(redName)} said red flag — 60 seconds to make their case 🥊`;
+    }
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${flagText(s.p1Vote)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${flagText(s.p2Vote)}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;">${footer}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myVote
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You voted <strong style="color:var(--accent);">${myVote === 'red' ? '🚩 Red flag' : '🟢 Green flag'}</strong> — waiting for partner${partnerVoted ? '' : '...'}</div>`
+        : `<div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="rg-red" style="min-width:140px;">🚩 Red flag</button>
+            <button class="btn-secondary" id="rg-green" style="min-width:140px;">🟢 Green flag</button>
+          </div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="rg-draw-btn">${cur ? 'Next behaviour' : 'Draw a behaviour'}</button>
+      <button class="btn-secondary" id="rg-reset">Reset</button>
+    </div>`;
+}
+
+function buildAssumptionsGame(game, s) {
+  const totalRounds = 20;
+  const guesserName = s.guesserRole === 'p1' ? (p1Name||'P1') : (p2Name||'P2');
+  const responderName = s.guesserRole === 'p1' ? (p2Name||'P2') : (p1Name||'P1');
+  const iAmGuesser = (isPlayer1 && s.guesserRole === 'p1') || (!isPlayer1 && s.guesserRole === 'p2');
+  const respLabel = { true:'✅ True', false:'❌ False', complicated:'🤔 Complicated' };
+
+  let cardHtml = '';
+  if (s.round >= totalRounds && s.phase !== 'writing') {
+    cardHtml = `<div class="card-content italic" style="text-align:center;">All 20 rounds done — beautiful work 🧡</div>`;
+  } else if (s.phase === 'responded') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(guesserName)} assumed</div>
+      <div class="card-content italic">"${escapeHtml(s.assumption)}"</div>
+      <div style="text-align:center;margin-top:12px;font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);">${respLabel[s.response]||''}</div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:4px;">— ${escapeHtml(responderName)}</div>`;
+  } else if (s.phase === 'responding') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(guesserName)} thinks...</div>
+      <div class="card-content italic">"${escapeHtml(s.assumption)}"</div>
+      ${iAmGuesser
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Waiting for ${escapeHtml(responderName)}...</div>`
+        : `<div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="as-true" style="min-width:110px;">✅ True</button>
+            <button class="btn-secondary" id="as-false" style="min-width:110px;">❌ False</button>
+            <button class="btn-secondary" id="as-complicated" style="min-width:140px;">🤔 Complicated</button>
+          </div>`}`;
+  } else {
+    // writing
+    const suggestions = game.prompts.map((p,i) => `<button class="btn-secondary" data-as-sug="${i}" style="font-size:12px;padding:6px 10px;text-align:left;">${escapeHtml(p)}</button>`).join('');
+    cardHtml = `
+      <div class="card-number">Round ${s.round + 1} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(guesserName)}'s turn to assume</div>
+      ${iAmGuesser
+        ? `<textarea id="as-input" class="qa-input" placeholder="Type your assumption about ${escapeHtml(responderName)}..." rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your assumption"></textarea>
+           <button class="btn-primary" id="as-send" style="width:100%;margin-top:10px;">Send to ${escapeHtml(responderName)}</button>
+           <details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--muted);">Need a starter? Tap one</summary>
+             <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">${suggestions}</div>
+           </details>`
+        : `<div style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px;">${escapeHtml(guesserName)} is typing an assumption...</div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">Round ${Math.min(s.round + (s.phase==='writing'?1:0), totalRounds)}/${totalRounds}</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.round((s.round/totalRounds)*100)}%"></div></div>
+        <span class="progress-text">Swap every round</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="as-reset">Reset</button>
+    </div>`;
+}
+
 function attachEvents(game, s) {
   if (!s.allShown) s.allShown = [];
 
@@ -2987,6 +3364,181 @@ function attachEvents(game, s) {
     });
     document.getElementById('km-reset')?.addEventListener('click', () => {
       s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='assigning'; s.p1Picks=['','','']; s.p2Picks=['','','']; s.p1Locked=false; s.p2Locked=false;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── UNPOPULAR OPINIONS ───────────────────────────────
+  if (game.type === 'unpopular') {
+    document.getElementById('up-send')?.addEventListener('click', () => {
+      const v = (document.getElementById('up-input')?.value || '').trim();
+      if (!v) { showToast('Type your opinion first'); return; }
+      s.opinion = v; s.reaction = ''; s.phase = 'reacting'; s.round++;
+      buildMain(); pushState();
+    });
+    ['shocked','agree','cancel'].forEach(r => {
+      document.getElementById('up-' + r)?.addEventListener('click', () => {
+        s.reaction = r; s.phase = 'reacted';
+        if (r === 'shocked') {
+          if (s.writerRole === 'p1') s.p1Shocked++; else s.p2Shocked++;
+        }
+        totalRoundsPlayed++;
+        // auto-advance to next round / swap writer
+        setTimeout(() => {
+          s.writerRole = s.writerRole === 'p1' ? 'p2' : 'p1';
+          s.opinion = ''; s.reaction = '';
+          s.phase = s.round >= 10 ? 'reacted' : 'writing';
+          buildMain(); pushState();
+        }, 2200);
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('up-reset')?.addEventListener('click', () => {
+      s.phase='writing'; s.writerRole='p1'; s.opinion=''; s.reaction=''; s.p1Shocked=0; s.p2Shocked=0; s.round=0;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── MOST LIKELY TO ───────────────────────────────────
+  if (game.type === 'mostlikely') {
+    document.getElementById('ml-draw-btn')?.addEventListener('click', () => {
+      if (s.drawn.length >= 15) return;
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'voting'; s.p1Vote = ''; s.p2Vote = '';
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    ['ml-me','ml-them'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        const v = id === 'ml-me' ? 'me' : 'them';
+        if (isPlayer1) s.p1Vote = v; else s.p2Vote = v;
+        if (s.p1Vote && s.p2Vote) {
+          s.phase = 'revealed';
+          // Resolve targets and award point if matched
+          const p1Target = s.p1Vote === 'me' ? 'p1' : 'p2';
+          const p2Target = s.p2Vote === 'me' ? 'p2' : 'p1';
+          if (p1Target === p2Target) {
+            if (p1Target === 'p1') s.p1Score++; else s.p2Score++;
+          }
+        }
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('ml-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='voting'; s.p1Vote=''; s.p2Vote=''; s.p1Score=0; s.p2Score=0;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── SCENARIO SPINNER ─────────────────────────────────
+  if (game.type === 'scenario') {
+    document.getElementById('sc-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+      // Auto-trigger 60s countdown timer
+      try {
+        document.getElementById('timer-widget')?.classList.add('open');
+        setTimer(60);
+        if (!timerRunning) toggleTimerRun();
+      } catch(e){}
+    });
+    document.getElementById('sc-ready-btn')?.addEventListener('click', () => {
+      const v = (document.getElementById('sc-answer')?.value || '').trim();
+      if (!v) { showToast('Type your answer first'); return; }
+      if (isPlayer1) { s.p1Answer = v; s.p1Ready = true; } else { s.p2Answer = v; s.p2Ready = true; }
+      if (s.p1Ready && s.p2Ready) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('sc-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── RED FLAG OR GREEN FLAG ───────────────────────────
+  if (game.type === 'redgreen') {
+    document.getElementById('rg-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'voting'; s.p1Vote = ''; s.p2Vote = '';
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    ['rg-red','rg-green'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        const v = id === 'rg-red' ? 'red' : 'green';
+        if (isPlayer1) s.p1Vote = v; else s.p2Vote = v;
+        if (s.p1Vote && s.p2Vote) {
+          s.phase = 'revealed';
+          // If disagreement → trigger 60s timer
+          if (s.p1Vote !== s.p2Vote) {
+            try {
+              document.getElementById('timer-widget')?.classList.add('open');
+              setTimer(60);
+              if (!timerRunning) toggleTimerRun();
+            } catch(e){}
+          }
+        }
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('rg-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='voting'; s.p1Vote=''; s.p2Vote='';
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── ASSUMPTIONS ──────────────────────────────────────
+  if (game.type === 'assumptions') {
+    document.querySelectorAll('[data-as-sug]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-as-sug'));
+        const inp = document.getElementById('as-input');
+        if (inp) inp.value = game.prompts[idx];
+      });
+    });
+    document.getElementById('as-send')?.addEventListener('click', () => {
+      const v = (document.getElementById('as-input')?.value || '').trim();
+      if (!v) { showToast('Type your assumption first'); return; }
+      s.assumption = v; s.response = ''; s.phase = 'responding'; s.round++;
+      buildMain(); pushState();
+    });
+    ['true','false','complicated'].forEach(r => {
+      document.getElementById('as-' + r)?.addEventListener('click', () => {
+        s.response = r; s.phase = 'responded';
+        totalRoundsPlayed++;
+        if (r === 'complicated') {
+          try {
+            document.getElementById('timer-widget')?.classList.add('open');
+            setTimer(60);
+            if (!timerRunning) toggleTimerRun();
+          } catch(e){}
+        }
+        const advanceMs = r === 'complicated' ? 3000 : 2000;
+        setTimeout(() => {
+          s.guesserRole = s.guesserRole === 'p1' ? 'p2' : 'p1';
+          s.assumption = ''; s.response = '';
+          s.phase = s.round >= 20 ? 'responded' : 'writing';
+          buildMain(); pushState();
+        }, advanceMs);
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('as-reset')?.addEventListener('click', () => {
+      s.phase='writing'; s.guesserRole='p1'; s.assumption=''; s.response=''; s.round=0;
       buildMain(); pushState();
     });
   }
