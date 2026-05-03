@@ -2744,6 +2744,292 @@ function buildKMAGame(game, s) {
     </div>`;
 }
 
+// ─── JUST FOR FUN BUILDERS ───────────────────────────────
+function buildUnpopularGame(game, s) {
+  const totalRounds = 10; // 5 each
+  const writerName = s.writerRole === 'p1' ? (p1Name||'P1') : (p2Name||'P2');
+  const reactorName = s.writerRole === 'p1' ? (p2Name||'P2') : (p1Name||'P1');
+  const iAmWriter = (isPlayer1 && s.writerRole === 'p1') || (!isPlayer1 && s.writerRole === 'p2');
+  const reactionEmoji = { shocked:'😱', agree:'👀', cancel:'🚫' };
+  const reactionLabel = { shocked:'Shocked', agree:'Agree', cancel:'Cancel' };
+
+  let cardHtml = '';
+  if (s.round >= totalRounds && s.phase !== 'writing') {
+    const winner = s.p1Shocked > s.p2Shocked ? (p1Name||'P1') : s.p2Shocked > s.p1Shocked ? (p2Name||'P2') : null;
+    cardHtml = `
+      <div class="card-content italic" style="text-align:center;">Game over 🎉</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--accent);">${s.p1Shocked} 😱</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--accent);">${s.p2Shocked} 😱</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.1rem;">${winner ? escapeHtml(winner) + ' wins most outrageous 🔥' : "It's a tie 🤝"}</div>`;
+  } else if (s.phase === 'reacted') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(writerName)}'s opinion</div>
+      <div class="card-content italic">"${escapeHtml(s.opinion)}"</div>
+      <div style="text-align:center;margin-top:12px;font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);">${reactionEmoji[s.reaction]||''} ${reactionLabel[s.reaction]||''}</div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:4px;">— ${escapeHtml(reactorName)}</div>`;
+  } else if (s.phase === 'reacting') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(writerName)}'s opinion</div>
+      <div class="card-content italic">"${escapeHtml(s.opinion)}"</div>
+      ${iAmWriter
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Waiting for ${escapeHtml(reactorName)} to react...</div>`
+        : `<div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="up-shocked" style="min-width:110px;">😱 Shocked</button>
+            <button class="btn-secondary" id="up-agree" style="min-width:110px;">👀 Agree</button>
+            <button class="btn-secondary" id="up-cancel" style="min-width:110px;">🚫 Cancel</button>
+          </div>`}`;
+  } else {
+    // writing
+    cardHtml = `
+      <div class="card-number">Round ${s.round + 1} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(writerName)}'s turn</div>
+      ${iAmWriter
+        ? `<textarea id="up-input" class="qa-input" placeholder="Type your most unpopular opinion..." rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your unpopular opinion"></textarea>
+           <button class="btn-primary" id="up-send" style="width:100%;margin-top:10px;">Send to ${escapeHtml(reactorName)}</button>`
+        : `<div style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px;">${escapeHtml(writerName)} is typing their opinion...</div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">${escapeHtml(p1Name||'P1')}: ${s.p1Shocked} 😱</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.round((s.round/totalRounds)*100)}%"></div></div>
+        <span class="progress-text">${escapeHtml(p2Name||'P2')}: ${s.p2Shocked} 😱</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="up-reset">Reset</button>
+    </div>`;
+}
+
+function buildMostLikelyGame(game, s) {
+  const totalRounds = 15;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myVote = isPlayer1 ? s.p1Vote : s.p2Vote;
+  const partnerVoted = isPlayer1 ? !!s.p2Vote : !!s.p1Vote;
+  const meLabel = (n) => n || 'partner';
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first round</span></div>`;
+  } else if (s.phase === 'revealed') {
+    // Resolve who each vote points to in absolute terms
+    const p1Target = s.p1Vote === 'me' ? (p1Name||'P1') : (p2Name||'P2');
+    const p2Target = s.p2Vote === 'me' ? (p2Name||'P2') : (p1Name||'P1');
+    const matched = p1Target === p2Target;
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${totalRounds}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')} pointed at</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${escapeHtml(p1Target)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')} pointed at</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${escapeHtml(p2Target)}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;">${matched ? `Agreed — point to ${escapeHtml(p1Target)} 🎉` : `Disagreement — 30 seconds to defend 🥊`}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Round ${s.histIdx + 1} of ${totalRounds}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myVote
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You pointed at <strong style="color:var(--accent);">${myVote === 'me' ? 'yourself' : meLabel(isPlayer1 ? p2Name : p1Name)}</strong> — waiting for partner${partnerVoted ? '' : '...'}</div>`
+        : `<div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-primary" id="ml-me" style="min-width:130px;">Me 👆</button>
+            <button class="btn-secondary" id="ml-them" style="min-width:130px;">Them 👆</button>
+          </div>`}`;
+  }
+
+  const done = s.drawn.length >= totalRounds && s.phase === 'revealed';
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">${escapeHtml(p1Name||'P1')}: ${s.p1Score}</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.round((s.drawn.length/totalRounds)*100)}%"></div></div>
+        <span class="progress-text">${escapeHtml(p2Name||'P2')}: ${s.p2Score}</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="ml-draw-btn" ${done ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''}>${cur ? 'Next round' : 'Draw a round'}</button>
+      <button class="btn-secondary" id="ml-reset">Reset</button>
+    </div>`;
+}
+
+function buildScenarioGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myReady = isPlayer1 ? s.p1Ready : s.p2Ready;
+  const partnerReady = isPlayer1 ? s.p2Ready : s.p1Ready;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Spin your first scenario</span></div>`;
+  } else if (s.phase === 'revealed') {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:grid;gap:10px;margin-top:14px;grid-template-columns:1fr 1fr;">
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p1Answer)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.08);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:0.98rem;">${escapeHtml(s.p2Answer)}</div>
+        </div>
+      </div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myReady
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Locked in — waiting for partner${partnerReady ? '' : '...'}</div>`
+        : `<div style="margin-top:14px;">
+            <textarea id="sc-answer" class="qa-input" placeholder="60 seconds — what would you do?" rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your private answer"></textarea>
+            <button class="btn-primary" id="sc-ready-btn" style="width:100%;margin-top:10px;">Ready — lock in</button>
+          </div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="sc-draw-btn">${cur ? 'Spin again' : 'Spin a scenario'}</button>
+      <button class="btn-secondary" id="sc-reset">Reset</button>
+    </div>`;
+}
+
+function buildRedGreenGame(game, s) {
+  const total = game.prompts.length;
+  const cur = s.histIdx >= 0 ? game.prompts[s.drawn[s.histIdx]] : null;
+  const myVote = isPlayer1 ? s.p1Vote : s.p2Vote;
+  const partnerVoted = isPlayer1 ? !!s.p2Vote : !!s.p1Vote;
+
+  let cardHtml = '';
+  if (!cur) {
+    cardHtml = `<div class="empty-state"><div class="empty-icon">✦</div><span>Draw your first behaviour</span></div>`;
+  } else if (s.phase === 'revealed') {
+    const matched = s.p1Vote === s.p2Vote;
+    const flagText = (v) => v === 'red' ? '🚩 Red flag' : '🟢 Green flag';
+    let footer;
+    if (matched) {
+      footer = `You agree 🧡`;
+    } else {
+      const redName = s.p1Vote === 'red' ? (p1Name||'P1') : (p2Name||'P2');
+      footer = `${escapeHtml(redName)} said red flag — 60 seconds to make their case 🥊`;
+    }
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      <div style="display:flex;gap:14px;justify-content:center;margin:14px 0;flex-wrap:wrap;">
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p1Name||'P1')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${flagText(s.p1Vote)}</div>
+        </div>
+        <div style="background:rgba(200,82,58,0.1);border-radius:10px;padding:10px 18px;text-align:center;">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(p2Name||'P2')}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--accent);">${flagText(s.p2Vote)}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;">${footer}</div>`;
+  } else {
+    cardHtml = `
+      <div class="card-number">Card ${s.histIdx + 1} of ${s.drawn.length}</div>
+      <div class="card-content italic">"${escapeHtml(cur)}"</div>
+      ${myVote
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">You voted <strong style="color:var(--accent);">${myVote === 'red' ? '🚩 Red flag' : '🟢 Green flag'}</strong> — waiting for partner${partnerVoted ? '' : '...'}</div>`
+        : `<div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="rg-red" style="min-width:140px;">🚩 Red flag</button>
+            <button class="btn-secondary" id="rg-green" style="min-width:140px;">🟢 Green flag</button>
+          </div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      ${_spicyProgressBar(s, total)}
+    </div>
+    <div class="btn-row">
+      <button class="btn-primary" id="rg-draw-btn">${cur ? 'Next behaviour' : 'Draw a behaviour'}</button>
+      <button class="btn-secondary" id="rg-reset">Reset</button>
+    </div>`;
+}
+
+function buildAssumptionsGame(game, s) {
+  const totalRounds = 20;
+  const guesserName = s.guesserRole === 'p1' ? (p1Name||'P1') : (p2Name||'P2');
+  const responderName = s.guesserRole === 'p1' ? (p2Name||'P2') : (p1Name||'P1');
+  const iAmGuesser = (isPlayer1 && s.guesserRole === 'p1') || (!isPlayer1 && s.guesserRole === 'p2');
+  const respLabel = { true:'✅ True', false:'❌ False', complicated:'🤔 Complicated' };
+
+  let cardHtml = '';
+  if (s.round >= totalRounds && s.phase !== 'writing') {
+    cardHtml = `<div class="card-content italic" style="text-align:center;">All 20 rounds done — beautiful work 🧡</div>`;
+  } else if (s.phase === 'responded') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(guesserName)} assumed</div>
+      <div class="card-content italic">"${escapeHtml(s.assumption)}"</div>
+      <div style="text-align:center;margin-top:12px;font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);">${respLabel[s.response]||''}</div>
+      <div style="text-align:center;font-size:12px;color:var(--muted);margin-top:4px;">— ${escapeHtml(responderName)}</div>`;
+  } else if (s.phase === 'responding') {
+    cardHtml = `
+      <div class="card-number">Round ${s.round} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(guesserName)} thinks...</div>
+      <div class="card-content italic">"${escapeHtml(s.assumption)}"</div>
+      ${iAmGuesser
+        ? `<div style="text-align:center;margin-top:10px;color:var(--muted);font-size:13px;">Waiting for ${escapeHtml(responderName)}...</div>`
+        : `<div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-secondary" id="as-true" style="min-width:110px;">✅ True</button>
+            <button class="btn-secondary" id="as-false" style="min-width:110px;">❌ False</button>
+            <button class="btn-secondary" id="as-complicated" style="min-width:140px;">🤔 Complicated</button>
+          </div>`}`;
+  } else {
+    // writing
+    const suggestions = game.prompts.map((p,i) => `<button class="btn-secondary" data-as-sug="${i}" style="font-size:12px;padding:6px 10px;text-align:left;">${escapeHtml(p)}</button>`).join('');
+    cardHtml = `
+      <div class="card-number">Round ${s.round + 1} of ${totalRounds}</div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;text-align:center;margin-bottom:6px;">${escapeHtml(guesserName)}'s turn to assume</div>
+      ${iAmGuesser
+        ? `<textarea id="as-input" class="qa-input" placeholder="Type your assumption about ${escapeHtml(responderName)}..." rows="3" style="width:100%;resize:vertical;font-family:'Playfair Display',serif;font-style:italic;" aria-label="Your assumption"></textarea>
+           <button class="btn-primary" id="as-send" style="width:100%;margin-top:10px;">Send to ${escapeHtml(responderName)}</button>
+           <details style="margin-top:10px;"><summary style="cursor:pointer;font-size:12px;color:var(--muted);">Need a starter? Tap one</summary>
+             <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">${suggestions}</div>
+           </details>`
+        : `<div style="text-align:center;color:var(--muted);font-size:13px;margin-top:8px;">${escapeHtml(guesserName)} is typing an assumption...</div>`}`;
+  }
+
+  return `
+    <div class="draw-area">
+      <div class="draw-top">${cardHtml}</div>
+      <div class="draw-bottom">
+        <span class="progress-text">Round ${Math.min(s.round + (s.phase==='writing'?1:0), totalRounds)}/${totalRounds}</span>
+        <div class="progress-bar-wrap"><div class="progress-bar" style="width:${Math.round((s.round/totalRounds)*100)}%"></div></div>
+        <span class="progress-text">Swap every round</span>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-secondary" id="as-reset">Reset</button>
+    </div>`;
+}
+
 function attachEvents(game, s) {
   if (!s.allShown) s.allShown = [];
 
