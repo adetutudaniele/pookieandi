@@ -3367,6 +3367,181 @@ function attachEvents(game, s) {
       buildMain(); pushState();
     });
   }
+
+  // ─── UNPOPULAR OPINIONS ───────────────────────────────
+  if (game.type === 'unpopular') {
+    document.getElementById('up-send')?.addEventListener('click', () => {
+      const v = (document.getElementById('up-input')?.value || '').trim();
+      if (!v) { showToast('Type your opinion first'); return; }
+      s.opinion = v; s.reaction = ''; s.phase = 'reacting'; s.round++;
+      buildMain(); pushState();
+    });
+    ['shocked','agree','cancel'].forEach(r => {
+      document.getElementById('up-' + r)?.addEventListener('click', () => {
+        s.reaction = r; s.phase = 'reacted';
+        if (r === 'shocked') {
+          if (s.writerRole === 'p1') s.p1Shocked++; else s.p2Shocked++;
+        }
+        totalRoundsPlayed++;
+        // auto-advance to next round / swap writer
+        setTimeout(() => {
+          s.writerRole = s.writerRole === 'p1' ? 'p2' : 'p1';
+          s.opinion = ''; s.reaction = '';
+          s.phase = s.round >= 10 ? 'reacted' : 'writing';
+          buildMain(); pushState();
+        }, 2200);
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('up-reset')?.addEventListener('click', () => {
+      s.phase='writing'; s.writerRole='p1'; s.opinion=''; s.reaction=''; s.p1Shocked=0; s.p2Shocked=0; s.round=0;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── MOST LIKELY TO ───────────────────────────────────
+  if (game.type === 'mostlikely') {
+    document.getElementById('ml-draw-btn')?.addEventListener('click', () => {
+      if (s.drawn.length >= 15) return;
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'voting'; s.p1Vote = ''; s.p2Vote = '';
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    ['ml-me','ml-them'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        const v = id === 'ml-me' ? 'me' : 'them';
+        if (isPlayer1) s.p1Vote = v; else s.p2Vote = v;
+        if (s.p1Vote && s.p2Vote) {
+          s.phase = 'revealed';
+          // Resolve targets and award point if matched
+          const p1Target = s.p1Vote === 'me' ? 'p1' : 'p2';
+          const p2Target = s.p2Vote === 'me' ? 'p2' : 'p1';
+          if (p1Target === p2Target) {
+            if (p1Target === 'p1') s.p1Score++; else s.p2Score++;
+          }
+        }
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('ml-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='voting'; s.p1Vote=''; s.p2Vote=''; s.p1Score=0; s.p2Score=0;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── SCENARIO SPINNER ─────────────────────────────────
+  if (game.type === 'scenario') {
+    document.getElementById('sc-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+      // Auto-trigger 60s countdown timer
+      try {
+        document.getElementById('timer-widget')?.classList.add('open');
+        setTimer(60);
+        if (!timerRunning) toggleTimerRun();
+      } catch(e){}
+    });
+    document.getElementById('sc-ready-btn')?.addEventListener('click', () => {
+      const v = (document.getElementById('sc-answer')?.value || '').trim();
+      if (!v) { showToast('Type your answer first'); return; }
+      if (isPlayer1) { s.p1Answer = v; s.p1Ready = true; } else { s.p2Answer = v; s.p2Ready = true; }
+      if (s.p1Ready && s.p2Ready) s.phase = 'revealed';
+      buildMain(); pushState();
+    });
+    document.getElementById('sc-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='writing'; s.p1Answer=''; s.p2Answer=''; s.p1Ready=false; s.p2Ready=false;
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── RED FLAG OR GREEN FLAG ───────────────────────────
+  if (game.type === 'redgreen') {
+    document.getElementById('rg-draw-btn')?.addEventListener('click', () => {
+      let avail = game.prompts.map((_,i)=>i).filter(i => !s.allShown.includes(i));
+      if (avail.length === 0) { s.allShown = []; avail = game.prompts.map((_,i)=>i); }
+      const idx = avail[Math.floor(Math.random()*avail.length)];
+      s.allShown.push(idx);
+      s.drawn.push(idx); s.histIdx = s.drawn.length - 1;
+      s.phase = 'voting'; s.p1Vote = ''; s.p2Vote = '';
+      totalRoundsPlayed++;
+      buildMain(); pushState(); saveShownPrompts(game.id, s.allShown);
+    });
+    ['rg-red','rg-green'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', () => {
+        const v = id === 'rg-red' ? 'red' : 'green';
+        if (isPlayer1) s.p1Vote = v; else s.p2Vote = v;
+        if (s.p1Vote && s.p2Vote) {
+          s.phase = 'revealed';
+          // If disagreement → trigger 60s timer
+          if (s.p1Vote !== s.p2Vote) {
+            try {
+              document.getElementById('timer-widget')?.classList.add('open');
+              setTimer(60);
+              if (!timerRunning) toggleTimerRun();
+            } catch(e){}
+          }
+        }
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('rg-reset')?.addEventListener('click', () => {
+      s.drawn=[]; s.histIdx=-1; s.allShown=[]; s.phase='voting'; s.p1Vote=''; s.p2Vote='';
+      buildMain(); pushState();
+    });
+  }
+
+  // ─── ASSUMPTIONS ──────────────────────────────────────
+  if (game.type === 'assumptions') {
+    document.querySelectorAll('[data-as-sug]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.getAttribute('data-as-sug'));
+        const inp = document.getElementById('as-input');
+        if (inp) inp.value = game.prompts[idx];
+      });
+    });
+    document.getElementById('as-send')?.addEventListener('click', () => {
+      const v = (document.getElementById('as-input')?.value || '').trim();
+      if (!v) { showToast('Type your assumption first'); return; }
+      s.assumption = v; s.response = ''; s.phase = 'responding'; s.round++;
+      buildMain(); pushState();
+    });
+    ['true','false','complicated'].forEach(r => {
+      document.getElementById('as-' + r)?.addEventListener('click', () => {
+        s.response = r; s.phase = 'responded';
+        totalRoundsPlayed++;
+        if (r === 'complicated') {
+          try {
+            document.getElementById('timer-widget')?.classList.add('open');
+            setTimer(60);
+            if (!timerRunning) toggleTimerRun();
+          } catch(e){}
+        }
+        const advanceMs = r === 'complicated' ? 3000 : 2000;
+        setTimeout(() => {
+          s.guesserRole = s.guesserRole === 'p1' ? 'p2' : 'p1';
+          s.assumption = ''; s.response = '';
+          s.phase = s.round >= 20 ? 'responded' : 'writing';
+          buildMain(); pushState();
+        }, advanceMs);
+        buildMain(); pushState();
+      });
+    });
+    document.getElementById('as-reset')?.addEventListener('click', () => {
+      s.phase='writing'; s.guesserRole='p1'; s.assumption=''; s.response=''; s.round=0;
+      buildMain(); pushState();
+    });
+  }
 }
 
 // ─── TOAST ──────────────────────────────────────────────
