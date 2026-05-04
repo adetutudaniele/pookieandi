@@ -1320,6 +1320,10 @@ html[data-theme="light"] .timer-widget {
 <div id="app" class="screen">
   <div style="position:sticky;top:0;z-index:100;">
     <div class="score-bar" id="score-bar" style="display:none;"></div>
+    <div class="room-status-bar" id="room-status-bar">
+      <div class="room-status-line" id="room-status-line"></div>
+      <div class="room-status-code" id="room-status-code"></div>
+    </div>
     <div class="app-header" style="position:static;">
       <div class="app-header-left" style="display:flex;align-items:center;gap:4px;">
         <button class="hamburger-btn" onclick="toggleSideNav()" aria-label="Toggle navigation menu" aria-controls="side-nav" aria-expanded="true"><span class="hb-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
@@ -1359,8 +1363,9 @@ html[data-theme="light"] .timer-widget {
 
   <div class="side-nav-overlay" id="side-nav-overlay" onclick="toggleSideNav()"></div>
   <div class="side-nav" id="side-nav">
-    <div class="side-nav-header">
-      <div class="side-nav-title">Games</div>
+    <div class="side-nav-top-actions">
+      <button class="side-nav-action-btn surprise" onclick="surpriseMe()">Surprise me 🎲</button>
+      <button class="side-nav-action-btn" id="theme-toggle-btn" onclick="toggleTheme()">🌙 Dark mode</button>
     </div>
     <div id="side-nav-content"></div>
     <div id="side-nav-history-leaderboard"></div>
