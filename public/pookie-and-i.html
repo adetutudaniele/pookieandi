@@ -3744,12 +3744,16 @@ function updateConnectionUI() {
   const bannerEl = document.getElementById('disconnected-banner');
   const namesEl = document.getElementById('header-names');
   const codeEl = document.getElementById('header-room-code');
+  const rsBar = document.getElementById('room-status-bar');
+  const rsLine = document.getElementById('room-status-line');
+  const rsCode = document.getElementById('room-status-code');
 
-  if (statusEl) statusEl.style.display = 'flex';
-  if (codeEl) {
-    codeEl.style.display = 'block';
-    codeEl.textContent = 'Room: ' + currentRoom.room_code;
-  }
+  // Hide old in-header status/code — they have moved below the score bar
+  if (statusEl) statusEl.style.display = 'none';
+  if (codeEl) codeEl.style.display = 'none';
+
+  if (rsBar) rsBar.classList.add('visible');
+  if (rsCode) rsCode.textContent = 'Room: ' + currentRoom.room_code;
 
   const p1c = currentRoom.player1_connected;
   const p2c = currentRoom.player2_connected;
@@ -3761,15 +3765,17 @@ function updateConnectionUI() {
     p2Name = isPlayer1 ? p2n : currentRoom.player1_name;
   }
 
+  const n1 = currentRoom.player1_name || 'Player 1';
+  const n2 = p2n || '';
   if (p1c && p2c) {
-    statusEl.innerHTML = '<span class="connected-dot green"></span> Both connected';
+    if (rsLine) rsLine.innerHTML = `<span class="connected-dot green"></span> ${escapeHtml(n1)} & ${escapeHtml(n2)}`;
     bannerEl.style.display = 'none';
   } else if ((isPlayer1 && !p2c) || (!isPlayer1 && !p1c)) {
     if (p2n) {
-      statusEl.innerHTML = '<span class="connected-dot red"></span> Partner disconnected';
+      if (rsLine) rsLine.innerHTML = '<span class="connected-dot red"></span> Partner disconnected';
       bannerEl.style.display = 'block';
     } else {
-      statusEl.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your partner...';
+      if (rsLine) rsLine.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your partner...';
       bannerEl.style.display = 'none';
     }
   }
