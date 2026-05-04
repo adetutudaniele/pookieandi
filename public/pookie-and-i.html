@@ -4480,17 +4480,45 @@ async function submitAuth() {
 }
 
 async function signInWithGoogle() {
+  const errEl = document.getElementById('auth-error');
+  const showErr = (msg) => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
   try {
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    });
-    if (error) {
-      const errEl = document.getElementById('auth-error');
-      errEl.textContent = error.message;
-      errEl.style.display = 'block';
+    if (!window.__lovableAuth) {
+      showErr('Google sign-in is still loading — please try again in a moment.');
+      return;
     }
-  } catch(e) {}
+    const result = await window.__lovableAuth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin
+    });
+    if (result?.error) {
+      showErr(result.error.message || 'Google sign-in failed. Please try again.');
+      return;
+    }
+    if (result?.redirected) {
+      // Browser will redirect to Google
+      return;
+    }
+    if (result?.tokens) {
+      const { error } = await sb.auth.setSession(result.tokens);
+      if (error) { showErr(error.message); return; }
+      if (errEl) errEl.style.display = 'none';
+      document.getElementById('auth-modal-overlay')?.classList.remove('open');
+      try { await loadCurrentUser(); } catch(e) {}
+    }
+  } catch(e) {
+    showErr(e?.message || 'Could not start Google sign-in.');
+  }
+}
+
+function togglePasswordVisibility() {
+  const inp = document.getElementById('auth-password');
+  const btn = document.getElementById('auth-pw-toggle');
+  if (!inp || !btn) return;
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  btn.setAttribute('aria-pressed', showing ? 'false' : 'true');
+  btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  btn.innerHTML = showing ? '<span aria-hidden="true">👁</span>' : '<span aria-hidden="true">🙈</span>';
 }
 
 async function signOut() {
