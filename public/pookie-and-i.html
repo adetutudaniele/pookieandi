@@ -11,6 +11,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+<script type="module">
+  // Load Lovable Cloud managed OAuth (used for Sign in with Google)
+  try {
+    const mod = await import('https://esm.sh/@lovable.dev/cloud-auth-js@1.1.2');
+    window.__lovableAuth = mod.createLovableAuth();
+  } catch (e) {
+    console.warn('Lovable cloud-auth failed to load', e);
+  }
+</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1100,6 +1109,20 @@ html[data-theme="light"] .timer-widget {
 }
 .auth-input::placeholder { color: rgba(250,247,242,0.25); }
 .auth-input:focus { border-color: rgba(200,82,58,0.5); }
+
+/* Password field with eye toggle */
+.auth-pw-wrap { position: relative; margin-bottom: 10px; }
+.auth-pw-wrap .auth-input { margin-bottom: 0; padding-right: 42px; }
+.auth-pw-toggle {
+  position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; padding: 6px;
+  color: rgba(250,247,242,0.5); font-size: 16px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+}
+.auth-pw-toggle:hover { color: var(--accent); }
+html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
+
 .auth-btn {
   width: 100%; border-radius: 10px; padding: 11px;
   font-family: 'DM Sans', sans-serif; font-size: 14px;
@@ -1407,7 +1430,10 @@ html[data-theme="light"] .timer-widget {
     <h3 id="auth-modal-title">Sign In</h3>
     <div class="auth-error" id="auth-error"></div>
     <input class="auth-input" id="auth-email" type="email" placeholder="Email" aria-label="Email" autocomplete="email" />
-    <input class="auth-input" id="auth-password" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" />
+    <div class="auth-pw-wrap">
+      <input class="auth-input" id="auth-password" type="password" placeholder="Password" aria-label="Password" autocomplete="current-password" />
+      <button type="button" class="auth-pw-toggle" id="auth-pw-toggle" onclick="togglePasswordVisibility()" aria-label="Show password" aria-pressed="false"><span aria-hidden="true">👁</span></button>
+    </div>
     <button class="auth-btn primary" id="auth-submit-btn" onclick="submitAuth()">Sign In</button>
     <div class="auth-divider">
       <div class="auth-divider-line"></div>
@@ -4454,17 +4480,45 @@ async function submitAuth() {
 }
 
 async function signInWithGoogle() {
+  const errEl = document.getElementById('auth-error');
+  const showErr = (msg) => { if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; } };
   try {
-    const { error } = await sb.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    });
-    if (error) {
-      const errEl = document.getElementById('auth-error');
-      errEl.textContent = error.message;
-      errEl.style.display = 'block';
+    if (!window.__lovableAuth) {
+      showErr('Google sign-in is still loading — please try again in a moment.');
+      return;
     }
-  } catch(e) {}
+    const result = await window.__lovableAuth.signInWithOAuth('google', {
+      redirect_uri: window.location.origin
+    });
+    if (result?.error) {
+      showErr(result.error.message || 'Google sign-in failed. Please try again.');
+      return;
+    }
+    if (result?.redirected) {
+      // Browser will redirect to Google
+      return;
+    }
+    if (result?.tokens) {
+      const { error } = await sb.auth.setSession(result.tokens);
+      if (error) { showErr(error.message); return; }
+      if (errEl) errEl.style.display = 'none';
+      document.getElementById('auth-modal-overlay')?.classList.remove('open');
+      // onAuthStateChange will refresh the UI
+    }
+  } catch(e) {
+    showErr(e?.message || 'Could not start Google sign-in.');
+  }
+}
+
+function togglePasswordVisibility() {
+  const inp = document.getElementById('auth-password');
+  const btn = document.getElementById('auth-pw-toggle');
+  if (!inp || !btn) return;
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  btn.setAttribute('aria-pressed', showing ? 'false' : 'true');
+  btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+  btn.innerHTML = showing ? '<span aria-hidden="true">👁</span>' : '<span aria-hidden="true">🙈</span>';
 }
 
 async function signOut() {
