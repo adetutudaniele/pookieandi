@@ -721,6 +721,9 @@ body {
   overflow-y: auto;
 }
 .side-nav.open { transform: translateX(0); }
+/* When closed, fully hide the side-nav so nothing peeks through */
+.side-nav:not(.open) { visibility: hidden; pointer-events: none; }
+.side-nav.open { visibility: visible; pointer-events: auto; }
 .side-nav-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.4); z-index: 199;
@@ -752,6 +755,36 @@ body {
   width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4;
 }
 .side-nav-item.active .nav-dot { opacity: 1; background: var(--accent); }
+
+/* Collapsible category headers */
+.side-nav-cat-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; background: none; border: none; cursor: pointer;
+  padding: 0 1.25rem; margin-bottom: 0.5rem;
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500; font-family: 'DM Sans', sans-serif;
+  text-align: left;
+}
+.side-nav-cat-chev {
+  display: inline-block; transition: transform 0.2s ease;
+  font-size: 10px; opacity: 0.7;
+}
+.side-nav-section.collapsed .side-nav-cat-chev { transform: rotate(-90deg); }
+.side-nav-section.collapsed .side-nav-cat-items { display: none; }
+
+/* Surprise-me + theme toggle buttons in the side panel */
+.side-nav-top-actions { padding: 0.75rem 1rem 0.25rem; display: flex; flex-direction: column; gap: 8px; }
+.side-nav-action-btn {
+  width: 100%; padding: 10px 12px;
+  background: transparent; border: 1px solid var(--accent);
+  color: var(--cream); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+  text-align: center;
+}
+.side-nav-action-btn:hover { background: rgba(200,82,58,0.12); }
+.side-nav-action-btn.surprise { color: var(--cream); }
+
 .hamburger-btn {
   background: none; border: none; color: var(--cream);
   cursor: pointer; padding: 6px; margin-right: 8px;
@@ -771,6 +804,71 @@ body {
 .hamburger-btn .hb-icon span:nth-child(1) { top: 0; }
 .hamburger-btn .hb-icon span:nth-child(2) { top: 6px; }
 .hamburger-btn .hb-icon span:nth-child(3) { top: 12px; }
+
+/* Room status (moved out of side panel) — small muted text under the score bar */
+.room-status-bar {
+  display: none; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 12px; background: var(--ink);
+  border-bottom: 1px solid rgba(250,247,242,0.06);
+  font-family: 'DM Sans', sans-serif;
+}
+.room-status-bar.visible { display: flex; }
+.room-status-line {
+  font-size: 12px; color: rgba(250,247,242,0.55);
+  display: flex; align-items: center; gap: 6px;
+}
+.room-status-code {
+  font-size: 13px; color: var(--accent);
+  letter-spacing: 0.12em; font-weight: 500;
+}
+
+/* ══ LIGHT THEME OVERRIDES ══ */
+html, body, .app-header, .side-nav, .score-bar, #landing,
+.room-status-bar, .game-header, .rules-card, .card, .invite-card,
+.chat-panel, .auth-modal, .timer-widget, .side-nav-action-btn,
+.partner-disconnected-banner {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+html[data-theme="light"] {
+  --cream: #1A1612;          /* "cream" used as text-on-dark becomes ink for text-on-light */
+  --ink-surface: #FAF7F2;    /* light surface replaces ink dark surface */
+}
+html[data-theme="light"] body { background: #FAF7F2; color: #1A1612; }
+html[data-theme="light"] .app-header,
+html[data-theme="light"] .side-nav,
+html[data-theme="light"] .score-bar,
+html[data-theme="light"] .room-status-bar,
+html[data-theme="light"] #landing {
+  background: #FAF7F2;
+  border-color: rgba(26,22,18,0.12);
+}
+html[data-theme="light"] .app-header { color: #1A1612; }
+html[data-theme="light"] .app-header-title { color: #1A1612; }
+html[data-theme="light"] .app-header-names,
+html[data-theme="light"] .connection-status,
+html[data-theme="light"] .room-status-line { color: rgba(26,22,18,0.55); }
+html[data-theme="light"] .side-nav { border-right-color: rgba(26,22,18,0.12); color: #1A1612; }
+html[data-theme="light"] .side-nav-title,
+html[data-theme="light"] .side-nav-item { color: #1A1612; }
+html[data-theme="light"] .side-nav-item:hover { background: rgba(26,22,18,0.05); }
+html[data-theme="light"] .side-nav-action-btn { color: #1A1612; }
+html[data-theme="light"] .score-bar { color: #1A1612; border-bottom-color: rgba(26,22,18,0.06); }
+html[data-theme="light"] .score-bar .sb-name { color: rgba(26,22,18,0.6); }
+html[data-theme="light"] .score-bar .sb-score { color: #1A1612; }
+html[data-theme="light"] .score-bar .sb-sep { color: rgba(26,22,18,0.3); }
+html[data-theme="light"] .hamburger-btn { color: #1A1612; }
+html[data-theme="light"] .landing-title { color: #1A1612; }
+html[data-theme="light"] .landing-tagline { color: rgba(26,22,18,0.6); }
+html[data-theme="light"] .card,
+html[data-theme="light"] .rules-card,
+html[data-theme="light"] .invite-card,
+html[data-theme="light"] .chat-panel,
+html[data-theme="light"] .auth-modal,
+html[data-theme="light"] .timer-widget {
+  background: #FFFFFF;
+  border-color: rgba(26,22,18,0.12);
+  color: #1A1612;
+}
 
 /* ══ SCORE BAR ══ */
 .score-bar {
@@ -1222,6 +1320,10 @@ body {
 <div id="app" class="screen">
   <div style="position:sticky;top:0;z-index:100;">
     <div class="score-bar" id="score-bar" style="display:none;"></div>
+    <div class="room-status-bar" id="room-status-bar">
+      <div class="room-status-line" id="room-status-line"></div>
+      <div class="room-status-code" id="room-status-code"></div>
+    </div>
     <div class="app-header" style="position:static;">
       <div class="app-header-left" style="display:flex;align-items:center;gap:4px;">
         <button class="hamburger-btn" onclick="toggleSideNav()" aria-label="Toggle navigation menu" aria-controls="side-nav" aria-expanded="true"><span class="hb-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
@@ -1261,8 +1363,9 @@ body {
 
   <div class="side-nav-overlay" id="side-nav-overlay" onclick="toggleSideNav()"></div>
   <div class="side-nav" id="side-nav">
-    <div class="side-nav-header">
-      <div class="side-nav-title">Games</div>
+    <div class="side-nav-top-actions">
+      <button class="side-nav-action-btn surprise" onclick="surpriseMe()">Surprise me 🎲</button>
+      <button class="side-nav-action-btn" id="theme-toggle-btn" onclick="toggleTheme()">🌙 Dark mode</button>
     </div>
     <div id="side-nav-content"></div>
     <div id="side-nav-history-leaderboard"></div>
@@ -2135,26 +2238,54 @@ function showScreen(id) {
 }
 
 // ─── NAV ────────────────────────────────────────────────
+// Category groupings for the side-nav (game ids mapped to display categories)
+const NAV_CATEGORIES = [
+  { key: 'foryoutwo',  label: '🧡 For You Two',     ids: ['questions','finishsentence','assumptions','activities','challenges'] },
+  { key: 'classic',    label: '🎮 Classic Games',   ids: ['never','thisorthat','twenty','wyr','truths','mostlikely'] },
+  { key: 'spicy',      label: '🌶️ Spicy & Flirty', ids: ['confessdare','rateus','hottakes','redgreen','kma'] },
+  { key: 'justforfun', label: '🎲 Just For Fun',    ids: ['emoji','word','song','scenario','unpopular'] },
+];
+let _navCollapsed = {}; // session-only collapsed state per category key
+let _lastSurpriseId = null;
+
 function buildNav() {
   const nav = document.getElementById('side-nav-content');
-  const sections = [
-    { label: 'For You Two', items: extras },
-    { label: 'Games', items: games },
-    { label: '🌶️ Spicy & Flirty', items: spicy }
-    ,{ label: '🎮 Just For Fun', items: justforfun }
-  ];
   let html = '';
-  sections.forEach(section => {
-    html += `<div class="side-nav-section">
-      <div class="side-nav-section-label">${section.label}</div>`;
-    section.items.forEach(g => {
+  NAV_CATEGORIES.forEach(cat => {
+    const collapsed = !!_navCollapsed[cat.key];
+    html += `<div class="side-nav-section${collapsed ? ' collapsed' : ''}" data-cat="${cat.key}">
+      <button class="side-nav-cat-header" onclick="toggleNavCategory('${cat.key}')" aria-expanded="${!collapsed}">
+        <span>${cat.label}</span><span class="side-nav-cat-chev" aria-hidden="true">▾</span>
+      </button>
+      <div class="side-nav-cat-items">`;
+    cat.ids.forEach(id => {
+      const g = allItems.find(x => x.id === id);
+      if (!g) return;
       html += `<button class="side-nav-item${g.id === activeGame ? ' active' : ''}" onclick="switchGame('${g.id}')"><span class="nav-dot"></span>${g.name}</button>`;
     });
-    html += '</div>';
+    html += `</div></div>`;
   });
   nav.innerHTML = html;
   renderSideNavAuth();
   renderHistoryLeaderboard();
+}
+
+function toggleNavCategory(key) {
+  _navCollapsed[key] = !_navCollapsed[key];
+  buildNav();
+}
+
+function surpriseMe() {
+  const all = NAV_CATEGORIES.flatMap(c => c.ids);
+  let pool = all.filter(id => id !== _lastSurpriseId && id !== activeGame);
+  if (pool.length === 0) pool = all.filter(id => id !== activeGame);
+  if (pool.length === 0) pool = all;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  _lastSurpriseId = pick;
+  const game = allItems.find(g => g.id === pick);
+  switchGame(pick);
+  closeSideNav();
+  if (game) showToast(`Tonight you're playing ${game.name} 🎲`);
 }
 
 function switchGame(id) {
@@ -3613,12 +3744,16 @@ function updateConnectionUI() {
   const bannerEl = document.getElementById('disconnected-banner');
   const namesEl = document.getElementById('header-names');
   const codeEl = document.getElementById('header-room-code');
+  const rsBar = document.getElementById('room-status-bar');
+  const rsLine = document.getElementById('room-status-line');
+  const rsCode = document.getElementById('room-status-code');
 
-  if (statusEl) statusEl.style.display = 'flex';
-  if (codeEl) {
-    codeEl.style.display = 'block';
-    codeEl.textContent = 'Room: ' + currentRoom.room_code;
-  }
+  // Hide old in-header status/code — they have moved below the score bar
+  if (statusEl) statusEl.style.display = 'none';
+  if (codeEl) codeEl.style.display = 'none';
+
+  if (rsBar) rsBar.classList.add('visible');
+  if (rsCode) rsCode.textContent = 'Room: ' + currentRoom.room_code;
 
   const p1c = currentRoom.player1_connected;
   const p2c = currentRoom.player2_connected;
@@ -3630,15 +3765,17 @@ function updateConnectionUI() {
     p2Name = isPlayer1 ? p2n : currentRoom.player1_name;
   }
 
+  const n1 = currentRoom.player1_name || 'Player 1';
+  const n2 = p2n || '';
   if (p1c && p2c) {
-    statusEl.innerHTML = '<span class="connected-dot green"></span> Both connected';
+    if (rsLine) rsLine.innerHTML = `<span class="connected-dot green"></span> ${escapeHtml(n1)} & ${escapeHtml(n2)}`;
     bannerEl.style.display = 'none';
   } else if ((isPlayer1 && !p2c) || (!isPlayer1 && !p1c)) {
     if (p2n) {
-      statusEl.innerHTML = '<span class="connected-dot red"></span> Partner disconnected';
+      if (rsLine) rsLine.innerHTML = '<span class="connected-dot red"></span> Partner disconnected';
       bannerEl.style.display = 'block';
     } else {
-      statusEl.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your partner...';
+      if (rsLine) rsLine.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your partner...';
       bannerEl.style.display = 'none';
     }
   }
@@ -3941,6 +4078,11 @@ function _syncSideNav() {
 
 function toggleSideNav() {
   sideNavOpen = !sideNavOpen;
+  if (sideNavOpen) {
+    // Always reset categories to fully expanded each time the panel opens
+    _navCollapsed = {};
+    if (typeof buildNav === 'function') buildNav();
+  }
   _syncSideNav();
 }
 
@@ -3951,6 +4093,31 @@ function closeSideNav() {
 
 // Open side nav by default on load
 document.addEventListener('DOMContentLoaded', () => { _syncSideNav(); });
+
+// ═══════════════════════════════════════════════════════════
+// THEME TOGGLE (light / dark mode)
+// ═══════════════════════════════════════════════════════════
+function _applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = theme === 'light' ? '🌙 Dark mode' : '☀️ Light mode';
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('pookie_theme', next); } catch(e) {}
+  _applyTheme(next);
+}
+(function initTheme(){
+  let theme = 'dark';
+  try {
+    const saved = localStorage.getItem('pookie_theme');
+    if (saved === 'light' || saved === 'dark') theme = saved;
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
+  } catch(e) {}
+  _applyTheme(theme);
+  document.addEventListener('DOMContentLoaded', () => _applyTheme(theme));
+})();
 
 // ═══════════════════════════════════════════════════════════
 // SCORE BAR
