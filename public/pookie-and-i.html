@@ -721,6 +721,9 @@ body {
   overflow-y: auto;
 }
 .side-nav.open { transform: translateX(0); }
+/* When closed, fully hide the side-nav so nothing peeks through */
+.side-nav:not(.open) { visibility: hidden; pointer-events: none; }
+.side-nav.open { visibility: visible; pointer-events: auto; }
 .side-nav-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.4); z-index: 199;
@@ -752,6 +755,36 @@ body {
   width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.4;
 }
 .side-nav-item.active .nav-dot { opacity: 1; background: var(--accent); }
+
+/* Collapsible category headers */
+.side-nav-cat-header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; background: none; border: none; cursor: pointer;
+  padding: 0 1.25rem; margin-bottom: 0.5rem;
+  font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500; font-family: 'DM Sans', sans-serif;
+  text-align: left;
+}
+.side-nav-cat-chev {
+  display: inline-block; transition: transform 0.2s ease;
+  font-size: 10px; opacity: 0.7;
+}
+.side-nav-section.collapsed .side-nav-cat-chev { transform: rotate(-90deg); }
+.side-nav-section.collapsed .side-nav-cat-items { display: none; }
+
+/* Surprise-me + theme toggle buttons in the side panel */
+.side-nav-top-actions { padding: 0.75rem 1rem 0.25rem; display: flex; flex-direction: column; gap: 8px; }
+.side-nav-action-btn {
+  width: 100%; padding: 10px 12px;
+  background: transparent; border: 1px solid var(--accent);
+  color: var(--cream); border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+  text-align: center;
+}
+.side-nav-action-btn:hover { background: rgba(200,82,58,0.12); }
+.side-nav-action-btn.surprise { color: var(--cream); }
+
 .hamburger-btn {
   background: none; border: none; color: var(--cream);
   cursor: pointer; padding: 6px; margin-right: 8px;
@@ -771,6 +804,71 @@ body {
 .hamburger-btn .hb-icon span:nth-child(1) { top: 0; }
 .hamburger-btn .hb-icon span:nth-child(2) { top: 6px; }
 .hamburger-btn .hb-icon span:nth-child(3) { top: 12px; }
+
+/* Room status (moved out of side panel) — small muted text under the score bar */
+.room-status-bar {
+  display: none; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 12px; background: var(--ink);
+  border-bottom: 1px solid rgba(250,247,242,0.06);
+  font-family: 'DM Sans', sans-serif;
+}
+.room-status-bar.visible { display: flex; }
+.room-status-line {
+  font-size: 12px; color: rgba(250,247,242,0.55);
+  display: flex; align-items: center; gap: 6px;
+}
+.room-status-code {
+  font-size: 13px; color: var(--accent);
+  letter-spacing: 0.12em; font-weight: 500;
+}
+
+/* ══ LIGHT THEME OVERRIDES ══ */
+html, body, .app-header, .side-nav, .score-bar, #landing,
+.room-status-bar, .game-header, .rules-card, .card, .invite-card,
+.chat-panel, .auth-modal, .timer-widget, .side-nav-action-btn,
+.partner-disconnected-banner {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+html[data-theme="light"] {
+  --cream: #1A1612;          /* "cream" used as text-on-dark becomes ink for text-on-light */
+  --ink-surface: #FAF7F2;    /* light surface replaces ink dark surface */
+}
+html[data-theme="light"] body { background: #FAF7F2; color: #1A1612; }
+html[data-theme="light"] .app-header,
+html[data-theme="light"] .side-nav,
+html[data-theme="light"] .score-bar,
+html[data-theme="light"] .room-status-bar,
+html[data-theme="light"] #landing {
+  background: #FAF7F2;
+  border-color: rgba(26,22,18,0.12);
+}
+html[data-theme="light"] .app-header { color: #1A1612; }
+html[data-theme="light"] .app-header-title { color: #1A1612; }
+html[data-theme="light"] .app-header-names,
+html[data-theme="light"] .connection-status,
+html[data-theme="light"] .room-status-line { color: rgba(26,22,18,0.55); }
+html[data-theme="light"] .side-nav { border-right-color: rgba(26,22,18,0.12); color: #1A1612; }
+html[data-theme="light"] .side-nav-title,
+html[data-theme="light"] .side-nav-item { color: #1A1612; }
+html[data-theme="light"] .side-nav-item:hover { background: rgba(26,22,18,0.05); }
+html[data-theme="light"] .side-nav-action-btn { color: #1A1612; }
+html[data-theme="light"] .score-bar { color: #1A1612; border-bottom-color: rgba(26,22,18,0.06); }
+html[data-theme="light"] .score-bar .sb-name { color: rgba(26,22,18,0.6); }
+html[data-theme="light"] .score-bar .sb-score { color: #1A1612; }
+html[data-theme="light"] .score-bar .sb-sep { color: rgba(26,22,18,0.3); }
+html[data-theme="light"] .hamburger-btn { color: #1A1612; }
+html[data-theme="light"] .landing-title { color: #1A1612; }
+html[data-theme="light"] .landing-tagline { color: rgba(26,22,18,0.6); }
+html[data-theme="light"] .card,
+html[data-theme="light"] .rules-card,
+html[data-theme="light"] .invite-card,
+html[data-theme="light"] .chat-panel,
+html[data-theme="light"] .auth-modal,
+html[data-theme="light"] .timer-widget {
+  background: #FFFFFF;
+  border-color: rgba(26,22,18,0.12);
+  color: #1A1612;
+}
 
 /* ══ SCORE BAR ══ */
 .score-bar {
