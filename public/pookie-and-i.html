@@ -4078,6 +4078,11 @@ function _syncSideNav() {
 
 function toggleSideNav() {
   sideNavOpen = !sideNavOpen;
+  if (sideNavOpen) {
+    // Always reset categories to fully expanded each time the panel opens
+    _navCollapsed = {};
+    if (typeof buildNav === 'function') buildNav();
+  }
   _syncSideNav();
 }
 
@@ -4088,6 +4093,31 @@ function closeSideNav() {
 
 // Open side nav by default on load
 document.addEventListener('DOMContentLoaded', () => { _syncSideNav(); });
+
+// ═══════════════════════════════════════════════════════════
+// THEME TOGGLE (light / dark mode)
+// ═══════════════════════════════════════════════════════════
+function _applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = theme === 'light' ? '🌙 Dark mode' : '☀️ Light mode';
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('pookie_theme', next); } catch(e) {}
+  _applyTheme(next);
+}
+(function initTheme(){
+  let theme = 'dark';
+  try {
+    const saved = localStorage.getItem('pookie_theme');
+    if (saved === 'light' || saved === 'dark') theme = saved;
+    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
+  } catch(e) {}
+  _applyTheme(theme);
+  document.addEventListener('DOMContentLoaded', () => _applyTheme(theme));
+})();
 
 // ═══════════════════════════════════════════════════════════
 // SCORE BAR
