@@ -2238,26 +2238,54 @@ function showScreen(id) {
 }
 
 // ─── NAV ────────────────────────────────────────────────
+// Category groupings for the side-nav (game ids mapped to display categories)
+const NAV_CATEGORIES = [
+  { key: 'foryoutwo',  label: '🧡 For You Two',     ids: ['questions','finishsentence','assumptions','activities','challenges'] },
+  { key: 'classic',    label: '🎮 Classic Games',   ids: ['never','thisorthat','twenty','wyr','truths','mostlikely'] },
+  { key: 'spicy',      label: '🌶️ Spicy & Flirty', ids: ['confessdare','rateus','hottakes','redgreen','kma'] },
+  { key: 'justforfun', label: '🎲 Just For Fun',    ids: ['emoji','word','song','scenario','unpopular'] },
+];
+let _navCollapsed = {}; // session-only collapsed state per category key
+let _lastSurpriseId = null;
+
 function buildNav() {
   const nav = document.getElementById('side-nav-content');
-  const sections = [
-    { label: 'For You Two', items: extras },
-    { label: 'Games', items: games },
-    { label: '🌶️ Spicy & Flirty', items: spicy }
-    ,{ label: '🎮 Just For Fun', items: justforfun }
-  ];
   let html = '';
-  sections.forEach(section => {
-    html += `<div class="side-nav-section">
-      <div class="side-nav-section-label">${section.label}</div>`;
-    section.items.forEach(g => {
+  NAV_CATEGORIES.forEach(cat => {
+    const collapsed = !!_navCollapsed[cat.key];
+    html += `<div class="side-nav-section${collapsed ? ' collapsed' : ''}" data-cat="${cat.key}">
+      <button class="side-nav-cat-header" onclick="toggleNavCategory('${cat.key}')" aria-expanded="${!collapsed}">
+        <span>${cat.label}</span><span class="side-nav-cat-chev" aria-hidden="true">▾</span>
+      </button>
+      <div class="side-nav-cat-items">`;
+    cat.ids.forEach(id => {
+      const g = allItems.find(x => x.id === id);
+      if (!g) return;
       html += `<button class="side-nav-item${g.id === activeGame ? ' active' : ''}" onclick="switchGame('${g.id}')"><span class="nav-dot"></span>${g.name}</button>`;
     });
-    html += '</div>';
+    html += `</div></div>`;
   });
   nav.innerHTML = html;
   renderSideNavAuth();
   renderHistoryLeaderboard();
+}
+
+function toggleNavCategory(key) {
+  _navCollapsed[key] = !_navCollapsed[key];
+  buildNav();
+}
+
+function surpriseMe() {
+  const all = NAV_CATEGORIES.flatMap(c => c.ids);
+  let pool = all.filter(id => id !== _lastSurpriseId && id !== activeGame);
+  if (pool.length === 0) pool = all.filter(id => id !== activeGame);
+  if (pool.length === 0) pool = all;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  _lastSurpriseId = pick;
+  const game = allItems.find(g => g.id === pick);
+  switchGame(pick);
+  closeSideNav();
+  if (game) showToast(`Tonight you're playing ${game.name} 🎲`);
 }
 
 function switchGame(id) {
