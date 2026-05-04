@@ -4503,7 +4503,7 @@ async function signInWithGoogle() {
       if (error) { showErr(error.message); return; }
       if (errEl) errEl.style.display = 'none';
       document.getElementById('auth-modal-overlay')?.classList.remove('open');
-      try { await loadCurrentUser(); } catch(e) {}
+      // onAuthStateChange will refresh the UI
     }
   } catch(e) {
     showErr(e?.message || 'Could not start Google sign-in.');
