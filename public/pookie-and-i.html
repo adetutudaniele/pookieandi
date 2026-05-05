@@ -4660,23 +4660,58 @@ async function signOut() {
   showToast('Signed out');
 }
 
+let _profileDisplayName = null;
+async function _loadProfileName() {
+  if (!currentUser) { _profileDisplayName = null; return; }
+  try {
+    const { data } = await sb.from('profiles').select('display_name').eq('id', currentUser.id).maybeSingle();
+    _profileDisplayName = data?.display_name || null;
+  } catch(e) { _profileDisplayName = null; }
+}
+
 function renderSideNavAuth() {
   const container = document.getElementById('side-nav-auth');
   if (!container) return;
 
   if (currentUser) {
-    const displayName = currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User';
+    const fallback = currentUser.user_metadata?.display_name
+      || currentUser.user_metadata?.full_name
+      || currentUser.email?.split('@')[0]
+      || 'User';
+    const displayName = _profileDisplayName || fallback;
     container.innerHTML = `
       <div class="side-nav-user">
-        <div class="side-nav-user-avatar">👤</div>
+        <div class="side-nav-user-avatar" title="${escapeHtml(displayName)}">${escapeHtml(displayName.slice(0,1).toUpperCase())}</div>
         <span class="side-nav-user-name">${escapeHtml(displayName)}</span>
+        <button class="side-nav-signout" onclick="editProfile()" title="Edit username">Edit</button>
         <button class="side-nav-signout" onclick="signOut()">Sign out</button>
       </div>`;
+    if (_profileDisplayName === null) {
+      _loadProfileName().then(() => renderSideNavAuth());
+    }
   } else {
     container.innerHTML = `
-      <button class="side-nav-signin-btn" onclick="openAuthModal()">Sign in / Create account</button>
+      <button class="side-nav-signin-btn" onclick="openAuthModal()" title="Sign in"><span class="side-nav-signin-label">Sign in / Create account</span><span class="side-nav-signin-icon" aria-hidden="true" style="display:none;">👤</span></button>
       <div class="side-nav-guest-msg">Playing as guest — sign in to save your history and appear on the leaderboard.</div>`;
   }
+}
+
+async function editProfile() {
+  if (!currentUser) return;
+  const current = _profileDisplayName || currentUser.user_metadata?.display_name || '';
+  const next = window.prompt('Choose your username', current);
+  if (next === null) return;
+  const name = next.trim();
+  if (!name) { showToast('Username cannot be empty'); return; }
+  try {
+    const { error } = await sb.from('profiles').upsert({ id: currentUser.id, display_name: name }, { onConflict: 'id' });
+    if (error) { showToast('Could not update username'); return; }
+    _profileDisplayName = name;
+    await sb.auth.updateUser({ data: { display_name: name } }).catch(() => {});
+    renderSideNavAuth();
+    renderHistoryLeaderboard();
+    showToast('Username updated 🧡');
+  } catch(e) { showToast('Could not update username'); }
 }
 
 // ═══════════════════════════════════════════════════════════
