@@ -2367,23 +2367,24 @@ const NAV_CATEGORIES = [
   { key: 'spicy',      label: '🌶️ Spicy & Flirty', ids: ['confessdare','rateus','hottakes','redgreen','kma'] },
   { key: 'justforfun', label: '🎲 Just For Fun',    ids: ['emoji','word','song','scenario','unpopular'] },
 ];
-let _navCollapsed = {}; // session-only collapsed state per category key
+// Categories start collapsed by default (per design); user can expand them.
+let _navCollapsed = { foryoutwo: true, classic: true, spicy: true, justforfun: true };
 let _lastSurpriseId = null;
 
 function buildNav() {
   const nav = document.getElementById('side-nav-content');
   let html = '';
   NAV_CATEGORIES.forEach(cat => {
-    const collapsed = !!_navCollapsed[cat.key];
+    const collapsed = _navCollapsed[cat.key] !== false;
     html += `<div class="side-nav-section${collapsed ? ' collapsed' : ''}" data-cat="${cat.key}">
-      <button class="side-nav-cat-header" onclick="toggleNavCategory('${cat.key}')" aria-expanded="${!collapsed}">
+      <button class="side-nav-cat-header" onclick="toggleNavCategory('${cat.key}')" aria-expanded="${!collapsed}" title="${escapeHtml(cat.label)}">
         <span>${cat.label}</span><span class="side-nav-cat-chev" aria-hidden="true">▾</span>
       </button>
       <div class="side-nav-cat-items">`;
     cat.ids.forEach(id => {
       const g = allItems.find(x => x.id === id);
       if (!g) return;
-      html += `<button class="side-nav-item${g.id === activeGame ? ' active' : ''}" onclick="switchGame('${g.id}')"><span class="nav-dot"></span>${g.name}</button>`;
+      html += `<button class="side-nav-item${g.id === activeGame ? ' active' : ''}" onclick="switchGame('${g.id}')" title="${escapeHtml(g.name)}"><span class="nav-dot"></span><span class="side-nav-item-label">${g.name}</span></button>`;
     });
     html += `</div></div>`;
   });
@@ -2393,7 +2394,7 @@ function buildNav() {
 }
 
 function toggleNavCategory(key) {
-  _navCollapsed[key] = !_navCollapsed[key];
+  _navCollapsed[key] = _navCollapsed[key] === false ? true : false;
   buildNav();
 }
 
