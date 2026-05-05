@@ -4540,14 +4540,17 @@ function renderAuthModal() {
   const title = document.getElementById('auth-modal-title');
   const btn = document.getElementById('auth-submit-btn');
   const toggle = document.getElementById('auth-toggle');
+  const nameField = document.getElementById('auth-displayname');
   if (authMode === 'signin') {
     title.textContent = 'Sign In';
     btn.textContent = 'Sign In';
     toggle.innerHTML = 'Don\'t have an account? <a onclick="toggleAuthMode()">Sign up</a>';
+    if (nameField) nameField.style.display = 'none';
   } else {
     title.textContent = 'Create Account';
     btn.textContent = 'Create Account';
     toggle.innerHTML = 'Already have an account? <a onclick="toggleAuthMode()">Sign in</a>';
+    if (nameField) nameField.style.display = '';
   }
   document.getElementById('auth-error').style.display = 'none';
 }
@@ -4560,6 +4563,7 @@ function toggleAuthMode() {
 async function submitAuth() {
   const email = document.getElementById('auth-email').value.trim();
   const password = document.getElementById('auth-password').value;
+  const displayName = document.getElementById('auth-displayname').value.trim();
   const errEl = document.getElementById('auth-error');
   errEl.style.display = 'none';
 
@@ -4568,11 +4572,19 @@ async function submitAuth() {
     errEl.style.display = 'block';
     return;
   }
+  if (authMode === 'signup' && !displayName) {
+    errEl.textContent = 'Please choose a username';
+    errEl.style.display = 'block';
+    return;
+  }
 
   try {
     let result;
     if (authMode === 'signup') {
-      result = await sb.auth.signUp({ email, password });
+      result = await sb.auth.signUp({
+        email, password,
+        options: { data: { display_name: displayName }, emailRedirectTo: window.location.origin }
+      });
     } else {
       result = await sb.auth.signInWithPassword({ email, password });
     }
@@ -4582,6 +4594,12 @@ async function submitAuth() {
       return;
     }
     currentUser = result.data?.user || null;
+    // Best-effort: ensure profile has the chosen display name.
+    if (authMode === 'signup' && currentUser && displayName) {
+      try {
+        await sb.from('profiles').upsert({ id: currentUser.id, display_name: displayName }, { onConflict: 'id' });
+      } catch(e) {}
+    }
     document.getElementById('auth-modal-overlay').classList.remove('open');
     showToast(authMode === 'signup' ? 'Account created! 🧡' : 'Signed in! 🧡');
     renderSideNavAuth();
