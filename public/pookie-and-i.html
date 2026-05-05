@@ -883,6 +883,10 @@ html[data-theme="light"] .side-nav-brand-name { color: #1A1612; }
 .hamburger-btn .hb-icon span:nth-child(1) { top: 0; }
 .hamburger-btn .hb-icon span:nth-child(2) { top: 6px; }
 .hamburger-btn .hb-icon span:nth-child(3) { top: 12px; }
+/* Hamburger in the app header is mobile-only; desktop uses the side-nav toggle */
+@media (min-width: 768px) {
+  .mobile-only-hb { display: none !important; }
+}
 
 /* Room status (moved out of side panel) — small muted text under the score bar */
 .room-status-bar {
