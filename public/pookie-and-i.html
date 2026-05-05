@@ -4190,32 +4190,48 @@ function goBackToLanding() {
 // ═══════════════════════════════════════════════════════════
 // SIDE NAVIGATION
 // ═══════════════════════════════════════════════════════════
-let sideNavOpen = true;
+// Side nav: on desktop we have an always-visible rail that collapses to icons.
+// On mobile it behaves as an off-canvas drawer.
+let sideNavOpen = false;     // mobile drawer open?
+let sideNavCollapsed = true; // desktop rail collapsed by default per design
+
+function _isMobileNav() { return window.innerWidth < 768; }
 
 function _syncSideNav() {
-  document.getElementById('side-nav').classList.toggle('open', sideNavOpen);
-  document.getElementById('side-nav-overlay').classList.toggle('open', sideNavOpen);
-  const btn = document.querySelector('.hamburger-btn');
-  if (btn) btn.setAttribute('aria-expanded', sideNavOpen ? 'true' : 'false');
+  const nav = document.getElementById('side-nav');
+  const overlay = document.getElementById('side-nav-overlay');
+  if (!nav) return;
+  if (_isMobileNav()) {
+    nav.classList.toggle('open', sideNavOpen);
+    nav.classList.toggle('collapsed', !sideNavOpen);
+    if (overlay) overlay.classList.toggle('open', sideNavOpen);
+  } else {
+    nav.classList.toggle('collapsed', sideNavCollapsed);
+    nav.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+  }
+  const expanded = _isMobileNav() ? sideNavOpen : !sideNavCollapsed;
+  document.querySelectorAll('.hamburger-btn, .side-nav-toggle').forEach(b => {
+    b.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  });
 }
 
 function toggleSideNav() {
-  sideNavOpen = !sideNavOpen;
-  if (sideNavOpen) {
-    // Always reset categories to fully expanded each time the panel opens
-    _navCollapsed = {};
-    if (typeof buildNav === 'function') buildNav();
+  if (_isMobileNav()) {
+    sideNavOpen = !sideNavOpen;
+  } else {
+    sideNavCollapsed = !sideNavCollapsed;
   }
   _syncSideNav();
 }
 
 function closeSideNav() {
-  sideNavOpen = false;
+  if (_isMobileNav()) { sideNavOpen = false; }
   _syncSideNav();
 }
 
-// Open side nav by default on load
 document.addEventListener('DOMContentLoaded', () => { _syncSideNav(); });
+window.addEventListener('resize', () => { _syncSideNav(); });
 
 // ═══════════════════════════════════════════════════════════
 // THEME TOGGLE (light / dark mode)
