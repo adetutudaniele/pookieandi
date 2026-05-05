@@ -4518,6 +4518,7 @@ async function checkAuthState() {
     }
     sb.auth.onAuthStateChange((event, session) => {
       currentUser = session?.user || null;
+      _profileDisplayName = null;
       renderSideNavAuth();
       renderHistoryLeaderboard();
     });
