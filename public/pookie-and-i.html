@@ -263,6 +263,77 @@ body {
 }
 .landing-footer-note.visible { opacity: 1; }
 
+/* ── Landing intro / auth two-column layout ── */
+.landing-intro-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  width: 100%;
+  align-items: start;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 768px) {
+  .landing-intro-row { grid-template-columns: 1fr; gap: 1.5rem; }
+}
+.auth-choice-card {
+  background: rgba(250,247,242,0.05);
+  border: 1px solid rgba(250,247,242,0.12);
+  border-radius: 16px;
+  padding: 1.75rem 1.5rem;
+  display: flex; flex-direction: column; gap: 12px;
+  position: sticky; top: 1rem;
+}
+.auth-choice-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem; font-weight: 600; color: var(--cream);
+  margin-bottom: 4px;
+}
+.auth-choice-sub {
+  font-size: 13px; color: rgba(250,247,242,0.55);
+  margin-bottom: 8px; line-height: 1.5;
+}
+.auth-choice-btn {
+  width: 100%; border-radius: 10px; padding: 12px;
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: opacity 0.15s, background 0.15s;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border: none;
+}
+.auth-choice-btn.google {
+  background: white; color: #1f1f1f; border: 1px solid rgba(0,0,0,0.1);
+}
+.auth-choice-btn.google:hover { opacity: 0.92; }
+.auth-choice-btn.email {
+  background: transparent; color: var(--cream);
+  border: 1px solid rgba(250,247,242,0.2);
+}
+.auth-choice-btn.email:hover { background: rgba(250,247,242,0.06); }
+.auth-choice-btn.guest {
+  background: var(--accent); color: white;
+}
+.auth-choice-btn.guest:hover { opacity: 0.9; }
+.auth-choice-divider {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 11px; color: rgba(250,247,242,0.35);
+  text-transform: uppercase; letter-spacing: 0.15em;
+}
+.auth-choice-divider::before,
+.auth-choice-divider::after {
+  content: ''; flex: 1; height: 1px; background: rgba(250,247,242,0.12);
+}
+.auth-choice-note {
+  font-size: 11px; color: rgba(250,247,242,0.35);
+  text-align: center; margin-top: 4px;
+}
+
+/* When stage view is active, hide intro + show stage. Default = intro. */
+.landing-inner.stage-view .landing-intro-row,
+.landing-inner.stage-view .story,
+.landing-inner.stage-view .landing-eyebrow { display: none !important; }
+.landing-inner:not(.stage-view) .landing-stage { display: none !important; }
+.landing-inner.stage-view .landing-title { font-size: clamp(1.8rem, 5vw, 2.4rem); margin-bottom: 0.25rem; }
+.landing-inner.stage-view .landing-tagline { margin-bottom: 1.5rem; }
+
 /* ══════════════════════════════════
    INVITE / SHARE SCREEN
 ══════════════════════════════════ */
