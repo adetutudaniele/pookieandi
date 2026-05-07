@@ -2345,14 +2345,8 @@ window.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => document.getElementById('s2')?.classList.add('visible'), 500);
   setTimeout(() => document.getElementById('s3')?.classList.add('visible'), 800);
   setTimeout(() => document.getElementById('s4')?.classList.add('visible'), 1100);
-  setTimeout(() => document.getElementById('sdiv')?.classList.add('visible'), 1200);
-  setTimeout(() => document.getElementById('namesetup')?.classList.add('visible'), 1200);
-  setTimeout(() => {
-    document.getElementById('startBtn')?.classList.add('visible');
-    document.getElementById('joinDivider')?.classList.add('visible');
-    document.getElementById('joinSection')?.classList.add('visible');
-    document.getElementById('footernote')?.classList.add('visible');
-  }, 1400);
+  // Stage section (names → room code → CTA → join) is hidden until the
+  // user picks "Play as a guest" or signs in. See showStage().
 
   // Check URL for room code
   const params = new URLSearchParams(window.location.search);
@@ -2367,6 +2361,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Check auth state
   checkAuthState();
+
+  // If user is already signed in (after Google redirect or persisted session),
+  // auto-advance to the stage view.
+  setTimeout(async () => {
+    try {
+      const { data } = await sb.auth.getSession();
+      if (data?.session?.user) showStage();
+    } catch(e) {}
+  }, 300);
 });
 
 function updateShareBox() {
