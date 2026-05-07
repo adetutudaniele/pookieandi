@@ -51,8 +51,8 @@
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background: var(--cream);
-  color: var(--ink);
+  background: var(--ink);
+  color: var(--cream);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -194,7 +194,7 @@ body {
   border: 1px solid rgba(250,247,242,0.1);
   border-radius: 16px;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.5s ease 1s, transform 0.5s ease 1s;
@@ -741,6 +741,7 @@ body {
 .side-nav.collapsed .side-nav-signout,
 .side-nav.collapsed .side-nav-guest-msg,
 .side-nav.collapsed .side-nav-signin-label { display: none !important; }
+.side-nav.collapsed .side-nav-brand-name { visibility: hidden; width: 0; }
 .side-nav.collapsed .side-nav-cat-header { justify-content: center; padding: 8px 0; font-size: 18px; }
 .side-nav.collapsed .side-nav-item { justify-content: center; padding: 8px 0; }
 .side-nav.collapsed .side-nav-item .nav-dot { display: none; }
@@ -1374,7 +1375,7 @@ html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
     </div>
 
     <!-- STEP 3: Start button -->
-    <button class="cta-btn" id="startBtn" onclick="startApp()">Start date night →</button>
+    <button class="cta-btn" id="startBtn" onclick="startApp()">Generate room code →</button>
 
     <!-- Join room section -->
     <div class="join-divider" id="joinDivider">
@@ -1390,7 +1391,7 @@ html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
       </div>
     </div>
 
-    <p class="landing-footer-note" id="footernote">No account needed · works on any device · free forever</p>
+    <p class="landing-footer-note" id="footernote" style="display:none;"></p>
   </div>
 </div>
 
@@ -1406,10 +1407,9 @@ html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
 
     <div class="invite-card">
       <div class="invite-url" id="invite-url">pookieandi.lovable.app</div>
-      <div class="invite-msg" id="invite-msg">Hey pookie 🧡 I made us something for tonight — open this when we're on the call: pookieandi.lovable.app</div>
+      <div class="invite-msg" id="invite-msg">Hey pookie 🧡 I made us something for tonight — open this when we're on the call: <a href="https://pookieandi.lovable.app" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">pookieandi.lovable.app</a></div>
       <div class="invite-btn-row">
-        <button class="invite-btn primary" onclick="copyLink()">Copy link</button>
-        <button class="invite-btn secondary" onclick="copyMsg()">Copy message</button>
+        <button class="invite-btn primary" onclick="copyMsg()">Copy message</button>
       </div>
     </div>
 
@@ -1475,7 +1475,6 @@ html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
     <div id="side-nav-content"></div>
     <div class="side-nav-top-actions">
       <button class="side-nav-action-btn surprise" onclick="surpriseMe()">Surprise me 🎲</button>
-      <button class="side-nav-action-btn" id="theme-toggle-btn" onclick="toggleTheme()">🌙 Dark mode</button>
     </div>
     <div id="side-nav-history-leaderboard"></div>
     <div class="side-nav-auth" id="side-nav-auth"></div>
@@ -4249,14 +4248,9 @@ function toggleTheme() {
   _applyTheme(next);
 }
 (function initTheme(){
-  let theme = 'dark';
-  try {
-    const saved = localStorage.getItem('pookie_theme');
-    if (saved === 'light' || saved === 'dark') theme = saved;
-    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
-  } catch(e) {}
-  _applyTheme(theme);
-  document.addEventListener('DOMContentLoaded', () => _applyTheme(theme));
+  // Light/dark toggle removed — app stays in original dark theme.
+  _applyTheme('dark');
+  document.addEventListener('DOMContentLoaded', () => _applyTheme('dark'));
 })();
 
 // ═══════════════════════════════════════════════════════════
