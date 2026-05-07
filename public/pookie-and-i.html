@@ -194,7 +194,7 @@ body {
   border: 1px solid rgba(250,247,242,0.1);
   border-radius: 16px;
   padding: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.5s ease 1s, transform 0.5s ease 1s;
@@ -741,6 +741,7 @@ body {
 .side-nav.collapsed .side-nav-signout,
 .side-nav.collapsed .side-nav-guest-msg,
 .side-nav.collapsed .side-nav-signin-label { display: none !important; }
+.side-nav.collapsed .side-nav-brand-name { visibility: hidden; width: 0; }
 .side-nav.collapsed .side-nav-cat-header { justify-content: center; padding: 8px 0; font-size: 18px; }
 .side-nav.collapsed .side-nav-item { justify-content: center; padding: 8px 0; }
 .side-nav.collapsed .side-nav-item .nav-dot { display: none; }
@@ -4247,14 +4248,9 @@ function toggleTheme() {
   _applyTheme(next);
 }
 (function initTheme(){
-  let theme = 'dark';
-  try {
-    const saved = localStorage.getItem('pookie_theme');
-    if (saved === 'light' || saved === 'dark') theme = saved;
-    else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) theme = 'light';
-  } catch(e) {}
-  _applyTheme(theme);
-  document.addEventListener('DOMContentLoaded', () => _applyTheme(theme));
+  // Light/dark toggle removed — app stays in original dark theme.
+  _applyTheme('dark');
+  document.addEventListener('DOMContentLoaded', () => _applyTheme('dark'));
 })();
 
 // ═══════════════════════════════════════════════════════════
