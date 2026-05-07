@@ -1519,22 +1519,11 @@ html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
     <div class="room-status-bar" id="room-status-bar">
       <div class="room-status-line" id="room-status-line"></div>
       <div class="room-status-code" id="room-status-code"></div>
-    </div>
-    <div class="app-header" style="position:static;">
-      <div class="app-header-left" style="display:flex;align-items:center;gap:4px;">
-        <button class="hamburger-btn mobile-only-hb" onclick="toggleSideNav()" aria-label="Toggle navigation menu" aria-controls="side-nav" aria-expanded="false"><span class="hb-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
-        <div>
-          <div class="app-header-title" style="cursor:pointer;" onclick="goBackToLanding()">Pookie <em>&</em> I</div>
-          <div class="app-header-names" id="header-names" style="display:none;"></div>
-          <div class="connection-status" id="connection-status" style="display:none;"></div>
-          <div class="app-header-room-code" id="header-room-code" style="display:none;"></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;position:relative;">
+      <div class="room-status-actions" style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:6px;position:relative;">
         <button class="app-share-btn" id="timer-btn" onclick="toggleTimer()" aria-label="Open countdown timer" style="padding:6px 8px;font-size:16px;"><span aria-hidden="true">⏱</span></button>
         <button class="app-share-btn" id="chat-btn" onclick="toggleChat()" aria-label="Open chat" style="position:relative;padding:6px 8px;font-size:16px;"><span aria-hidden="true">💬</span><span class="chat-unread-dot" id="chat-badge" aria-hidden="true"></span></button>
         <button class="app-share-btn" onclick="showInvite()" aria-label="Share room">Share ↗</button>
-        <div class="timer-widget" id="timer-widget">
+        <div class="timer-widget" id="timer-widget" style="left:50%;right:auto;transform:translateX(-50%);">
           <div class="timer-display" id="timer-display">00:00</div>
           <div class="timer-presets">
             <button class="timer-preset" onclick="setTimer(30)">30s</button>
@@ -1551,6 +1540,17 @@ html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
             <button class="timer-ctrl-btn start" id="timer-start-btn" onclick="toggleTimerRun()">Start</button>
             <button class="timer-ctrl-btn reset" onclick="resetTimer()">Reset</button>
           </div>
+        </div>
+      </div>
+    </div>
+    <div class="app-header" style="position:static;">
+      <div class="app-header-left" style="display:flex;align-items:center;gap:4px;">
+        <button class="hamburger-btn mobile-only-hb" onclick="toggleSideNav()" aria-label="Toggle navigation menu" aria-controls="side-nav" aria-expanded="false"><span class="hb-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
+        <div>
+          <div class="app-header-title" style="cursor:pointer;" onclick="goBackToLanding()">Pookie <em>&</em> I</div>
+          <div class="app-header-names" id="header-names" style="display:none;"></div>
+          <div class="connection-status" id="connection-status" style="display:none;"></div>
+          <div class="app-header-room-code" id="header-room-code" style="display:none;"></div>
         </div>
       </div>
     </div>
