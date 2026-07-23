@@ -5045,5 +5045,129 @@ async function saveSessionHistory() {
 }
 
 </script>
+
+<!-- ══ Offline banner (mobile hardening) ══ -->
+<div id="offline-banner" role="status" aria-live="polite">You are offline — reconnecting…</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   MOBILE / CROSS-DEVICE HARDENING (behavior — no design changes)
+   ══════════════════════════════════════════════════════════════ */
+(function(){
+  // 1) iOS 100vh fallback via --app-vh
+  function setAppVh() {
+    document.documentElement.style.setProperty('--app-vh', (window.innerHeight * 0.01) + 'px');
+  }
+  setAppVh();
+  window.addEventListener('resize', setAppVh, { passive: true });
+  window.addEventListener('orientationchange', setAppVh, { passive: true });
+
+  // 2) Offline / online banner
+  var banner = document.getElementById('offline-banner');
+  function showOffline() { if (banner) banner.classList.add('show'); }
+  function hideOffline() { if (banner) banner.classList.remove('show'); }
+  if (!navigator.onLine) showOffline();
+  window.addEventListener('offline', showOffline);
+  window.addEventListener('online', function(){
+    hideOffline();
+    reconnectRealtime('online');
+  });
+
+  // 3) Realtime reconnect when the app regains focus / visibility
+  //    Uses whatever supabase client is exposed by the app (sb / supabaseClient / window.sb)
+  function getSb() {
+    return window.sb || window.supabaseClient || (window.supabase && window.supabase.__client) || null;
+  }
+  function reconnectRealtime(reason) {
+    try {
+      var client = getSb();
+      if (!client || !client.realtime) return;
+      // Ask realtime to reconnect its socket; channels will resubscribe.
+      if (typeof client.realtime.disconnect === 'function') {
+        client.realtime.disconnect();
+      }
+      if (typeof client.realtime.connect === 'function') {
+        client.realtime.connect();
+      }
+      // Re-track presence if the app exposes a helper (best-effort)
+      if (typeof window.__pkResyncPresence === 'function') {
+        try { window.__pkResyncPresence(); } catch(e) {}
+      }
+    } catch (e) { /* ignore */ }
+  }
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') {
+      if (navigator.onLine) hideOffline();
+      reconnectRealtime('visible');
+    }
+  });
+  window.addEventListener('focus', function(){ reconnectRealtime('focus'); });
+  window.addEventListener('pageshow', function(e){
+    if (e.persisted) reconnectRealtime('pageshow');
+  });
+
+  // 4) Android back button closes open panels before navigating away
+  var panelClosers = [
+    function(){ // side nav
+      var n = document.getElementById('side-nav');
+      if (n && n.classList.contains('open')) {
+        n.classList.remove('open');
+        var o = document.getElementById('side-nav-overlay');
+        if (o) o.classList.remove('open');
+        try { window.sideNavOpen = false; } catch(e){}
+        return true;
+      }
+      return false;
+    },
+    function(){ // chat
+      var p = document.getElementById('chat-panel');
+      var o = document.getElementById('chat-overlay');
+      if (p && p.classList.contains('open')) {
+        p.classList.remove('open');
+        if (o) o.classList.remove('open');
+        try { window.chatOpen = false; } catch(e){}
+        return true;
+      }
+      return false;
+    },
+    function(){ // timer
+      var t = document.getElementById('timer-widget');
+      if (t && t.classList.contains('open')) {
+        t.classList.remove('open');
+        return true;
+      }
+      return false;
+    },
+    function(){ // auth modal
+      var a = document.getElementById('auth-modal-overlay');
+      if (a && a.classList.contains('open')) {
+        a.classList.remove('open');
+        return true;
+      }
+      return false;
+    },
+  ];
+  // Push a dummy state so the first back press fires popstate
+  try { history.pushState({ pk: 'panel-guard' }, ''); } catch(e){}
+  window.addEventListener('popstate', function(){
+    var handled = false;
+    for (var i = 0; i < panelClosers.length; i++) {
+      if (panelClosers[i]()) { handled = true; break; }
+    }
+    if (handled) {
+      try { history.pushState({ pk: 'panel-guard' }, ''); } catch(e){}
+    }
+  });
+
+  // 5) Keyboard-open jitter: temporarily unset fixed positioning while VirtualKeyboard is up
+  //    (best-effort — no layout change when keyboard is closed)
+  if ('visualViewport' in window) {
+    window.visualViewport.addEventListener('resize', function(){
+      var kb = (window.innerHeight - window.visualViewport.height) > 150;
+      document.documentElement.classList.toggle('kb-open', kb);
+    });
+  }
+})();
+</script>
 </body>
 </html>
