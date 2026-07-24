@@ -5171,5 +5171,271 @@ async function saveSessionHistory() {
   }
 })();
 </script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROBUST SYNC LAYER (additive — does not change any design/content/logic)
+   - Retry every rooms.update up to 3 times with backoff
+   - Sync status indicator (green Synced / amber Syncing / red Retrying)
+   - Channel-drop watchdog: resubscribe + full resync every 5s if unhealthy
+   - Full resync on visibility/online/focus/pageshow
+   - Timer sync across both devices (start/pause/reset/tick)
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var client = window.sb;
+  if (!client) { return; }
+
+  /* -------- Sync status indicator (tiny dot appended to room status bar) -- */
+  var lastStatus = 'idle';
+  function ensureStatusDot() {
+    var dot = document.getElementById('pk-sync-dot');
+    if (dot) return dot;
+    dot = document.createElement('span');
+    dot.id = 'pk-sync-dot';
+    dot.setAttribute('aria-live','polite');
+    dot.style.cssText = 'display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:10px;opacity:.75;vertical-align:middle;';
+    dot.innerHTML = '<span id="pk-sync-dot-mark" style="width:7px;height:7px;border-radius:50%;background:#4ade80;display:inline-block;"></span><span id="pk-sync-dot-label">Synced</span>';
+    var target = document.getElementById('room-status-line') || document.getElementById('room-status-bar');
+    if (target) target.appendChild(dot);
+    return dot;
+  }
+  function setSyncStatus(s) {
+    if (s === lastStatus) return;
+    lastStatus = s;
+    var dot = ensureStatusDot();
+    if (!dot) return;
+    var mark = document.getElementById('pk-sync-dot-mark');
+    var label = document.getElementById('pk-sync-dot-label');
+    if (!mark || !label) return;
+    if (s === 'synced')      { mark.style.background = '#4ade80'; label.textContent = 'Synced'; }
+    else if (s === 'syncing'){ mark.style.background = '#fbbf24'; label.textContent = 'Syncing…'; }
+    else if (s === 'retry')  { mark.style.background = '#f87171'; label.textContent = 'Sync issue — retrying…'; }
+  }
+  // Re-attach dot whenever the status bar re-renders
+  setInterval(ensureStatusDot, 1500);
+
+  /* -------- Retrying rooms.update wrapper ------------------------------- */
+  var inflight = 0;
+  async function safeRoomUpdate(patch, opts) {
+    opts = opts || {};
+    var room = window.currentRoom;
+    if (!room) return { ok:false, error:'no-room' };
+    inflight++;
+    setSyncStatus('syncing');
+    var lastErr = null;
+    for (var attempt = 1; attempt <= 3; attempt++) {
+      try {
+        var res = await client.from('rooms').update(patch).eq('id', room.id);
+        if (!res.error) {
+          inflight = Math.max(0, inflight - 1);
+          if (inflight === 0) setSyncStatus('synced');
+          return { ok:true };
+        }
+        lastErr = res.error;
+      } catch (e) { lastErr = e; }
+      setSyncStatus('retry');
+      await new Promise(function(r){ setTimeout(r, 400 * attempt); });
+    }
+    inflight = Math.max(0, inflight - 1);
+    setSyncStatus('retry');
+    setTimeout(function(){ if (inflight === 0) setSyncStatus('synced'); }, 4000);
+    console.warn('[sync] rooms.update failed after 3 retries', lastErr, patch);
+    return { ok:false, error:lastErr };
+  }
+  window.__pkSafeRoomUpdate = safeRoomUpdate;
+
+  /* -------- Wrap pushState / pushScores / chat / presence writes -------- */
+  function wrapPush() {
+    if (typeof window.pushState === 'function' && !window.pushState.__wrapped) {
+      var orig = window.pushState;
+      window.pushState = function() {
+        if (window.syncPaused || !window.currentRoom) return;
+        clearTimeout(window.syncTimer);
+        window.syncTimer = setTimeout(function(){
+          var gs = window.getFullState ? window.getFullState() : null;
+          if (!gs) return;
+          safeRoomUpdate({ game_state: gs, active_game: window.activeGame });
+        }, 100);
+      };
+      window.pushState.__wrapped = true;
+    }
+    if (typeof window.pushScores === 'function' && !window.pushScores.__wrapped) {
+      window.pushScores = function() {
+        if (!window.currentRoom) return;
+        safeRoomUpdate({ scores: window.scores });
+      };
+      window.pushScores.__wrapped = true;
+    }
+  }
+  wrapPush();
+  // In case scripts define these later, re-try once
+  setTimeout(wrapPush, 500);
+
+  /* -------- Chat send: intercept the raw supabase call at fetch level is
+     tricky, so instead monkey-patch sendChatMsg by wrapping its body. --- */
+  (function wrapChat(){
+    if (typeof window.sendChatMsg !== 'function' || window.sendChatMsg.__wrapped) return;
+    var origSend = window.sendChatMsg;
+    window.sendChatMsg = function() {
+      var input = document.getElementById('chat-input');
+      var text = input && input.value.trim();
+      if (!text || !window.currentRoom) return;
+      input.value = '';
+      var msg = { from: window.isPlayer1 ? 'p1' : 'p2', text: text, ts: Date.now() };
+      window.chatMessages.push(msg);
+      window.lastReadCount = window.chatMessages.length;
+      if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
+      if (typeof window.updateChatBadge === 'function') window.updateChatBadge();
+      safeRoomUpdate({ messages: window.chatMessages });
+      var wrap = document.getElementById('emoji-picker-wrap');
+      if (wrap) wrap.classList.remove('open');
+    };
+    window.sendChatMsg.__wrapped = true;
+  })();
+
+  /* -------- Timer sync via game_state.__timer ---------------------------- */
+  // Only the initiator (Player 1) is authoritative for timer commands.
+  // We serialise {seconds, remaining, running, startedAt, epoch} to game_state
+  // by piggy-backing on the existing pushState channel.
+  var appliedTimerEpoch = 0;
+  var timerEpoch = 0;
+  function broadcastTimer() {
+    if (!window.currentRoom) return;
+    timerEpoch = Date.now();
+    var payload = {
+      __timer: {
+        seconds: window.timerSeconds,
+        remaining: window.timerRemaining,
+        running: window.timerRunning,
+        startedAt: window.timerRunning ? Date.now() : 0,
+        epoch: timerEpoch,
+      },
+    };
+    // Merge into state via the same rooms.update
+    var gs = window.getFullState ? window.getFullState() : { state:{}, activeGame: window.activeGame };
+    gs.__timer = payload.__timer;
+    safeRoomUpdate({ game_state: gs, active_game: window.activeGame });
+  }
+  function applyRemoteTimer(t) {
+    if (!t || typeof t.epoch !== 'number' || t.epoch <= appliedTimerEpoch) return;
+    appliedTimerEpoch = t.epoch;
+    clearInterval(window.timerInterval);
+    window.timerSeconds = t.seconds || 0;
+    var rem = t.remaining || 0;
+    if (t.running && t.startedAt) {
+      var elapsed = Math.floor((Date.now() - t.startedAt) / 1000);
+      rem = Math.max(0, rem - elapsed);
+    }
+    window.timerRemaining = rem;
+    window.timerRunning = !!t.running && rem > 0;
+    if (typeof window.updateTimerDisplay === 'function') window.updateTimerDisplay();
+    var btn = document.getElementById('timer-start-btn');
+    if (btn) btn.textContent = window.timerRunning ? 'Pause' : 'Start';
+    var disp = document.getElementById('timer-display');
+    if (disp) disp.classList.remove('flash');
+    if (window.timerRunning) {
+      window.timerInterval = setInterval(function(){
+        window.timerRemaining--;
+        if (typeof window.updateTimerDisplay === 'function') window.updateTimerDisplay();
+        if (window.timerRemaining <= 0) {
+          clearInterval(window.timerInterval);
+          window.timerRunning = false;
+          if (btn) btn.textContent = 'Start';
+          if (disp) disp.classList.add('flash');
+          if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+        }
+      }, 1000);
+    }
+  }
+  // Hook the three timer entry points
+  (function wrapTimer(){
+    ['setTimer','toggleTimerRun','resetTimer'].forEach(function(fn){
+      if (typeof window[fn] !== 'function' || window[fn].__wrapped) return;
+      var orig = window[fn];
+      window[fn] = function() {
+        var r = orig.apply(this, arguments);
+        try { broadcastTimer(); } catch(e){}
+        return r;
+      };
+      window[fn].__wrapped = true;
+    });
+  })();
+
+  /* -------- Intercept remote game_state to also apply timer ------------- */
+  (function wrapApply(){
+    if (typeof window.applyRemoteState !== 'function' || window.applyRemoteState.__wrapped) return;
+    var orig = window.applyRemoteState;
+    window.applyRemoteState = function(gs) {
+      var r = orig.call(this, gs);
+      if (gs && gs.__timer) applyRemoteTimer(gs.__timer);
+      return r;
+    };
+    window.applyRemoteState.__wrapped = true;
+  })();
+
+  /* -------- Full-state resync helper ------------------------------------ */
+  async function fullResync(reason) {
+    if (!window.currentRoom) return;
+    try {
+      var res = await client.from('rooms').select('*').eq('id', window.currentRoom.id).maybeSingle();
+      if (res.error || !res.data) return;
+      var row = res.data;
+      window.currentRoom = row;
+      if (row.game_state && row.game_state.state && typeof window.applyRemoteState === 'function') {
+        window.applyRemoteState(row.game_state);
+      }
+      if (row.messages && Array.isArray(row.messages)) {
+        window.chatMessages = row.messages;
+        if (window.chatOpen) {
+          window.lastReadCount = window.chatMessages.length;
+          if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
+        } else if (typeof window.updateChatBadge === 'function') {
+          window.updateChatBadge();
+        }
+      }
+      if (row.scores && typeof row.scores === 'object') {
+        window.scores = row.scores;
+        if (typeof window.renderScoreBar === 'function') window.renderScoreBar();
+      }
+      if (typeof window.updateConnectionUI === 'function') window.updateConnectionUI();
+      setSyncStatus('synced');
+    } catch(e) {
+      console.warn('[sync] fullResync failed', reason, e);
+    }
+  }
+  window.__pkFullResync = fullResync;
+
+  /* -------- Channel-drop watchdog: every 5s check + resync -------------- */
+  setInterval(function(){
+    if (!window.currentRoom) return;
+    var ch = window.roomChannel;
+    var unhealthy = !ch || (ch.state && ch.state !== 'joined' && ch.state !== 'joining');
+    if (unhealthy) {
+      setSyncStatus('retry');
+      try {
+        if (typeof window.subscribeToRoom === 'function') {
+          window.subscribeToRoom(window.currentRoom.id);
+        }
+      } catch(e){}
+      fullResync('watchdog');
+    }
+  }, 5000);
+
+  /* -------- Hook the existing mobile reconnect helper ------------------- */
+  window.__pkResyncPresence = function(){
+    if (window.currentRoom && typeof window.subscribeToRoom === 'function') {
+      window.subscribeToRoom(window.currentRoom.id);
+    }
+    fullResync('presence');
+  };
+
+  // Extra resync triggers
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') fullResync('visible');
+  });
+  window.addEventListener('online',  function(){ fullResync('online');  });
+  window.addEventListener('focus',   function(){ fullResync('focus');   });
+  window.addEventListener('pageshow',function(e){ if (e.persisted) fullResync('pageshow'); });
+})();
+</script>
 </body>
 </html>
