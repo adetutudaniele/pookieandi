@@ -4989,7 +4989,11 @@ async function renderHistoryLeaderboard() {
 
   // Fetch leaderboard
   try {
-    const { data: ranked } = await sb.rpc('get_leaderboard', { limit_count: 10 });
+    const { data: ranked } = await sb
+      .from('player_stats')
+      .select('user_id, display_name, total_points')
+      .order('total_points', { ascending: false })
+      .limit(10);
     if (ranked && ranked.length) {
       html += `<div class="side-nav-panel">
         <div class="side-nav-panel-title">🏆 Leaderboard</div>`;
