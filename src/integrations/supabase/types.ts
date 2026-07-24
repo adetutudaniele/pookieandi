@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      player_stats: {
+        Row: {
+          display_name: string | null
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          display_name?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          display_name?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -118,14 +139,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_leaderboard: {
-        Args: { limit_count?: number }
-        Returns: {
-          display_name: string
-          total_points: number
-          user_id: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
