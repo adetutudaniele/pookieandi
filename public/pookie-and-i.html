@@ -4989,39 +4989,15 @@ async function renderHistoryLeaderboard() {
 
   // Fetch leaderboard
   try {
-    const { data: lb } = await sb.from('session_history')
-      .select('user_id, final_scores')
-      .limit(200);
-
-    if (lb && lb.length) {
-      // Aggregate scores by user
-      const userScores = {};
-      lb.forEach(row => {
-        const uid = row.user_id;
-        const sc = row.final_scores || { p1: 0, p2: 0 };
-        if (!userScores[uid]) userScores[uid] = 0;
-        userScores[uid] += (sc.p1 || 0);
-      });
-
-      // Fetch display names
-      const userIds = Object.keys(userScores);
-      const { data: profiles } = await sb.from('profiles')
-        .select('id, display_name')
-        .in('id', userIds);
-
-      const ranked = userIds.map(uid => ({
-        uid,
-        name: profiles?.find(p => p.id === uid)?.display_name || 'Player',
-        pts: userScores[uid]
-      })).sort((a,b) => b.pts - a.pts).slice(0, 10);
-
+    const { data: ranked } = await sb.rpc('get_leaderboard', { limit_count: 10 });
+    if (ranked && ranked.length) {
       html += `<div class="side-nav-panel">
         <div class="side-nav-panel-title">🏆 Leaderboard</div>`;
       ranked.forEach((r, i) => {
         html += `<div class="leaderboard-row">
           <span class="leaderboard-rank">${i === 0 ? '👑' : '#'+(i+1)}</span>
-          <span class="leaderboard-name">${escapeHtml(r.name)}</span>
-          <span class="leaderboard-pts">${r.pts} pts</span>
+          <span class="leaderboard-name">${escapeHtml(r.display_name || 'Player')}</span>
+          <span class="leaderboard-pts">${r.total_points} pts</span>
         </div>`;
       });
       html += '</div>';
