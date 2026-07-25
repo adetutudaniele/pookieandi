@@ -5599,7 +5599,7 @@ async function saveSessionHistory() {
         try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
         return;
       }
-      const stage = document.getElementById('landing-stage');
+      const stage = document.getElementById('landing-inner');
       if (!stage) return;
       if (document.getElementById('rejoin-banner')) return;
       const wrap = document.createElement('div');
