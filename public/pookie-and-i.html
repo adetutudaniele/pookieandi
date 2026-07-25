@@ -2478,23 +2478,8 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateShareBox() {
-  const n1 = document.getElementById('name1').value.trim();
-  const n2 = document.getElementById('name2').value.trim();
-  const box = document.getElementById('sharebox');
-  const rcBox = document.getElementById('room-code-landing');
-
-  if (n1 && n2) {
-    box.style.opacity = '1';
-    box.style.transform = 'translateY(0)';
-    rcBox.style.display = 'block';
-    document.getElementById('sharebox-name').textContent = n2;
-    document.getElementById('sharebox-msg').textContent = `Hey ${n2}, 🧡 Join our date night, open pookieandi.lovable.app and enter code: ${pendingRoomCode}`;
-    document.getElementById('landing-room-code').textContent = pendingRoomCode;
-  } else {
-    box.style.opacity = '0';
-    box.style.transform = 'translateY(10px)';
-    rcBox.style.display = 'none';
-  }
+  // Sharebox + room-code preview are only revealed AFTER a room is generated
+  // (see startApp override). Kept as a no-op for backwards compatibility.
 }
 
 function copyShareMsg() {
