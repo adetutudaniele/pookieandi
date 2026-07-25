@@ -5613,7 +5613,8 @@ async function saveSessionHistory() {
         </div>`;
       stage.insertBefore(wrap, stage.firstChild);
       document.getElementById('rejoin-yes').onclick = async () => {
-        // Fill name from stored profile if any; otherwise ask
+        // Make sure the stage (with name input + join field) is visible.
+        if (typeof window.showStage === 'function') { try { window.showStage(); } catch(e){} }
         const n1 = document.getElementById('name1');
         if (!n1.value.trim()) {
           window.showToast && window.showToast('Enter your name to rejoin 🧡');
