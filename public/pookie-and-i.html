@@ -1541,19 +1541,16 @@ emoji-picker {
       <div class="story-divider-line"></div>
     </div>
 
-    <!-- STEP 1: Enter names -->
+    <!-- STEP 1: Enter your name (partner adds their own name when joining) -->
     <div class="name-setup" id="namesetup">
-      <div class="name-setup-label">Who's playing tonight?</div>
+      <div class="name-setup-label" id="namesetup-label">What's your name?</div>
       <div class="name-row">
-        <div class="name-input-wrap">
+        <div class="name-input-wrap" style="flex:1 1 100%;">
           <label>Your name</label>
           <input class="name-input" id="name1" placeholder="e.g. Adetutu" maxlength="20" oninput="updateShareBox()" aria-label="Your name" />
         </div>
-        <div class="name-input-wrap">
-          <label>Your pookie's name</label>
-          <input class="name-input" id="name2" placeholder="e.g. Daniel" maxlength="20" oninput="updateShareBox()" aria-label="Partner's name" />
-        </div>
       </div>
+      <input type="hidden" id="name2" value="" />
     </div>
 
     <!-- STEP 2: Room code + share (shown inline after names) -->
@@ -1567,7 +1564,7 @@ emoji-picker {
     <div id="sharebox" style="width:100%;opacity:0;transform:translateY(10px);transition:opacity 0.4s ease,transform 0.4s ease;margin-bottom:0.75rem;">
       <div style="font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--accent);font-weight:500;margin-bottom:8px;">Send this to <span id="sharebox-name">your pookie</span> first</div>
       <div style="background:rgba(200,82,58,0.1);border:1px solid rgba(200,82,58,0.2);border-radius:12px;padding:1rem 1.25rem;">
-        <div style="font-size:13px;color:rgba(250,247,242,0.65);line-height:1.5;margin-bottom:10px;" id="sharebox-msg">Hey pookie 🧡 Join our date night, open pookieandi.lovable.app and enter code: ----</div>
+        <div style="font-size:13px;color:rgba(250,247,242,0.65);line-height:1.5;margin-bottom:10px;" id="sharebox-msg">Hey 🧡 Join our date night on Pookie & I — open pookieandi.lovable.app and enter code: ----</div>
         <div style="display:flex;gap:8px;">
           <button onclick="copyShareMsg()" id="copy-msg-btn" style="flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity 0.15s;">Copy message</button>
           <button onclick="copyShareLink()" id="copy-link-btn" style="background:rgba(250,247,242,0.08);color:var(--cream);border:1px solid rgba(250,247,242,0.15);border-radius:8px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:background 0.15s;">Copy link</button>
@@ -2481,23 +2478,8 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function updateShareBox() {
-  const n1 = document.getElementById('name1').value.trim();
-  const n2 = document.getElementById('name2').value.trim();
-  const box = document.getElementById('sharebox');
-  const rcBox = document.getElementById('room-code-landing');
-
-  if (n1 && n2) {
-    box.style.opacity = '1';
-    box.style.transform = 'translateY(0)';
-    rcBox.style.display = 'block';
-    document.getElementById('sharebox-name').textContent = n2;
-    document.getElementById('sharebox-msg').textContent = `Hey ${n2}, 🧡 Join our date night, open pookieandi.lovable.app and enter code: ${pendingRoomCode}`;
-    document.getElementById('landing-room-code').textContent = pendingRoomCode;
-  } else {
-    box.style.opacity = '0';
-    box.style.transform = 'translateY(10px)';
-    rcBox.style.display = 'none';
-  }
+  // Sharebox + room-code preview are only revealed AFTER a room is generated
+  // (see startApp override). Kept as a no-op for backwards compatibility.
 }
 
 function copyShareMsg() {
@@ -5415,6 +5397,326 @@ async function saveSessionHistory() {
   window.addEventListener('online',  function(){ fullResync('online');  });
   window.addEventListener('focus',   function(){ fullResync('focus');   });
   window.addEventListener('pageshow',function(e){ if (e.persisted) fullResync('pageshow'); });
+})();
+</script>
+
+<!-- ══ ONBOARDING + HAMBURGER + EXPIRY OVERRIDES ══ -->
+<style>
+/* Hamburger visible in the app header on all screen sizes */
+.mobile-only-hb { display: inline-flex !important; }
+/* Side nav behaves as an off-canvas drawer on all screen sizes.
+   Closed = fully hidden, open = overlays main content from the left. */
+.side-nav { transform: translateX(-100%) !important; width: 260px !important; }
+.side-nav.open { transform: translateX(0) !important; width: 260px !important; }
+/* When collapsed, force full-width contents visible (no mini-rail behavior). */
+.side-nav.collapsed .side-nav-brand-name,
+.side-nav.collapsed .side-nav-cat-header span:first-child,
+.side-nav.collapsed .side-nav-cat-chev,
+.side-nav.collapsed .side-nav-item-label,
+.side-nav.collapsed .side-nav-top-actions,
+.side-nav.collapsed #side-nav-history-leaderboard,
+.side-nav.collapsed .side-nav-user-name,
+.side-nav.collapsed .side-nav-signout,
+.side-nav.collapsed .side-nav-guest-msg,
+.side-nav.collapsed .side-nav-signin-label { display: revert !important; }
+.side-nav.collapsed .side-nav-brand-name { visibility: visible !important; width: auto !important; }
+.side-nav.collapsed .side-nav-brand { justify-content: flex-start !important; flex-direction: row !important; gap: 10px !important; padding: 14px 14px 10px !important; }
+.side-nav.collapsed .side-nav-cat-items { display: block !important; }
+.side-nav.collapsed .side-nav-section.collapsed .side-nav-cat-items { display: none !important; }
+.side-nav.collapsed .side-nav-cat-header { justify-content: space-between !important; padding: 0 1.25rem !important; font-size: 10px !important; }
+.side-nav.collapsed .side-nav-item { justify-content: flex-start !important; padding: 10px 1.25rem !important; }
+.side-nav.collapsed .side-nav-item .nav-dot { display: inline-block !important; }
+/* Room-expiry pill (below the room code) */
+.room-expiry-line { font-size: 11px; color: rgba(250,247,242,0.45); margin-top: 2px; }
+.room-expiry-line.warn { color: #E8A24C; }
+/* Full-screen expired overlay */
+.room-expired-overlay {
+  position: fixed; inset: 0; background: rgba(15,12,10,0.96); z-index: 9999;
+  display: none; align-items: center; justify-content: center; padding: 2rem;
+  text-align: center; font-family: 'DM Sans', sans-serif;
+}
+.room-expired-overlay.visible { display: flex; }
+.room-expired-overlay .rex-inner { max-width: 420px; color: var(--cream); }
+.room-expired-overlay .rex-heart { font-size: 44px; color: var(--accent); margin-bottom: 12px; }
+.room-expired-overlay h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; margin-bottom: 10px; }
+.room-expired-overlay p { color: rgba(250,247,242,0.7); margin-bottom: 1.5rem; line-height: 1.5; }
+.room-expired-overlay button {
+  background: var(--accent); color: white; border: none; border-radius: 10px;
+  padding: 12px 22px; font-size: 14px; font-weight: 500; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+/* Rejoin prompt on landing */
+.rejoin-banner {
+  width: 100%; background: rgba(200,82,58,0.12); border: 1px solid rgba(200,82,58,0.35);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; text-align: left;
+  font-family: 'DM Sans', sans-serif; color: var(--cream);
+}
+.rejoin-banner-title { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.rejoin-banner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.rejoin-banner button {
+  flex: 1; min-width: 130px; padding: 9px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+  border: 1px solid rgba(250,247,242,0.2); background: rgba(250,247,242,0.06); color: var(--cream);
+}
+.rejoin-banner button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+</style>
+
+<div id="room-expired-overlay" class="room-expired-overlay" role="dialog" aria-modal="true" aria-labelledby="rex-title">
+  <div class="rex-inner">
+    <div class="rex-heart" aria-hidden="true">🧡</div>
+    <h2 id="rex-title">Tonight was beautiful</h2>
+    <p>This room has ended. Come back tomorrow for a new date night.</p>
+    <button onclick="__pookieGoHome()">Go home</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+  const LS_KEY = 'pookie_room_id';
+  const LS_CODE = 'pookie_room_code';
+
+  // ── Sidebar: always drawer, never a mini-rail. ──────────────
+  window._syncSideNav = function() {
+    const nav = document.getElementById('side-nav');
+    const overlay = document.getElementById('side-nav-overlay');
+    if (!nav) return;
+    const isOpen = !!window.__sideNavOpen;
+    nav.classList.toggle('open', isOpen);
+    nav.classList.remove('collapsed');
+    if (overlay) overlay.classList.toggle('open', isOpen);
+    document.querySelectorAll('.hamburger-btn, .side-nav-toggle').forEach(b => {
+      b.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  };
+  window.toggleSideNav = function(){ window.__sideNavOpen = !window.__sideNavOpen; window._syncSideNav(); };
+  window.closeSideNav  = function(){ window.__sideNavOpen = false; window._syncSideNav(); };
+  document.addEventListener('DOMContentLoaded', () => { window.__sideNavOpen = false; window._syncSideNav(); });
+
+  // ── Onboarding: partner-less share message + inline reveal after generate ──
+  function _revealSharebox(code) {
+    const box  = document.getElementById('sharebox');
+    const rcBx = document.getElementById('room-code-landing');
+    const rcVal= document.getElementById('landing-room-code');
+    const msg  = document.getElementById('sharebox-msg');
+    const nameSpan = document.getElementById('sharebox-name');
+    if (rcBx) rcBx.style.display = 'block';
+    if (rcVal) rcVal.textContent = code;
+    if (nameSpan) nameSpan.textContent = 'your pookie';
+    if (msg) msg.textContent = `Hey 🧡 Join our date night on Pookie & I — open pookieandi.lovable.app and enter code: ${code}`;
+    if (box) { box.style.opacity = '1'; box.style.transform = 'translateY(0)'; }
+    // Swap the CTA into "Start date night"
+    const startBtn = document.getElementById('startBtn');
+    if (startBtn) {
+      startBtn.textContent = 'Start date night →';
+      startBtn.onclick = function(){ window.goToApp && window.goToApp(); };
+    }
+    // Hide the join-your-partner divider + section for the initiator
+    const jd = document.getElementById('joinDivider');
+    const js = document.getElementById('joinSection');
+    if (jd) jd.style.display = 'none';
+    if (js) js.style.display = 'none';
+  }
+
+  const _origStartApp = window.startApp;
+  window.startApp = async function(){
+    const nameInput = document.getElementById('name1');
+    const myName = (nameInput && nameInput.value.trim()) || '';
+    if (!myName) {
+      window.showToast && window.showToast('Please enter your name first 🧡');
+      nameInput && nameInput.focus();
+      return;
+    }
+    // Force partner name to be unknown until they join.
+    const n2 = document.getElementById('name2');
+    if (n2) n2.value = '';
+    if (typeof _origStartApp === 'function') {
+      await _origStartApp.call(this);
+    }
+    // After the original flow creates the room, replace the invite-screen
+    // navigation with an inline reveal on the same landing screen.
+    try {
+      if (window.currentRoom) {
+        const code = window.currentRoom.room_code;
+        try { localStorage.setItem(LS_CODE, code); } catch(e) {}
+        // Bring the user back to the landing/stage view and reveal share UI.
+        window.showScreen && window.showScreen('landing');
+        _revealSharebox(code);
+      }
+    } catch(e) { console.warn('startApp reveal failed', e); }
+  };
+
+  // Override showRoomInvite so it does NOT navigate away, just reveals inline.
+  window.showRoomInvite = function(code){
+    _revealSharebox(code);
+    if (typeof window.pollForPartner === 'function') { try { window.pollForPartner(); } catch(e){} }
+  };
+
+  // Override copyRoomCode (invite-screen message) to drop partner name.
+  window.copyRoomCode = function(code){
+    const msg = `Hey 🧡 Join our date night on Pookie & I — open pookieandi.lovable.app and enter code: ${code}`;
+    navigator.clipboard.writeText(msg).then(() => window.showToast && window.showToast('Message copied! 🧡'));
+  };
+
+  // ── Joiner mode: if URL has ?code=, hide the story/auth cards + generate CTA
+  //    and show only "Your name + Join room". ─────────────────
+  function _enterJoinerMode(code) {
+    const inner = document.getElementById('landing-inner');
+    if (inner) inner.classList.add('stage-view');
+    const hide = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+    hide('s1'); hide('s2'); hide('s3'); hide('s4');
+    const authCard = document.getElementById('auth-choice-card');
+    if (authCard) authCard.style.display = 'none';
+    const sdiv = document.getElementById('sdiv'); if (sdiv) sdiv.style.display = 'none';
+    const rcBx = document.getElementById('room-code-landing'); if (rcBx) rcBx.style.display = 'none';
+    const sb   = document.getElementById('sharebox'); if (sb) sb.style.display = 'none';
+    const startBtn = document.getElementById('startBtn'); if (startBtn) startBtn.style.display = 'none';
+    const jd = document.getElementById('joinDivider'); if (jd) jd.style.display = 'none';
+    const label = document.getElementById('namesetup-label'); if (label) label.textContent = 'Join your pookie 🧡';
+    // Reveal namesetup + join section
+    document.getElementById('namesetup')?.classList.add('visible');
+    const js = document.getElementById('joinSection');
+    if (js) { js.classList.add('visible'); js.style.display = ''; }
+    // Prefill code
+    const codeInput = document.getElementById('joinCodeInput');
+    if (codeInput && code) codeInput.value = code;
+    // Rename join button for clarity
+    const jbtn = document.getElementById('joinCodeBtn'); if (jbtn) jbtn.textContent = 'Join room';
+    try { document.getElementById('name1')?.focus(); } catch(e){}
+  }
+
+  // ── Rejoin prompt when returning within 24h ───────────────────
+  async function _maybeShowRejoin() {
+    let roomId = null;
+    try { roomId = localStorage.getItem(LS_KEY); } catch(e) {}
+    if (!roomId || !window.sb) return;
+    try {
+      const { data } = await window.sb.from('rooms').select('*').eq('id', roomId).maybeSingle();
+      if (!data) return;
+      const created = new Date(data.created_at).getTime();
+      const now = Date.now();
+      if (now - created >= ROOM_TTL_MS) {
+        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
+        return;
+      }
+      const stage = document.getElementById('landing-inner');
+      if (!stage) return;
+      if (document.getElementById('rejoin-banner')) return;
+      const wrap = document.createElement('div');
+      wrap.id = 'rejoin-banner';
+      wrap.className = 'rejoin-banner';
+      wrap.innerHTML = `
+        <div class="rejoin-banner-title">Welcome back 🧡 Your room <strong>${data.room_code}</strong> is still active — want to rejoin?</div>
+        <div class="rejoin-banner-actions">
+          <button class="primary" id="rejoin-yes">Rejoin room</button>
+          <button id="rejoin-no">Start a new room</button>
+        </div>`;
+      stage.insertBefore(wrap, stage.firstChild);
+      document.getElementById('rejoin-yes').onclick = async () => {
+        // Make sure the stage (with name input + join field) is visible.
+        if (typeof window.showStage === 'function') { try { window.showStage(); } catch(e){} }
+        const n1 = document.getElementById('name1');
+        if (!n1.value.trim()) {
+          window.showToast && window.showToast('Enter your name to rejoin 🧡');
+          n1.focus();
+          return;
+        }
+        const codeInput = document.getElementById('joinCodeInput');
+        if (codeInput) codeInput.value = data.room_code;
+        if (typeof window.joinRoom === 'function') await window.joinRoom();
+      };
+      document.getElementById('rejoin-no').onclick = () => {
+        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
+        wrap.remove();
+      };
+    } catch(e) { /* silent */ }
+  }
+
+  // ── Friendlier expired message when joining ───────────────────
+  const _origJoinRoom = window.joinRoom;
+  window.joinRoom = async function(){
+    if (typeof _origJoinRoom !== 'function') return;
+    // Wrap the toast for the "not found or expired" message
+    const origToast = window.showToast;
+    let interceptedExpired = false;
+    window.showToast = function(msg){
+      if (msg === 'Room not found or expired') {
+        interceptedExpired = true;
+        origToast && origToast('This room has ended 🧡 Ready for a new date night? Start a fresh room below.');
+        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
+      } else {
+        origToast && origToast(msg);
+      }
+    };
+    try { await _origJoinRoom.call(this); }
+    finally { window.showToast = origToast; }
+  };
+
+  // ── Room expiry countdown + full-screen expiry banner ─────────
+  let __expiryTimer = null;
+  function _fmtRemaining(ms) {
+    const totalMin = Math.max(0, Math.floor(ms / 60000));
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h > 0) return `${h} hr${h===1?'':'s'} ${m} min${m===1?'':'s'}`;
+    return `${m} min${m===1?'':'s'}`;
+  }
+  function _renderExpiry() {
+    const rsBar = document.getElementById('room-status-bar');
+    if (!window.currentRoom || !rsBar) return;
+    let line = document.getElementById('room-expiry-line');
+    if (!line) {
+      line = document.createElement('div');
+      line.id = 'room-expiry-line';
+      line.className = 'room-expiry-line';
+      const codeEl = document.getElementById('room-status-code');
+      if (codeEl && codeEl.parentNode) codeEl.parentNode.insertBefore(line, codeEl.nextSibling);
+      else rsBar.appendChild(line);
+    }
+    const created = new Date(window.currentRoom.created_at).getTime();
+    const remaining = created + ROOM_TTL_MS - Date.now();
+    if (remaining <= 0) {
+      line.textContent = '';
+      _showExpiredOverlay();
+      return;
+    }
+    line.textContent = 'Room expires in ' + _fmtRemaining(remaining);
+    line.classList.toggle('warn', remaining < 60 * 60 * 1000);
+  }
+  function _showExpiredOverlay() {
+    const ov = document.getElementById('room-expired-overlay');
+    if (ov) ov.classList.add('visible');
+    try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
+    if (__expiryTimer) { clearInterval(__expiryTimer); __expiryTimer = null; }
+  }
+  window.__pookieGoHome = function(){
+    try { window.currentRoom = null; } catch(e) {}
+    const ov = document.getElementById('room-expired-overlay');
+    if (ov) ov.classList.remove('visible');
+    window.showScreen && window.showScreen('landing');
+    try { location.reload(); } catch(e) {}
+  };
+  // Piggyback on updateConnectionUI to keep expiry rendered.
+  const _origUpdConn = window.updateConnectionUI;
+  window.updateConnectionUI = function(){
+    if (typeof _origUpdConn === 'function') _origUpdConn.apply(this, arguments);
+    _renderExpiry();
+    if (!__expiryTimer) __expiryTimer = setInterval(_renderExpiry, 30000);
+  };
+
+  // ── Init: detect ?code= URL and rejoin banner on landing ──────
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      if (code && code.length === 4) {
+        // Give existing DOMContentLoaded handlers a tick to run.
+        setTimeout(() => _enterJoinerMode(code), 50);
+      } else {
+        setTimeout(_maybeShowRejoin, 400);
+      }
+    } catch(e) {}
+  });
 })();
 </script>
 </body>
