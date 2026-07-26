@@ -5719,5 +5719,238 @@ async function saveSessionHistory() {
   });
 })();
 </script>
+
+<!-- ══ Bug-fix / polish overlay (does not modify existing design) ══ -->
+<style>
+  /* 11) Gentle pulse on connection dots */
+  @keyframes pookiePulseDot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.25); opacity: 0.7; }
+  }
+  .connected-dot.yellow, .connected-dot.green {
+    animation: pookiePulseDot 1.6s ease-in-out infinite;
+  }
+
+  /* 2) Ensure hamburger sits neatly inside header, above sibling content */
+  #app .app-header { position: relative; z-index: 105; }
+  #app .app-header-left { gap: 6px; align-items: center; }
+  #app .hamburger-btn.mobile-only-hb { position: relative; z-index: 2; flex: 0 0 auto; }
+  /* Drawer never pushes content */
+  #app .main, #app .app-footer { position: relative; z-index: 1; }
+
+  /* 1) Chat is hidden until both players are connected */
+  body:not(.pookie-chat-enabled) #chat-btn { display: none !important; }
+  body:not(.pookie-chat-enabled) #chat-panel,
+  body:not(.pookie-chat-enabled) #chat-overlay {
+    display: none !important;
+  }
+
+  /* 7) Tappable room-code digits */
+  #landing-room-code, #room-status-code {
+    cursor: pointer; user-select: none;
+    transition: opacity 0.15s;
+  }
+  #landing-room-code:hover, #room-status-code:hover { opacity: 0.75; }
+
+  /* 8) How-to-play tooltip */
+  .pookie-howto-tip {
+    position: fixed; z-index: 400;
+    background: var(--ink); color: var(--cream);
+    border: 1px solid rgba(200,82,58,0.4);
+    border-radius: 12px; padding: 12px 14px 10px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; line-height: 1.4;
+    max-width: 240px; box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    animation: pookieTipIn 0.35s ease-out;
+  }
+  .pookie-howto-tip::before {
+    content: ''; position: absolute; width: 12px; height: 12px;
+    background: var(--ink); border-left: 1px solid rgba(200,82,58,0.4);
+    border-top: 1px solid rgba(200,82,58,0.4);
+    transform: rotate(45deg);
+  }
+  .pookie-howto-tip .pookie-tip-close {
+    display: block; margin-top: 8px; background: var(--accent); color: #fff;
+    border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px;
+    cursor: pointer; font-family: inherit;
+  }
+  @keyframes pookieTipIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script>
+(function(){
+  // ── 10) "Copied! 🧡" feedback wrapper on clipboard writes ─────
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      var _origWrite = navigator.clipboard.writeText.bind(navigator.clipboard);
+      navigator.clipboard.writeText = function(text) {
+        var p = _origWrite(text);
+        p.then(function(){
+          try {
+            if (typeof window.showToast === 'function' && !window.__pookieToastActive) {
+              window.__pookieToastActive = true;
+              window.showToast('Copied! 🧡');
+              setTimeout(function(){ window.__pookieToastActive = false; }, 2000);
+            }
+          } catch(e) {}
+        }).catch(function(){});
+        return p;
+      };
+    }
+  } catch(e) {}
+
+  // ── 1) Hide/close chat until both players are in game ─────────
+  function _bothConnected() {
+    try {
+      if (!window.currentRoom) return false;
+      var r = window.currentRoom;
+      if (r.player2_id || r.player2_name) return true;
+      // fallback: presence-based flag if the app sets it
+      if (window.partnerConnected === true) return true;
+    } catch(e){}
+    return false;
+  }
+  function _refreshChatVisibility() {
+    var on = _bothConnected();
+    document.body.classList.toggle('pookie-chat-enabled', on);
+    if (!on) {
+      // Force-close if it was left open
+      try {
+        var p = document.getElementById('chat-panel');
+        var o = document.getElementById('chat-overlay');
+        if (p) p.classList.remove('open');
+        if (o) o.classList.remove('open');
+        window.chatOpen = false;
+      } catch(e){}
+    }
+  }
+  // Wrap updateConnectionUI (called on partner join / presence updates)
+  var _origUpd = window.updateConnectionUI;
+  window.updateConnectionUI = function(){
+    if (typeof _origUpd === 'function') _origUpd.apply(this, arguments);
+    _refreshChatVisibility();
+  };
+  // Wrap showScreen to reset chat when leaving app view
+  var _origShowScreen = window.showScreen;
+  window.showScreen = function(id){
+    if (typeof _origShowScreen === 'function') _origShowScreen.apply(this, arguments);
+    if (id !== 'app') {
+      document.body.classList.remove('pookie-chat-enabled');
+      try {
+        var p = document.getElementById('chat-panel');
+        var o = document.getElementById('chat-overlay');
+        if (p) p.classList.remove('open');
+        if (o) o.classList.remove('open');
+        window.chatOpen = false;
+      } catch(e){}
+    } else {
+      _refreshChatVisibility();
+    }
+  };
+  document.addEventListener('DOMContentLoaded', _refreshChatVisibility);
+  setInterval(_refreshChatVisibility, 1500);
+
+  // ── 7) Tap room-code digits to copy ──────────────────────────
+  function _wireCodeCopy(el) {
+    if (!el || el.__pookieCopyWired) return;
+    el.__pookieCopyWired = true;
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label', 'Copy room code');
+    el.title = 'Tap to copy';
+    var handler = function(){
+      var code = (el.textContent || '').trim();
+      if (!code || code === '----') return;
+      navigator.clipboard.writeText(code);
+    };
+    el.addEventListener('click', handler);
+    el.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    _wireCodeCopy(document.getElementById('landing-room-code'));
+    _wireCodeCopy(document.getElementById('room-status-code'));
+  });
+  // Re-wire in case the elements are re-rendered
+  setInterval(function(){
+    _wireCodeCopy(document.getElementById('landing-room-code'));
+    _wireCodeCopy(document.getElementById('room-status-code'));
+  }, 2000);
+
+  // ── 9) Chat empty state polish ───────────────────────────────
+  function _polishChatEmpty() {
+    var wrap = document.getElementById('chat-messages');
+    if (!wrap) return;
+    var empty = wrap.querySelector('.chat-empty');
+    if (empty && !empty.__pookiePolished) {
+      empty.__pookiePolished = true;
+      empty.innerHTML = '<div style="font-size:28px;line-height:1;margin-bottom:6px;">🧡</div>Say something nice';
+      empty.style.textAlign = 'center';
+      empty.style.opacity = '0.75';
+      empty.style.padding = '18px 8px';
+    }
+  }
+  document.addEventListener('DOMContentLoaded', _polishChatEmpty);
+  setInterval(_polishChatEmpty, 2000);
+
+  // ── 8) "How to play" tooltip on first session ────────────────
+  var TIP_KEY = 'pookie_howto_seen_v1';
+  function _maybeShowHowTo() {
+    try { if (localStorage.getItem(TIP_KEY)) return; } catch(e){}
+    if (document.getElementById('app').style.display === 'none') return;
+    // Target the first primary action in main (draw card / start button)
+    var main = document.getElementById('main');
+    if (!main) return;
+    var target = main.querySelector('button, .card, .draw-area');
+    if (!target) return;
+    if (document.querySelector('.pookie-howto-tip')) return;
+    var rect = target.getBoundingClientRect();
+    var tip = document.createElement('div');
+    tip.className = 'pookie-howto-tip';
+    tip.innerHTML =
+      '<strong style="font-family:Playfair Display,serif;color:var(--accent);">How to play</strong><br>' +
+      'Pick a game from the menu, tap to reveal a prompt, and take turns. Everything syncs live with your pookie.' +
+      '<button class="pookie-tip-close" type="button">Got it 🧡</button>';
+    document.body.appendChild(tip);
+    var top = Math.max(80, rect.top + window.scrollY + rect.height + 12);
+    var left = Math.max(12, Math.min(window.innerWidth - 260, rect.left + rect.width/2 - 120));
+    tip.style.top = top + 'px';
+    tip.style.left = left + 'px';
+    var arrow = document.createElement('style');
+    tip.querySelector('.pookie-tip-close').addEventListener('click', function(){
+      try { localStorage.setItem(TIP_KEY, '1'); } catch(e){}
+      tip.remove();
+    });
+    // Auto-dismiss after 12s
+    setTimeout(function(){
+      if (tip.parentNode) {
+        try { localStorage.setItem(TIP_KEY, '1'); } catch(e){}
+        tip.remove();
+      }
+    }, 12000);
+  }
+  var _origGoToApp = window.goToApp;
+  window.goToApp = function(){
+    if (typeof _origGoToApp === 'function') _origGoToApp.apply(this, arguments);
+    setTimeout(_maybeShowHowTo, 500);
+  };
+
+  // ── 4) Landing story: keep auth prompt after the story ───────
+  //     (Auth choice card is moved to the bottom of the landing card.)
+  document.addEventListener('DOMContentLoaded', function(){
+    try {
+      var authCard = document.getElementById('auth-choice-card');
+      var inner = document.getElementById('landing-inner');
+      if (authCard && inner && authCard.parentNode === inner) {
+        inner.appendChild(authCard); // move to end so it appears after the story
+      }
+    } catch(e){}
+  });
+})();
+</script>
+
 </body>
 </html>
