@@ -5994,5 +5994,113 @@ async function saveSessionHistory() {
 })();
 </script>
 
+
+<!-- ══ Targeted fixes: chat icon, header layout, drawer overlay, copy text ══ -->
+<style>
+  /* FIX 1: Chat icon always visible on the main game screen */
+  #app #chat-btn { display: inline-flex !important; align-items: center; justify-content: center; }
+  #chat-panel, #chat-overlay { display: block !important; }
+
+  /* FIX 2: Hamburger + logo on one horizontal row inside a 56px header */
+  #app .app-header {
+    height: 56px;
+    min-height: 56px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+  }
+  #app .app-header-left {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  #app .app-header-left > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.1;
+  }
+  #app .app-header-title { font-size: 1.15rem; line-height: 1.1; }
+  #app .hamburger-btn.mobile-only-hb {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    padding: 0;
+    flex: 0 0 auto;
+  }
+
+  /* FIX 3: Side panel is an overlay drawer at every breakpoint */
+  .side-nav {
+    width: 260px !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s ease !important;
+    z-index: 1000 !important;
+  }
+  .side-nav.open { transform: translateX(0) !important; }
+  .side-nav-overlay {
+    display: block !important;
+    background: rgba(0,0,0,0.5);
+    z-index: 999 !important;
+  }
+  /* Main content never shifts or resizes when the drawer opens */
+  #app .main, #app .app-footer, #app .app-header { margin-left: 0 !important; }
+</style>
+
+<script>
+(function(){
+  // FIX 1: Ensure chat is enabled whenever the main game screen is visible.
+  function _pookieEnsureChatEnabled() {
+    var app = document.getElementById('app');
+    if (!app) return;
+    var visible = app.style.display !== 'none' && app.offsetParent !== null;
+    if (visible) document.body.classList.add('pookie-chat-enabled');
+  }
+  document.addEventListener('DOMContentLoaded', _pookieEnsureChatEnabled);
+  setInterval(_pookieEnsureChatEnabled, 500);
+  var _origShow = window.showScreen;
+  window.showScreen = function(id){
+    if (typeof _origShow === 'function') _origShow.apply(this, arguments);
+    if (id === 'app') document.body.classList.add('pookie-chat-enabled');
+  };
+
+  // FIX 4: Prefilled copy message — exact wording, with line break.
+  function _pookieBuildMsg(code) {
+    var c = (code && String(code).trim()) || '----';
+    return 'Hey Pookie, 🧡\nJoin our date night on Pookie & I, open pookieandi.lovable.app and enter code ' + c + '.';
+  }
+  function _pookieCurrentCode() {
+    var el = document.getElementById('landing-room-code')
+          || document.getElementById('room-status-code');
+    var t = el && el.textContent ? el.textContent.trim() : '';
+    if (/^\d{4}$/.test(t)) return t;
+    try {
+      if (window.currentRoom && window.currentRoom.code) return String(window.currentRoom.code);
+    } catch(e){}
+    try { return localStorage.getItem('pookie_room_code') || ''; } catch(e){ return ''; }
+  }
+  function _pookieRefreshPrefill() {
+    var code = _pookieCurrentCode();
+    var msg = _pookieBuildMsg(code);
+    var sb = document.getElementById('sharebox-msg');
+    if (sb) { sb.textContent = msg; sb.style.whiteSpace = 'pre-line'; }
+    var iv = document.getElementById('invite-msg');
+    if (iv) { iv.textContent = msg; iv.style.whiteSpace = 'pre-line'; }
+  }
+  document.addEventListener('DOMContentLoaded', _pookieRefreshPrefill);
+  setInterval(_pookieRefreshPrefill, 800);
+
+  window.copyShareMsg = function() {
+    var msg = _pookieBuildMsg(_pookieCurrentCode());
+    navigator.clipboard.writeText(msg);
+  };
+  window.copyMsg = function() {
+    var msg = _pookieBuildMsg(_pookieCurrentCode());
+    navigator.clipboard.writeText(msg);
+  };
+})();
+</script>
+
 </body>
 </html>
