@@ -2466,15 +2466,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Check auth state
   checkAuthState();
-
-  // If user is already signed in (after Google redirect or persisted session),
-  // auto-advance to the stage view.
-  setTimeout(async () => {
-    try {
-      const { data } = await sb.auth.getSession();
-      if (data?.session?.user) showStage();
-    } catch(e) {}
-  }, 300);
+  // NOTE: Do NOT auto-advance to the stage view when a session or saved
+  // room code exists. The landing page must remain visible until the user
+  // explicitly taps "Continue with Google", "Sign in with email", or
+  // "Play as a guest". Rejoin prompts are deferred until after that choice.
 });
 
 function updateShareBox() {
