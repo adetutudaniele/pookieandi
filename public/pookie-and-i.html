@@ -5731,6 +5731,39 @@ async function saveSessionHistory() {
 
 <!-- ══ Bug-fix / polish overlay (does not modify existing design) ══ -->
 <style>
+  /* Setup screen ("What's your name?") — center the card + its contents */
+  .landing-inner.stage-view .name-setup,
+  .landing-inner.stage-view #room-code-landing,
+  .landing-inner.stage-view #sharebox,
+  .landing-inner.stage-view #startBtn,
+  .landing-inner.stage-view .join-divider,
+  .landing-inner.stage-view .join-section {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .landing-inner.stage-view .name-setup {
+    text-align: center;
+  }
+  .landing-inner.stage-view .name-setup .name-setup-label {
+    text-align: center;
+  }
+  .landing-inner.stage-view .name-setup .name-row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .landing-inner.stage-view .name-setup .name-input-wrap {
+    width: 100%;
+    align-items: center;
+    text-align: center;
+  }
+  .landing-inner.stage-view .name-setup .name-input-wrap label {
+    text-align: center;
+    width: 100%;
+  }
+  .landing-inner.stage-view .name-setup .name-input {
+    text-align: center;
+  }
   /* 11) Gentle pulse on connection dots */
   @keyframes pookiePulseDot {
     0%, 100% { transform: scale(1); opacity: 1; }
