@@ -5707,11 +5707,25 @@ async function saveSessionHistory() {
       if (code && code.length === 4) {
         // Give existing DOMContentLoaded handlers a tick to run.
         setTimeout(() => _enterJoinerMode(code), 50);
-      } else {
-        setTimeout(_maybeShowRejoin, 400);
       }
+      // Rejoin banner is NOT shown on page load. It is only revealed
+      // AFTER the user taps "Play as a guest" or signs in (see the
+      // showStage wrapper below).
     } catch(e) {}
   });
+
+  // Wrap showStage so the rejoin prompt only appears after the user has
+  // actively chosen guest / sign-in, per the landing-behaviour spec.
+  try {
+    const _origShowStage = window.showStage;
+    if (typeof _origShowStage === 'function') {
+      window.showStage = function(){
+        const r = _origShowStage.apply(this, arguments);
+        setTimeout(_maybeShowRejoin, 50);
+        return r;
+      };
+    }
+  } catch(e) {}
 })();
 </script>
 
