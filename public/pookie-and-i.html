@@ -2466,15 +2466,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Check auth state
   checkAuthState();
-
-  // If user is already signed in (after Google redirect or persisted session),
-  // auto-advance to the stage view.
-  setTimeout(async () => {
-    try {
-      const { data } = await sb.auth.getSession();
-      if (data?.session?.user) showStage();
-    } catch(e) {}
-  }, 300);
+  // NOTE: Do NOT auto-advance to the stage view when a session or saved
+  // room code exists. The landing page must remain visible until the user
+  // explicitly taps "Continue with Google", "Sign in with email", or
+  // "Play as a guest". Rejoin prompts are deferred until after that choice.
 });
 
 function updateShareBox() {
@@ -5712,16 +5707,63 @@ async function saveSessionHistory() {
       if (code && code.length === 4) {
         // Give existing DOMContentLoaded handlers a tick to run.
         setTimeout(() => _enterJoinerMode(code), 50);
-      } else {
-        setTimeout(_maybeShowRejoin, 400);
       }
+      // Rejoin banner is NOT shown on page load. It is only revealed
+      // AFTER the user taps "Play as a guest" or signs in (see the
+      // showStage wrapper below).
     } catch(e) {}
   });
+
+  // Wrap showStage so the rejoin prompt only appears after the user has
+  // actively chosen guest / sign-in, per the landing-behaviour spec.
+  try {
+    const _origShowStage = window.showStage;
+    if (typeof _origShowStage === 'function') {
+      window.showStage = function(){
+        const r = _origShowStage.apply(this, arguments);
+        setTimeout(_maybeShowRejoin, 50);
+        return r;
+      };
+    }
+  } catch(e) {}
 })();
 </script>
 
 <!-- ══ Bug-fix / polish overlay (does not modify existing design) ══ -->
 <style>
+  /* Setup screen ("What's your name?") — center the card + its contents */
+  .landing-inner.stage-view .name-setup,
+  .landing-inner.stage-view #room-code-landing,
+  .landing-inner.stage-view #sharebox,
+  .landing-inner.stage-view #startBtn,
+  .landing-inner.stage-view .join-divider,
+  .landing-inner.stage-view .join-section {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .landing-inner.stage-view .name-setup {
+    text-align: center;
+  }
+  .landing-inner.stage-view .name-setup .name-setup-label {
+    text-align: center;
+  }
+  .landing-inner.stage-view .name-setup .name-row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .landing-inner.stage-view .name-setup .name-input-wrap {
+    width: 100%;
+    align-items: center;
+    text-align: center;
+  }
+  .landing-inner.stage-view .name-setup .name-input-wrap label {
+    text-align: center;
+    width: 100%;
+  }
+  .landing-inner.stage-view .name-setup .name-input {
+    text-align: center;
+  }
   /* 11) Gentle pulse on connection dots */
   @keyframes pookiePulseDot {
     0%, 100% { transform: scale(1); opacity: 1; }
