@@ -6102,5 +6102,245 @@ async function saveSessionHistory() {
 })();
 </script>
 
+
+<!-- ══ FIX A: unified two-row fixed header · FIX B: auto-scoring ══ -->
+<style>
+  #pk-header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+    background: var(--ink);
+    border-bottom: 1px solid rgba(250,247,242,0.06);
+    padding: 0 12px calc(6px) 12px;
+    padding-top: env(safe-area-inset-top, 0px);
+    font-family: 'DM Sans', sans-serif;
+  }
+  #pk-header-row1 {
+    display: flex; align-items: center; gap: 8px;
+    min-height: 48px;
+  }
+  #pk-header-row1 .pk-h-left { flex: 0 0 auto; display: flex; align-items: center; }
+  #pk-header-row1 .pk-h-center {
+    flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
+    min-width: 0; overflow-x: auto;
+  }
+  #pk-header-row1 .pk-h-right { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; position: relative; }
+  #pk-header #score-bar {
+    position: static !important; border: 0 !important; background: transparent !important;
+    padding: 0 !important; margin: 0 !important; width: auto !important; top: auto !important;
+  }
+  #pk-header-row2 {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 4px 8px;
+    font-size: 12.5px; color: rgba(250,247,242,0.55);
+    padding-bottom: 2px;
+  }
+  #pk-header-row2 .pk-r2-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  #pk-header-row2 .pk-r2-sep { color: rgba(250,247,242,0.3); }
+  #pk-header #room-status-line { font-size: 12.5px !important; }
+  #pk-header #room-status-code {
+    font-size: 13px; width: 100%; text-align: center; cursor: pointer;
+  }
+  #pk-header .hamburger-btn { display: inline-flex !important; width: 40px; height: 40px; align-items: center; justify-content: center; padding: 0; }
+  #app > div:first-child { position: static !important; }
+  #app .app-header { display: none !important; }
+  #app .room-status-bar { display: none !important; }
+  body.pk-header-on #app { padding-top: var(--pk-header-h, 84px); }
+  @keyframes pkScorePulse { 0%{transform:scale(1);} 40%{transform:scale(1.45);} 100%{transform:scale(1);} }
+  .pk-score-pulse { display:inline-block; animation: pkScorePulse 0.45s ease; }
+</style>
+<script>
+(function(){
+  /* ───────── FIX A: two-row fixed header ───────── */
+  function buildHeader(){
+    var app = document.getElementById('app');
+    if (!app || document.getElementById('pk-header')) return;
+    var scoreBar = document.getElementById('score-bar');
+    if (!scoreBar) return;
+
+    var h = document.createElement('div');
+    h.id = 'pk-header';
+    h.innerHTML = '<div id="pk-header-row1">'
+      + '<div class="pk-h-left"></div><div class="pk-h-center"></div><div class="pk-h-right"></div>'
+      + '</div>'
+      + '<div id="pk-header-row2"><div class="pk-r2-group"></div></div>';
+    document.body.insertBefore(h, document.body.firstChild);
+    document.body.classList.add('pk-header-on');
+
+    var hb = app.querySelector('.hamburger-btn');
+    if (hb) h.querySelector('.pk-h-left').appendChild(hb);
+    h.querySelector('.pk-h-center').appendChild(scoreBar);
+
+    var actions = document.querySelector('.room-status-actions');
+    var right = h.querySelector('.pk-h-right');
+    if (actions) {
+      Array.prototype.slice.call(actions.children).forEach(function(el){ right.appendChild(el); });
+    }
+    var g = h.querySelector('.pk-r2-group');
+    var line = document.getElementById('room-status-line');
+    var code = document.getElementById('room-status-code');
+    if (line) g.appendChild(line);
+    var sep = document.createElement('span'); sep.className = 'pk-r2-sep'; sep.textContent = '·';
+    g.appendChild(sep);
+    var syncSlot = document.createElement('span'); syncSlot.id = 'pk-sync-slot';
+    g.appendChild(syncSlot);
+    if (code) h.querySelector('#pk-header-row2').appendChild(code);
+    measure();
+  }
+
+  function measure(){
+    var h = document.getElementById('pk-header');
+    if (!h) return;
+    document.documentElement.style.setProperty('--pk-header-h', h.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', measure);
+
+  /* keep the sync indicator inside row 2, right of the separator */
+  function placeSync(){
+    var dot = document.getElementById('pk-sync-dot');
+    var slot = document.getElementById('pk-sync-slot');
+    if (dot && slot && dot.parentNode !== slot) slot.appendChild(dot);
+  }
+
+  /* Row 2 status text */
+  function refreshStatus(){
+    var line = document.getElementById('room-status-line');
+    if (!line) return;
+    var room = null;
+    try { room = window.currentRoom; } catch(e){}
+    if (!room) return;
+    var both = room.player1_connected && room.player2_connected;
+    var html;
+    if (both) html = '<span class="connected-dot green"></span> Both connected 🧡';
+    else if (room.player2_name) html = '<span class="connected-dot red"></span> Pookie disconnected';
+    else html = '<span class="connected-dot yellow"></span> Waiting for your pookie...';
+    if (line.getAttribute('data-pk') !== html) {
+      line.innerHTML = html;
+      line.setAttribute('data-pk', html);
+    }
+  }
+
+  setInterval(function(){ buildHeader(); placeSync(); refreshStatus(); measure(); }, 500);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(buildHeader, 300); });
+
+  /* ───────── FIX B: automatic scoreboard updates ───────── */
+  var pulseNext = null;
+  var _origRender = window.renderScoreBar;
+  var lastRendered = null;
+  if (typeof _origRender === 'function') {
+    window.renderScoreBar = function(){
+      _origRender.apply(this, arguments);
+      var bar = document.getElementById('score-bar');
+      if (!bar) return;
+      var els = bar.querySelectorAll('.sb-score');
+      if (pulseNext && els.length === 2) {
+        var el = pulseNext === 'p1' ? els[0] : els[1];
+        if (el) { el.classList.remove('pk-score-pulse'); void el.offsetWidth; el.classList.add('pk-score-pulse'); }
+        pulseNext = null;
+      }
+    };
+  }
+
+  function award(target, n){
+    if (!n) return;
+    try {
+      if (!window.isPlayer1) return;      // single writer avoids double counting
+      window.scores[target] = Math.max(0, (window.scores[target] || 0) + n);
+      pulseNext = target;
+      window.renderScoreBar();
+      window.pushScores();
+    } catch(e){}
+  }
+  /* pulse for everyone when scores arrive over realtime */
+  var lastScores = null;
+  setInterval(function(){
+    try {
+      var s = window.scores; if (!s) return;
+      var sig = s.p1 + ':' + s.p2;
+      if (lastScores !== null && lastScores !== sig) {
+        var prev = lastScores.split(':');
+        pulseNext = (+prev[0] !== s.p1) ? 'p1' : 'p2';
+        window.renderScoreBar();
+      }
+      lastScores = sig;
+    } catch(e){}
+  }, 400);
+
+  /* Watch per-game counters and mirror increases onto the shared scoreboard */
+  var snap = {};
+  var WATCH = {
+    mostlikely: ['p1Score', 'p2Score'],
+    truths:     ['p1Score', 'p2Score'],
+    unpopular:  ['p1Shocked', 'p2Shocked']
+  };
+  setInterval(function(){
+    try {
+      var st = window.state; if (!st) return;
+      Object.keys(WATCH).forEach(function(gid){
+        var s = st[gid]; if (!s) return;
+        WATCH[gid].forEach(function(key){
+          var k = gid + '.' + key;
+          var v = s[key] || 0;
+          if (!(k in snap)) { snap[k] = v; return; }
+          var d = v - snap[k];
+          snap[k] = v;
+          if (d > 0) {
+            if (gid === 'truths') {
+              // only the responder (guesser) earns a shared point
+              var writer = s.writerRole === 'p1' ? 'p1' : 'p2';
+              var scorer = key === 'p1Score' ? 'p1' : 'p2';
+              if (scorer === writer) return;
+            }
+            award(key.indexOf('p1') === 0 ? 'p1' : 'p2', d);
+          }
+        });
+      });
+    } catch(e){}
+  }, 400);
+
+  /* Manual point buttons for Word Association and Name That Song */
+  function myKey(){ return window.isPlayer1 ? 'p1' : 'p2'; }
+  function otherKey(){ return window.isPlayer1 ? 'p2' : 'p1'; }
+  function pointFor(target){
+    try {
+      if (window.isPlayer1) { award(target, 1); }
+      else {
+        // player 2 asks player 1's client through the shared game state
+        window.scores[target] = Math.max(0, (window.scores[target] || 0) + 1);
+        pulseNext = target;
+        window.renderScoreBar();
+        window.pushScores();
+      }
+      if (window.showToast) window.showToast('Point awarded 🧡');
+    } catch(e){}
+  }
+  function injectGameButtons(){
+    try {
+      var gid = window.activeGame;
+      if (gid !== 'word' && gid !== 'song') return;
+      var area = document.querySelector('#main .draw-area');
+      if (!area || area.querySelector('.pk-award-btn')) return;
+      var btn = document.createElement('button');
+      btn.className = 'btn-secondary pk-award-btn';
+      btn.style.cssText = 'margin:10px auto 0;display:block;';
+      if (gid === 'word') {
+        btn.textContent = 'They hesitated — point to me';
+        btn.onclick = function(){ pointFor(myKey()); };
+      } else {
+        btn.textContent = 'Got it right! 🎵';
+        btn.onclick = function(){ pointFor(otherKey()); };
+      }
+      area.appendChild(btn);
+    } catch(e){}
+  }
+  var _origBuildMain = window.buildMain;
+  if (typeof _origBuildMain === 'function') {
+    window.buildMain = function(){
+      _origBuildMain.apply(this, arguments);
+      injectGameButtons();
+    };
+  }
+  setInterval(injectGameButtons, 600);
+})();
+</script>
+
 </body>
 </html>
