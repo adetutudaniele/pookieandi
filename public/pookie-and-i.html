@@ -6211,10 +6211,7 @@ async function saveSessionHistory() {
     if (both) html = '<span class="connected-dot green"></span> Both connected 🧡';
     else if (room.player2_name) html = '<span class="connected-dot red"></span> Pookie disconnected';
     else html = '<span class="connected-dot yellow"></span> Waiting for your pookie...';
-    if (line.getAttribute('data-pk') !== html) {
-      line.innerHTML = html;
-      line.setAttribute('data-pk', html);
-    }
+    if (line.innerHTML !== html) line.innerHTML = html;
   }
 
   setInterval(function(){ buildHeader(); placeSync(); refreshStatus(); measure(); }, 500);
