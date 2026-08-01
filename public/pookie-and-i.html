@@ -6204,8 +6204,7 @@ async function saveSessionHistory() {
   function refreshStatus(){
     var line = document.getElementById('room-status-line');
     if (!line) return;
-    var room = null;
-    try { room = window.currentRoom; } catch(e){}
+    var room = (typeof currentRoom !== 'undefined') ? currentRoom : null;
     if (!room) return;
     var both = room.player1_connected && room.player2_connected;
     var html;
@@ -6242,23 +6241,23 @@ async function saveSessionHistory() {
   function award(target, n){
     if (!n) return;
     try {
-      if (!window.isPlayer1) return;      // single writer avoids double counting
-      window.scores[target] = Math.max(0, (window.scores[target] || 0) + n);
+      if (!isPlayer1) return;      // single writer avoids double counting
+      scores[target] = Math.max(0, (scores[target] || 0) + n);
       pulseNext = target;
-      window.renderScoreBar();
-      window.pushScores();
+      renderScoreBar();
+      pushScores();
     } catch(e){}
   }
   /* pulse for everyone when scores arrive over realtime */
   var lastScores = null;
   setInterval(function(){
     try {
-      var s = window.scores; if (!s) return;
+      var s = scores; if (!s) return;
       var sig = s.p1 + ':' + s.p2;
       if (lastScores !== null && lastScores !== sig) {
         var prev = lastScores.split(':');
         pulseNext = (+prev[0] !== s.p1) ? 'p1' : 'p2';
-        window.renderScoreBar();
+        renderScoreBar();
       }
       lastScores = sig;
     } catch(e){}
@@ -6273,7 +6272,7 @@ async function saveSessionHistory() {
   };
   setInterval(function(){
     try {
-      var st = window.state; if (!st) return;
+      var st = state; if (!st) return;
       Object.keys(WATCH).forEach(function(gid){
         var s = st[gid]; if (!s) return;
         WATCH[gid].forEach(function(key){
@@ -6297,24 +6296,24 @@ async function saveSessionHistory() {
   }, 400);
 
   /* Manual point buttons for Word Association and Name That Song */
-  function myKey(){ return window.isPlayer1 ? 'p1' : 'p2'; }
-  function otherKey(){ return window.isPlayer1 ? 'p2' : 'p1'; }
+  function myKey(){ return isPlayer1 ? 'p1' : 'p2'; }
+  function otherKey(){ return isPlayer1 ? 'p2' : 'p1'; }
   function pointFor(target){
     try {
-      if (window.isPlayer1) { award(target, 1); }
+      if (isPlayer1) { award(target, 1); }
       else {
         // player 2 asks player 1's client through the shared game state
-        window.scores[target] = Math.max(0, (window.scores[target] || 0) + 1);
+        scores[target] = Math.max(0, (scores[target] || 0) + 1);
         pulseNext = target;
-        window.renderScoreBar();
-        window.pushScores();
+        renderScoreBar();
+        pushScores();
       }
       if (window.showToast) window.showToast('Point awarded 🧡');
     } catch(e){}
   }
   function injectGameButtons(){
     try {
-      var gid = window.activeGame;
+      var gid = activeGame;
       if (gid !== 'word' && gid !== 'song') return;
       var area = document.querySelector('#main .draw-area');
       if (!area || area.querySelector('.pk-award-btn')) return;
