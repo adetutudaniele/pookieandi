@@ -6372,6 +6372,30 @@ html[data-theme="light"] .pk-stat-lab { color: rgba(26,22,18,0.5); }
 .pk-profile-hint { font-size: 12px; color: rgba(250,247,242,0.35); margin-top: 6px; }
 html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
 .pk-profile-danger { background: transparent; color: var(--accent); border: 1px solid rgba(200,82,58,0.5); }
+.pk-avatar-wrap { position: relative; flex: 0 0 52px; }
+.pk-profile-avatar { overflow: hidden; }
+.pk-profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pk-avatar-edit {
+  position: absolute; right: -4px; bottom: -4px; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #fff; border: none; font-size: 11px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.pk-avatar-edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pk-field-err { font-size: 12px; color: #ff8a73; margin-top: 6px; min-height: 0; }
+html[data-theme="light"] .pk-field-err { color: #b23a22; }
+.pk-input-invalid { border-color: #ff8a73 !important; }
+.pk-device { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(250,247,242,0.07); }
+.pk-device:last-of-type { border-bottom: none; }
+.pk-device-main { min-width: 0; flex: 1; }
+.pk-device-name { font-size: 13px; }
+.pk-device-meta { font-size: 11px; color: rgba(250,247,242,0.4); }
+html[data-theme="light"] .pk-device-meta { color: rgba(26,22,18,0.5); }
+.pk-device-tag { font-size: 10px; color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase; }
+.pk-device-off { opacity: 0.5; }
+.pk-device-btn {
+  background: transparent; color: var(--accent); border: 1px solid rgba(200,82,58,0.5);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; cursor: pointer; min-height: 36px; white-space: nowrap;
+}
 </style>
 
 <div class="auth-modal-overlay" id="pk-profile-overlay" onclick="if(event.target===this) window.closeProfilePage()">
@@ -6395,12 +6419,106 @@ html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
       || (u.email ? u.email.split('@')[0] : '') || 'Player';
   }
 
+  /* ── Display name validation ───────────────────────────────── */
+  var NAME_RE = /^[\p{L}\p{N}][\p{L}\p{N} ._'\-]*$/u;
+  function validateName(raw){
+    var v = String(raw == null ? '' : raw).trim().replace(/\s+/g, ' ');
+    if (!v) return { ok:false, msg:'Display name cannot be empty.' };
+    if (v.length < 2) return { ok:false, msg:'Use at least 2 characters.' };
+    if (v.length > 30) return { ok:false, msg:'Use 30 characters or fewer.' };
+    if (!NAME_RE.test(v)) return { ok:false, msg:'Only letters, numbers, spaces and . _ - \u2019 are allowed, starting with a letter or number.' };
+    return { ok:true, value:v };
+  }
+  window.validateDisplayName = validateName;
+
+  /* ── Device / session tracking ─────────────────────────────── */
+  function deviceId(){
+    var k = 'pk_device_id', v = '';
+    try { v = localStorage.getItem(k) || ''; } catch(e){}
+    if (!v) {
+      v = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+        : 'd-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+      try { localStorage.setItem(k, v); } catch(e){}
+    }
+    return v;
+  }
+  function deviceLabel(){
+    var ua = navigator.userAgent || '';
+    var os = /iPhone|iPad|iPod/i.test(ua) ? 'iOS'
+      : /Android/i.test(ua) ? 'Android'
+      : /Mac OS X/i.test(ua) ? 'macOS'
+      : /Windows/i.test(ua) ? 'Windows'
+      : /Linux/i.test(ua) ? 'Linux' : 'Device';
+    var br = /Edg\//i.test(ua) ? 'Edge'
+      : /OPR\//i.test(ua) ? 'Opera'
+      : /Chrome\//i.test(ua) ? 'Chrome'
+      : /Firefox\//i.test(ua) ? 'Firefox'
+      : /Safari\//i.test(ua) ? 'Safari' : 'Browser';
+    return br + ' on ' + os;
+  }
+  async function registerDevice(){
+    var u = me(); if (!u || !window.sb) return;
+    try {
+      await window.sb.from('user_sessions').upsert({
+        user_id: u.id, device_id: deviceId(), device_label: deviceLabel(),
+        user_agent: (navigator.userAgent || '').slice(0, 300),
+        revoked: false, last_seen_at: new Date().toISOString()
+      }, { onConflict: 'user_id,device_id' });
+    } catch(e){}
+  }
+  async function checkRevoked(){
+    var u = me(); if (!u || !window.sb) return;
+    try {
+      var r = await window.sb.from('user_sessions')
+        .select('revoked').eq('user_id', u.id).eq('device_id', deviceId()).maybeSingle();
+      if (r.data && r.data.revoked) {
+        toast('Signed out from another device');
+        if (typeof window.signOut === 'function') await window.signOut();
+        else await window.sb.auth.signOut();
+      }
+    } catch(e){}
+  }
+  window.pkRegisterDevice = registerDevice;
+  setInterval(function(){ if (me()) { registerDevice(); checkRevoked(); } }, 60000);
+  setTimeout(function(){ if (me()) registerDevice(); }, 2500);
+
+  /* ── Avatar helpers (square crop + resize, private bucket) ─── */
+  var AVATAR_SIZE = 256;
+  function cropResize(file){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        try {
+          var side = Math.min(img.width, img.height);
+          var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+          var c = document.createElement('canvas');
+          c.width = AVATAR_SIZE; c.height = AVATAR_SIZE;
+          var ctx = c.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_SIZE, AVATAR_SIZE);
+          URL.revokeObjectURL(url);
+          c.toBlob(function(b){ b ? resolve(b) : reject(new Error('encode failed')); }, 'image/jpeg', 0.88);
+        } catch(e){ URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('Could not read that image')); };
+      img.src = url;
+    });
+  }
+  async function signedAvatarUrl(path){
+    if (!path) return '';
+    try {
+      var r = await window.sb.storage.from('avatars').createSignedUrl(path, 3600);
+      return (r.data && r.data.signedUrl) || '';
+    } catch(e){ return ''; }
+  }
+
   async function loadProfileData(){
     var u = me();
     if (!u) return null;
-    var out = { profile: null, stats: null, sessions: [] };
+    var out = { profile: null, stats: null, sessions: [], devices: [], avatarUrl: '' };
     try {
-      var p = await window.sb.from('profiles').select('id, display_name, created_at').eq('id', u.id).maybeSingle();
+      var p = await window.sb.from('profiles').select('id, display_name, avatar_url, created_at').eq('id', u.id).maybeSingle();
       out.profile = p.data || null;
     } catch(e){}
     try {
@@ -6413,6 +6531,14 @@ html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
         .eq('user_id', u.id).order('played_at', { ascending: false }).limit(8);
       out.sessions = h.data || [];
     } catch(e){}
+    try {
+      await registerDevice();
+      var dv = await window.sb.from('user_sessions')
+        .select('id, device_id, device_label, last_seen_at, created_at, revoked')
+        .eq('user_id', u.id).order('last_seen_at', { ascending: false }).limit(10);
+      out.devices = dv.data || [];
+    } catch(e){}
+    out.avatarUrl = await signedAvatarUrl(out.profile && out.profile.avatar_url);
     return out;
   }
 
@@ -6429,15 +6555,26 @@ html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
     var since = (d && d.profile && d.profile.created_at) ? new Date(d.profile.created_at) : new Date(u.created_at || Date.now());
     var pts = (d && d.stats && d.stats.total_points) || 0;
     var sessions = (d && d.sessions) || [];
+    var devices = (d && d.devices) || [];
+    var avatarUrl = (d && d.avatarUrl) || '';
     var isEmailUser = !!(u.app_metadata && (u.app_metadata.provider === 'email'
       || (u.app_metadata.providers || []).indexOf('email') > -1));
 
+    var avatarInner = avatarUrl
+      ? '<img id="pk-avatar-img" src="' + esc(avatarUrl) + '" alt="Your profile picture">'
+      : '<span id="pk-avatar-initial">' + esc(name.slice(0,1).toUpperCase()) + '</span>';
+
     var html = ''
       + '<div class="pk-profile-head">'
-      +   '<div class="pk-profile-avatar" aria-hidden="true">' + esc(name.slice(0,1).toUpperCase()) + '</div>'
+      +   '<div class="pk-avatar-wrap">'
+      +     '<div class="pk-profile-avatar" id="pk-avatar-box">' + avatarInner + '</div>'
+      +     '<button class="pk-avatar-edit" id="pk-avatar-btn" aria-label="Change profile picture" title="Change profile picture">\u270E</button>'
+      +     '<input type="file" id="pk-avatar-file" accept="image/*" hidden>'
+      +   '</div>'
       +   '<div class="pk-profile-id">'
       +     '<div class="pk-name">' + esc(name) + '</div>'
       +     '<div class="pk-mail">' + esc(u.email || 'Signed in') + '</div>'
+      +     '<div class="pk-profile-hint" id="pk-avatar-status"></div>'
       +   '</div>'
       + '</div>'
 
@@ -6450,21 +6587,43 @@ html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
       + '<div class="pk-profile-section">'
       +   '<div class="pk-profile-label">Display name</div>'
       +   '<div class="pk-profile-row">'
-      +     '<input id="pk-profile-name" class="auth-input" maxlength="60" value="' + esc(name) + '" aria-label="Display name">'
+      +     '<input id="pk-profile-name" class="auth-input" maxlength="30" value="' + esc(name) + '" aria-label="Display name" aria-describedby="pk-name-err">'
       +     '<button class="auth-btn primary" id="pk-profile-save">Save</button>'
       +   '</div>'
-      +   '<div class="pk-profile-hint">This is the name shown to your Pookie and on the leaderboard.</div>'
+      +   '<div class="pk-field-err" id="pk-name-err" role="alert" aria-live="polite"></div>'
+      +   '<div class="pk-profile-hint">2\u201330 characters. Letters, numbers, spaces and . _ - \u2019 only.</div>'
       + '</div>';
 
     if (isEmailUser) {
       html += '<div class="pk-profile-section">'
       +   '<div class="pk-profile-label">Password</div>'
       +   '<div class="pk-profile-row">'
-      +     '<input id="pk-profile-pw" class="auth-input" type="password" minlength="6" placeholder="New password" aria-label="New password" autocomplete="new-password">'
+      +     '<input id="pk-profile-pw" class="auth-input" type="password" minlength="6" placeholder="New password" aria-label="New password" autocomplete="new-password" aria-describedby="pk-pw-err">'
       +     '<button class="auth-btn primary" id="pk-profile-pw-save">Update</button>'
       +   '</div>'
+      +   '<div class="pk-field-err" id="pk-pw-err" role="alert" aria-live="polite"></div>'
+      +   '<button class="auth-btn pk-profile-danger" id="pk-profile-pw-reset" style="margin-top:8px;">Email me a reset link</button>'
+      +   '<div class="pk-profile-hint">Forgot your current password? We\u2019ll send a secure link to ' + esc(u.email || 'your email') + '.</div>'
       + '</div>';
     }
+
+    html += '<div class="pk-profile-section">'
+      +   '<div class="pk-profile-label">Signed-in devices</div>';
+    if (devices.length) {
+      devices.forEach(function(dv){
+        var isThis = dv.device_id === deviceId();
+        html += '<div class="pk-device' + (dv.revoked ? ' pk-device-off' : '') + '">'
+          + '<div class="pk-device-main">'
+          +   '<div class="pk-device-name">' + esc(dv.device_label) + (isThis ? ' <span class="pk-device-tag">This device</span>' : '') + '</div>'
+          +   '<div class="pk-device-meta">' + (dv.revoked ? 'Signed out' : 'Last active ' + new Date(dv.last_seen_at).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })) + '</div>'
+          + '</div>'
+          + (dv.revoked ? '' : '<button class="pk-device-btn" data-device="' + esc(dv.device_id) + '">' + (isThis ? 'Sign out' : 'Sign out') + '</button>')
+          + '</div>';
+      });
+    } else {
+      html += '<div class="pk-profile-hint">No devices recorded yet.</div>';
+    }
+    html += '<div class="pk-profile-hint">Other devices are signed out within a minute.</div></div>';
 
     html += '<div class="pk-profile-section">'
       +   '<div class="pk-profile-label">Recent sessions</div>';
@@ -6473,9 +6632,9 @@ html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
         var sc = h.final_scores || { p1:0, p2:0 };
         html += '<div class="history-card">'
           + '<div class="history-card-date">' + new Date(h.played_at).toLocaleDateString([], { month:'short', day:'numeric' })
-            + ' · ' + h.duration_minutes + 'min · ' + h.rounds_played + ' rounds</div>'
+            + ' \u00b7 ' + h.duration_minutes + 'min \u00b7 ' + h.rounds_played + ' rounds</div>'
           + '<div class="history-card-players">vs ' + esc(h.partner_name) + '</div>'
-          + '<div class="history-card-score">' + sc.p1 + ' — ' + sc.p2 + '</div>'
+          + '<div class="history-card-score">' + sc.p1 + ' \u2014 ' + sc.p2 + '</div>'
           + '</div>';
       });
     } else {
@@ -6489,39 +6648,132 @@ html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
 
     box.innerHTML = html;
 
+    /* Display name save + inline validation */
+    var nameInput = document.getElementById('pk-profile-name');
+    var nameErr = document.getElementById('pk-name-err');
+    function showNameErr(msg){
+      if (!nameErr) return;
+      nameErr.textContent = msg || '';
+      if (nameInput) nameInput.classList.toggle('pk-input-invalid', !!msg);
+      if (nameInput) nameInput.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    }
+    if (nameInput) nameInput.addEventListener('input', function(){
+      var v = validateName(nameInput.value);
+      showNameErr(v.ok ? '' : v.msg);
+    });
+
     var saveBtn = document.getElementById('pk-profile-save');
     if (saveBtn) saveBtn.onclick = async function(){
       var u2 = me(); if (!u2) return;
-      var val = (document.getElementById('pk-profile-name').value || '').trim();
-      if (!val) { toast('Username cannot be empty'); return; }
+      var v = validateName(nameInput ? nameInput.value : '');
+      if (!v.ok) { showNameErr(v.msg); if (nameInput) nameInput.focus(); return; }
+      showNameErr('');
       saveBtn.disabled = true;
       try {
         var r = await window.sb.from('profiles')
-          .upsert({ id: u2.id, display_name: val }, { onConflict: 'id' }); // RLS: only own row
-        if (r.error) { toast('Could not update username'); return; }
-        try { await window.sb.auth.updateUser({ data: { display_name: val } }); } catch(e){}
-        if (typeof window.renderSideNavAuth === 'function') { window._profileDisplayName = val; window.renderSideNavAuth(); }
+          .upsert({ id: u2.id, display_name: v.value }, { onConflict: 'id' }); // RLS: only own row
+        if (r.error) { showNameErr(r.error.message || 'Could not update display name.'); return; }
+        try { await window.sb.auth.updateUser({ data: { display_name: v.value } }); } catch(e){}
+        if (typeof window.renderSideNavAuth === 'function') { window._profileDisplayName = v.value; window.renderSideNavAuth(); }
         if (typeof window.renderHistoryLeaderboard === 'function') window.renderHistoryLeaderboard();
-        toast('Username updated 🧡');
+        toast('Display name updated \ud83e\udde1');
         openProfilePage();
       } finally { saveBtn.disabled = false; }
     };
 
+    /* Avatar upload */
+    var avaBtn = document.getElementById('pk-avatar-btn');
+    var avaFile = document.getElementById('pk-avatar-file');
+    var avaStatus = document.getElementById('pk-avatar-status');
+    if (avaBtn && avaFile) {
+      avaBtn.onclick = function(){ avaFile.click(); };
+      avaFile.onchange = async function(){
+        var u3 = me(); var f = avaFile.files && avaFile.files[0];
+        if (!u3 || !f) return;
+        if (!/^image\//.test(f.type)) { if (avaStatus) avaStatus.textContent = 'Please choose an image file.'; return; }
+        if (f.size > 8 * 1024 * 1024) { if (avaStatus) avaStatus.textContent = 'Image must be under 8MB.'; return; }
+        if (avaStatus) avaStatus.textContent = 'Processing\u2026';
+        try {
+          var blob = await cropResize(f);
+          // instant preview
+          var box2 = document.getElementById('pk-avatar-box');
+          var localUrl = URL.createObjectURL(blob);
+          if (box2) box2.innerHTML = '<img id="pk-avatar-img" src="' + localUrl + '" alt="Your profile picture">';
+          if (avaStatus) avaStatus.textContent = 'Uploading\u2026';
+          var path = u3.id + '/avatar.jpg';
+          var up = await window.sb.storage.from('avatars')
+            .upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+          if (up.error) throw up.error;
+          var pr = await window.sb.from('profiles')
+            .upsert({ id: u3.id, avatar_url: path }, { onConflict: 'id' });
+          if (pr.error) throw pr.error;
+          if (avaStatus) avaStatus.textContent = 'Profile picture updated \ud83e\udde1';
+        } catch(e){
+          if (avaStatus) avaStatus.textContent = (e && e.message) ? e.message : 'Upload failed.';
+        } finally { avaFile.value = ''; }
+      };
+    }
+
+    /* Password update + reset link */
+    var pwErr = document.getElementById('pk-pw-err');
     var pwBtn = document.getElementById('pk-profile-pw-save');
     if (pwBtn) pwBtn.onclick = async function(){
-      var pw = (document.getElementById('pk-profile-pw').value || '');
-      if (pw.length < 6) { toast('Password must be at least 6 characters'); return; }
+      var input = document.getElementById('pk-profile-pw');
+      var pw = (input && input.value) || '';
+      if (pw.length < 6) { if (pwErr) pwErr.textContent = 'Password must be at least 6 characters.'; return; }
+      if (pwErr) pwErr.textContent = '';
       pwBtn.disabled = true;
       try {
         var r = await window.sb.auth.updateUser({ password: pw });
-        if (r.error) { toast(r.error.message || 'Could not update password'); return; }
-        document.getElementById('pk-profile-pw').value = '';
-        toast('Password updated 🧡');
+        if (r.error) { if (pwErr) pwErr.textContent = r.error.message || 'Could not update password.'; return; }
+        if (input) input.value = '';
+        toast('Password updated \ud83e\udde1');
       } finally { pwBtn.disabled = false; }
     };
 
+    var resetBtn = document.getElementById('pk-profile-pw-reset');
+    if (resetBtn) resetBtn.onclick = async function(){
+      var u4 = me(); if (!u4 || !u4.email) return;
+      resetBtn.disabled = true;
+      try {
+        var origin = window.location.origin;
+        try { if (window.top && window.top.location && window.top.location.origin) origin = window.top.location.origin; } catch(e){}
+        var r = await window.sb.auth.resetPasswordForEmail(u4.email, { redirectTo: origin + '/reset-password' });
+        if (r.error) { if (pwErr) pwErr.textContent = r.error.message || 'Could not send reset email.'; return; }
+        if (pwErr) pwErr.textContent = '';
+        toast('Reset link sent to ' + u4.email);
+      } finally { resetBtn.disabled = false; }
+    };
+
+    /* Device sign-out */
+    Array.prototype.forEach.call(box.querySelectorAll('.pk-device-btn'), function(b){
+      b.onclick = async function(){
+        var u5 = me(); if (!u5) return;
+        var did = b.getAttribute('data-device');
+        b.disabled = true;
+        try {
+          var r = await window.sb.from('user_sessions')
+            .update({ revoked: true })
+            .eq('user_id', u5.id).eq('device_id', did);   // ownership enforced client + RLS
+          if (r.error) { toast('Could not sign out that device'); b.disabled = false; return; }
+          if (did === deviceId()) {
+            closeProfilePage();
+            if (typeof window.signOut === 'function') await window.signOut();
+          } else {
+            toast('Device signed out');
+            openProfilePage();
+          }
+        } catch(e){ b.disabled = false; }
+      };
+    });
+
     var outBtn = document.getElementById('pk-profile-signout');
     if (outBtn) outBtn.onclick = async function(){
+      var u6 = me();
+      try {
+        if (u6) await window.sb.from('user_sessions').update({ revoked: true })
+          .eq('user_id', u6.id).eq('device_id', deviceId());
+      } catch(e){}
       closeProfilePage();
       if (typeof window.signOut === 'function') await window.signOut();
     };
@@ -6533,7 +6785,7 @@ html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
     ov.classList.add('open');
     renderBody(null);
     var box = document.getElementById('pk-profile-body');
-    if (me() && box) box.innerHTML = '<div class="pk-profile-hint">Loading your account…</div>';
+    if (me() && box) box.innerHTML = '<div class="pk-profile-hint">Loading your account\u2026</div>';
     var d = await loadProfileData();
     if (ov.classList.contains('open')) renderBody(d);
   }
