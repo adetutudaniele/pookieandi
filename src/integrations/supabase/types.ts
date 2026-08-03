@@ -37,16 +37,19 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           display_name: string
           id: string
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string
           id: string
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string
           id?: string
@@ -130,6 +133,39 @@ export type Database = {
           partner_name?: string
           played_at?: string
           rounds_played?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_id: string
+          device_label: string
+          id: string
+          last_seen_at: string
+          revoked: boolean
+          user_agent: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          device_label?: string
+          id?: string
+          last_seen_at?: string
+          revoked?: boolean
+          user_agent?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          device_label?: string
+          id?: string
+          last_seen_at?: string
+          revoked?: boolean
+          user_agent?: string
           user_id?: string
         }
         Relationships: []
