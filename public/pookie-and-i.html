@@ -6338,5 +6338,220 @@ async function saveSessionHistory() {
 })();
 </script>
 
+<!-- ══ Account / Profile page (additive; reuses existing tokens & classes) ══ -->
+<style>
+#pk-profile-overlay { z-index: 1100; }
+.pk-profile-modal { max-width: 460px; max-height: 88dvh; overflow-y: auto; }
+.pk-profile-head { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+.pk-profile-avatar {
+  width: 52px; height: 52px; border-radius: 50%; flex: 0 0 52px;
+  background: var(--accent); color: #fff; font-weight: 600; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.pk-profile-id { min-width: 0; }
+.pk-profile-id .pk-name { font-family: 'Playfair Display', serif; font-size: 1.15rem; }
+.pk-profile-id .pk-mail { font-size: 12px; color: rgba(250,247,242,0.45); word-break: break-all; }
+html[data-theme="light"] .pk-profile-id .pk-mail { color: rgba(26,22,18,0.5); }
+.pk-profile-section { border-top: 1px solid rgba(250,247,242,0.1); padding-top: 12px; margin-top: 12px; }
+.pk-profile-label {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(250,247,242,0.4); margin-bottom: 8px;
+}
+html[data-theme="light"] .pk-profile-label { color: rgba(26,22,18,0.45); }
+.pk-profile-stats { display: flex; gap: 10px; }
+.pk-stat {
+  flex: 1; background: rgba(250,247,242,0.06); border-radius: 10px;
+  padding: 10px; text-align: center;
+}
+.pk-stat-val { font-size: 18px; font-weight: 600; color: var(--accent); }
+.pk-stat-lab { font-size: 11px; color: rgba(250,247,242,0.45); }
+html[data-theme="light"] .pk-stat-lab { color: rgba(26,22,18,0.5); }
+.pk-profile-row { display: flex; gap: 8px; align-items: flex-start; }
+.pk-profile-row .auth-input { margin-bottom: 0; }
+.pk-profile-row .auth-btn { width: auto; padding: 10px 14px; margin-bottom: 0; white-space: nowrap; min-height: 44px; }
+.pk-profile-hint { font-size: 12px; color: rgba(250,247,242,0.35); margin-top: 6px; }
+html[data-theme="light"] .pk-profile-hint { color: rgba(26,22,18,0.45); }
+.pk-profile-danger { background: transparent; color: var(--accent); border: 1px solid rgba(200,82,58,0.5); }
+</style>
+
+<div class="auth-modal-overlay" id="pk-profile-overlay" onclick="if(event.target===this) window.closeProfilePage()">
+  <div class="auth-modal pk-profile-modal" role="dialog" aria-modal="true" aria-labelledby="pk-profile-title" onclick="event.stopPropagation()" style="position:relative;">
+    <button class="auth-close-btn" onclick="window.closeProfilePage()" aria-label="Close account settings">✕</button>
+    <h3 id="pk-profile-title">Your Account</h3>
+    <div id="pk-profile-body"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  function esc(s){ return (window.escapeHtml ? window.escapeHtml(String(s == null ? '' : s)) : String(s == null ? '' : s)); }
+  function toast(m){ if (typeof window.showToast === 'function') window.showToast(m); }
+  function me(){ return window.currentUser || null; }        // ownership anchor: always the signed-in user
+
+  function fallbackName(u){
+    return (u.user_metadata && (u.user_metadata.display_name || u.user_metadata.full_name))
+      || (u.email ? u.email.split('@')[0] : '') || 'Player';
+  }
+
+  async function loadProfileData(){
+    var u = me();
+    if (!u) return null;
+    var out = { profile: null, stats: null, sessions: [] };
+    try {
+      var p = await window.sb.from('profiles').select('id, display_name, created_at').eq('id', u.id).maybeSingle();
+      out.profile = p.data || null;
+    } catch(e){}
+    try {
+      var s = await window.sb.from('player_stats').select('total_points, updated_at').eq('user_id', u.id).maybeSingle();
+      out.stats = s.data || null;
+    } catch(e){}
+    try {
+      var h = await window.sb.from('session_history')
+        .select('id, partner_name, played_at, duration_minutes, rounds_played, final_scores')
+        .eq('user_id', u.id).order('played_at', { ascending: false }).limit(8);
+      out.sessions = h.data || [];
+    } catch(e){}
+    return out;
+  }
+
+  function renderBody(d){
+    var box = document.getElementById('pk-profile-body');
+    var u = me();
+    if (!box) return;
+    if (!u) {
+      box.innerHTML = '<div class="pk-profile-hint">Sign in to manage your account.</div>'
+        + '<button class="auth-btn primary" style="margin-top:12px;" onclick="window.closeProfilePage(); window.openAuthModal && window.openAuthModal();">Sign in</button>';
+      return;
+    }
+    var name = (d && d.profile && d.profile.display_name) || fallbackName(u);
+    var since = (d && d.profile && d.profile.created_at) ? new Date(d.profile.created_at) : new Date(u.created_at || Date.now());
+    var pts = (d && d.stats && d.stats.total_points) || 0;
+    var sessions = (d && d.sessions) || [];
+    var isEmailUser = !!(u.app_metadata && (u.app_metadata.provider === 'email'
+      || (u.app_metadata.providers || []).indexOf('email') > -1));
+
+    var html = ''
+      + '<div class="pk-profile-head">'
+      +   '<div class="pk-profile-avatar" aria-hidden="true">' + esc(name.slice(0,1).toUpperCase()) + '</div>'
+      +   '<div class="pk-profile-id">'
+      +     '<div class="pk-name">' + esc(name) + '</div>'
+      +     '<div class="pk-mail">' + esc(u.email || 'Signed in') + '</div>'
+      +   '</div>'
+      + '</div>'
+
+      + '<div class="pk-profile-stats">'
+      +   '<div class="pk-stat"><div class="pk-stat-val">' + pts + '</div><div class="pk-stat-lab">Points</div></div>'
+      +   '<div class="pk-stat"><div class="pk-stat-val">' + sessions.length + '</div><div class="pk-stat-lab">Sessions</div></div>'
+      +   '<div class="pk-stat"><div class="pk-stat-val">' + since.toLocaleDateString([], { month:'short', year:'numeric' }) + '</div><div class="pk-stat-lab">Member since</div></div>'
+      + '</div>'
+
+      + '<div class="pk-profile-section">'
+      +   '<div class="pk-profile-label">Display name</div>'
+      +   '<div class="pk-profile-row">'
+      +     '<input id="pk-profile-name" class="auth-input" maxlength="60" value="' + esc(name) + '" aria-label="Display name">'
+      +     '<button class="auth-btn primary" id="pk-profile-save">Save</button>'
+      +   '</div>'
+      +   '<div class="pk-profile-hint">This is the name shown to your Pookie and on the leaderboard.</div>'
+      + '</div>';
+
+    if (isEmailUser) {
+      html += '<div class="pk-profile-section">'
+      +   '<div class="pk-profile-label">Password</div>'
+      +   '<div class="pk-profile-row">'
+      +     '<input id="pk-profile-pw" class="auth-input" type="password" minlength="6" placeholder="New password" aria-label="New password" autocomplete="new-password">'
+      +     '<button class="auth-btn primary" id="pk-profile-pw-save">Update</button>'
+      +   '</div>'
+      + '</div>';
+    }
+
+    html += '<div class="pk-profile-section">'
+      +   '<div class="pk-profile-label">Recent sessions</div>';
+    if (sessions.length) {
+      sessions.forEach(function(h){
+        var sc = h.final_scores || { p1:0, p2:0 };
+        html += '<div class="history-card">'
+          + '<div class="history-card-date">' + new Date(h.played_at).toLocaleDateString([], { month:'short', day:'numeric' })
+            + ' · ' + h.duration_minutes + 'min · ' + h.rounds_played + ' rounds</div>'
+          + '<div class="history-card-players">vs ' + esc(h.partner_name) + '</div>'
+          + '<div class="history-card-score">' + sc.p1 + ' — ' + sc.p2 + '</div>'
+          + '</div>';
+      });
+    } else {
+      html += '<div class="pk-profile-hint">No saved sessions yet.</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="pk-profile-section">'
+      + '<button class="auth-btn pk-profile-danger" id="pk-profile-signout">Sign out</button>'
+      + '</div>';
+
+    box.innerHTML = html;
+
+    var saveBtn = document.getElementById('pk-profile-save');
+    if (saveBtn) saveBtn.onclick = async function(){
+      var u2 = me(); if (!u2) return;
+      var val = (document.getElementById('pk-profile-name').value || '').trim();
+      if (!val) { toast('Username cannot be empty'); return; }
+      saveBtn.disabled = true;
+      try {
+        var r = await window.sb.from('profiles')
+          .upsert({ id: u2.id, display_name: val }, { onConflict: 'id' }); // RLS: only own row
+        if (r.error) { toast('Could not update username'); return; }
+        try { await window.sb.auth.updateUser({ data: { display_name: val } }); } catch(e){}
+        if (typeof window.renderSideNavAuth === 'function') { window._profileDisplayName = val; window.renderSideNavAuth(); }
+        if (typeof window.renderHistoryLeaderboard === 'function') window.renderHistoryLeaderboard();
+        toast('Username updated 🧡');
+        openProfilePage();
+      } finally { saveBtn.disabled = false; }
+    };
+
+    var pwBtn = document.getElementById('pk-profile-pw-save');
+    if (pwBtn) pwBtn.onclick = async function(){
+      var pw = (document.getElementById('pk-profile-pw').value || '');
+      if (pw.length < 6) { toast('Password must be at least 6 characters'); return; }
+      pwBtn.disabled = true;
+      try {
+        var r = await window.sb.auth.updateUser({ password: pw });
+        if (r.error) { toast(r.error.message || 'Could not update password'); return; }
+        document.getElementById('pk-profile-pw').value = '';
+        toast('Password updated 🧡');
+      } finally { pwBtn.disabled = false; }
+    };
+
+    var outBtn = document.getElementById('pk-profile-signout');
+    if (outBtn) outBtn.onclick = async function(){
+      closeProfilePage();
+      if (typeof window.signOut === 'function') await window.signOut();
+    };
+  }
+
+  async function openProfilePage(){
+    var ov = document.getElementById('pk-profile-overlay');
+    if (!ov) return;
+    ov.classList.add('open');
+    renderBody(null);
+    var box = document.getElementById('pk-profile-body');
+    if (me() && box) box.innerHTML = '<div class="pk-profile-hint">Loading your account…</div>';
+    var d = await loadProfileData();
+    if (ov.classList.contains('open')) renderBody(d);
+  }
+  function closeProfilePage(){
+    var ov = document.getElementById('pk-profile-overlay');
+    if (ov) ov.classList.remove('open');
+  }
+
+  window.openProfilePage = openProfilePage;
+  window.closeProfilePage = closeProfilePage;
+  // Route the existing "Edit" entry point to the full account page
+  window.editProfile = openProfilePage;
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape') closeProfilePage();
+  });
+})();
+</script>
+
 </body>
 </html>
