@@ -4136,20 +4136,22 @@ function updateConnectionUI() {
     p2Name = isPlayer1 ? p2n : currentRoom.player1_name;
   }
 
-  const n1 = currentRoom.player1_name || 'Player 1';
-  const n2 = p2n || '';
+  // Single source of truth for the row-2 status line.
   if (p1c && p2c) {
-    if (rsLine) rsLine.innerHTML = `<span class="connected-dot green"></span> ${escapeHtml(n1)} & ${escapeHtml(n2)}`;
+    if (rsLine) rsLine.innerHTML = '<span class="connected-dot green"></span> Both connected 🧡';
     bannerEl.style.display = 'none';
-  } else if ((isPlayer1 && !p2c) || (!isPlayer1 && !p1c)) {
-    if (p2n) {
-      if (rsLine) rsLine.innerHTML = '<span class="connected-dot red"></span> Partner disconnected';
-      bannerEl.style.display = 'block';
-    } else {
-      if (rsLine) rsLine.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your partner...';
-      bannerEl.style.display = 'none';
-    }
+  } else if (p2n) {
+    if (rsLine) rsLine.innerHTML = '<span class="connected-dot red"></span> Pookie disconnected';
+    bannerEl.style.display = 'block';
+  } else {
+    if (rsLine) rsLine.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your pookie...';
+    bannerEl.style.display = 'none';
   }
+
+  // Connection-driven chrome updates (previously done by polling intervals).
+  if (typeof window.__pkRenderExpiry === 'function') window.__pkRenderExpiry();
+  if (typeof window.__pkRefreshPrefill === 'function') window.__pkRefreshPrefill();
+  if (typeof window.__pkMeasureHeader === 'function') window.__pkMeasureHeader();
 }
 
 function subscribeToRoom(roomId) {
