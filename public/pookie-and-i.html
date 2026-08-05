@@ -1433,10 +1433,11 @@ html, body { overscroll-behavior-y: none; }
   padding-top: env(safe-area-inset-top);
 }
 
-/* GPU-accelerate sliding panels */
+/* GPU-accelerate sliding panels.
+   NOTE: never set `transform` here — these ID selectors outrank the class-based
+   off-canvas transforms (.side-nav / .chat-panel) and would pin the panels open. */
 #side-nav, #chat-panel, #timer-widget, #side-nav-overlay, #chat-overlay {
   will-change: transform, opacity;
-  transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
