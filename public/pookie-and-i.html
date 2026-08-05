@@ -2530,7 +2530,7 @@ async function signInWithGoogleFromLanding() {
 // ─── INVITE SCREEN ──────────────────────────────────────
 function showInviteScreen() {
   let url = 'pookieandi.lovable.app';
-  const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
+  const name = p2Name && p2Name !== 'Pookie' ? p2Name : 'your pookie';
   document.getElementById('invite-name').textContent = name;
   document.getElementById('invite-url').textContent = url;
   document.getElementById('invite-msg').textContent = `Hey ${name} 🧡 I made us something for tonight — open this when we're on the call: ${url}`;
@@ -4205,7 +4205,7 @@ async function startApp() {
   if (n2) n2.value = '';
 
   p1Name = myName;
-  p2Name = 'Partner';
+  p2Name = 'Pookie';
   isPlayer1 = true;
   sessionStartTime = Date.now();
 
@@ -4251,7 +4251,7 @@ function showRoomInvite(code) {
     return;
   }
   const url = 'pookieandi.lovable.app';
-  const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
+  const name = p2Name && p2Name !== 'Pookie' ? p2Name : 'your pookie';
   document.getElementById('invite-name').textContent = name;
   document.getElementById('invite-url').textContent = url;
   document.getElementById('invite-msg').textContent = `Hey ${name}, 🧡 Join our date night, open ${url} and enter code: ${code}`;
@@ -4309,7 +4309,7 @@ async function joinRoom() {
     return;
   }
 
-  const myName = document.getElementById('name1').value.trim() || 'Partner';
+  const myName = document.getElementById('name1').value.trim() || 'Pookie';
 
   const { data, error } = await sb.from('rooms')
     .select('*')
@@ -5043,7 +5043,7 @@ async function saveSessionHistory() {
   try {
     await sb.from('session_history').insert({
       user_id: currentUser.id,
-      partner_name: partnerName || 'Partner',
+      partner_name: partnerName || 'Pookie',
       final_scores: scores,
       rounds_played: totalRoundsPlayed,
       duration_minutes: Math.max(1, duration),
@@ -5863,8 +5863,9 @@ async function saveSessionHistory() {
   /* Chat icon is always available on the main game screen */
   #app #chat-btn { display: inline-flex; align-items: center; justify-content: center; }
   /* Drawer geometry/stacking now comes from the :root tokens (see top of file).
-     Main content never shifts when the drawer opens. */
-  #app .main, #app .app-footer { margin-left: 0; }
+     Main content never shifts when the drawer opens; it stays centred. */
+  #app .main { margin-left: auto; margin-right: auto; }
+  #app .app-footer { margin-left: 0; }
 </style>
 
 <script>
