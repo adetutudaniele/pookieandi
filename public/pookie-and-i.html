@@ -410,7 +410,7 @@ body {
 #invite .orb2 { width: 160px; height: 160px; bottom: 40px; left: -40px; }
 
 .invite-inner {
-  position: relative; z-index: 1;
+  position: relative; z-index: var(--z-content);
   max-width: 420px; width: 100%;
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
@@ -1441,13 +1441,9 @@ html, body { overscroll-behavior-y: none; }
   backface-visibility: hidden;
 }
 
-/* Z-index sanity for overlays */
-#side-nav-overlay, #chat-overlay { z-index: 900; }
-#side-nav { z-index: 950; }
-#chat-panel { z-index: 960; }
-#timer-widget { z-index: 970; }
-#auth-modal-overlay { z-index: 1000; }
-#offline-banner { z-index: 2000; }
+/* Overlay stacking is defined once in the :root token scale at the top of
+   this stylesheet. Do not add per-element z-index numbers here. */
+#offline-banner { z-index: var(--z-offline); }
 
 /* Prevent horizontal overflow on small screens */
 html, body, #landing, .screen { max-width: 100vw; }
@@ -5417,30 +5413,13 @@ async function saveSessionHistory() {
    Closed = fully hidden, open = overlays main content from the left. */
 .side-nav { transform: translateX(-100%) !important; width: 260px !important; }
 .side-nav.open { transform: translateX(0) !important; width: 260px !important; }
-/* When collapsed, force full-width contents visible (no mini-rail behavior). */
-.side-nav.collapsed .side-nav-brand-name,
-.side-nav.collapsed .side-nav-cat-header span:first-child,
-.side-nav.collapsed .side-nav-cat-chev,
-.side-nav.collapsed .side-nav-item-label,
-.side-nav.collapsed .side-nav-top-actions,
-.side-nav.collapsed #side-nav-history-leaderboard,
-.side-nav.collapsed .side-nav-user-name,
-.side-nav.collapsed .side-nav-signout,
-.side-nav.collapsed .side-nav-guest-msg,
-.side-nav.collapsed .side-nav-signin-label { display: revert !important; }
-.side-nav.collapsed .side-nav-brand-name { visibility: visible !important; width: auto !important; }
-.side-nav.collapsed .side-nav-brand { justify-content: flex-start !important; flex-direction: row !important; gap: 10px !important; padding: 14px 14px 10px !important; }
-.side-nav.collapsed .side-nav-cat-items { display: block !important; }
-.side-nav.collapsed .side-nav-section.collapsed .side-nav-cat-items { display: none !important; }
-.side-nav.collapsed .side-nav-cat-header { justify-content: space-between !important; padding: 0 1.25rem !important; font-size: 10px !important; }
-.side-nav.collapsed .side-nav-item { justify-content: flex-start !important; padding: 10px 1.25rem !important; }
-.side-nav.collapsed .side-nav-item .nav-dot { display: inline-block !important; }
+/* Mini-rail CSS removed in Phase 2 — the nav is drawer-only. */
 /* Room-expiry pill (below the room code) */
 .room-expiry-line { font-size: 11px; color: rgba(250,247,242,0.45); margin-top: 2px; }
 .room-expiry-line.warn { color: #E8A24C; }
 /* Full-screen expired overlay */
 .room-expired-overlay {
-  position: fixed; inset: 0; background: rgba(15,12,10,0.96); z-index: 9999;
+  position: fixed; inset: 0; background: rgba(15,12,10,0.96); z-index: var(--z-room-expired);
   display: none; align-items: center; justify-content: center; padding: 2rem;
   text-align: center; font-family: 'DM Sans', sans-serif;
 }
@@ -5787,19 +5766,11 @@ async function saveSessionHistory() {
     animation: pookiePulseDot 1.6s ease-in-out infinite;
   }
 
-  /* 2) Ensure hamburger sits neatly inside header, above sibling content */
-  #app .app-header { position: relative; z-index: 105; }
-  #app .app-header-left { gap: 6px; align-items: center; }
-  #app .hamburger-btn.mobile-only-hb { position: relative; z-index: 2; flex: 0 0 auto; }
-  /* Drawer never pushes content */
-  #app .main, #app .app-footer { position: relative; z-index: 1; }
+  /* NOTE: the legacy #app .app-header is display:none (replaced by #pk-header).
+     Its layout rules were removed in Phase 2 as dead CSS. */
 
-  /* 1) Chat is hidden until both players are connected */
-  body:not(.pookie-chat-enabled) #chat-btn { display: none !important; }
-  body:not(.pookie-chat-enabled) #chat-panel,
-  body:not(.pookie-chat-enabled) #chat-overlay {
-    display: none !important;
-  }
+  /* Chat availability is driven by showScreen() adding .pookie-chat-enabled
+     to <body> on the app screen; no CSS gating needed. */
 
   /* 7) Tappable room-code digits */
   #landing-room-code, #room-status-code {
@@ -5810,7 +5781,7 @@ async function saveSessionHistory() {
 
   /* 8) How-to-play tooltip */
   .pookie-howto-tip {
-    position: fixed; z-index: 400;
+    position: fixed; z-index: var(--z-tooltip);
     background: var(--ink); color: var(--cream);
     border: 1px solid rgba(200,82,58,0.4);
     border-radius: 12px; padding: 12px 14px 10px;
@@ -6011,55 +5982,11 @@ async function saveSessionHistory() {
 
 <!-- ══ Targeted fixes: chat icon, header layout, drawer overlay, copy text ══ -->
 <style>
-  /* FIX 1: Chat icon always visible on the main game screen */
-  #app #chat-btn { display: inline-flex !important; align-items: center; justify-content: center; }
-  #chat-panel, #chat-overlay { display: block !important; }
-
-  /* FIX 2: Hamburger + logo on one horizontal row inside a 56px header */
-  #app .app-header {
-    height: 56px;
-    min-height: 56px;
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
-  }
-  #app .app-header-left {
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 10px !important;
-  }
-  #app .app-header-left > div {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    line-height: 1.1;
-  }
-  #app .app-header-title { font-size: 1.15rem; line-height: 1.1; }
-  #app .hamburger-btn.mobile-only-hb {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 40px; height: 40px;
-    padding: 0;
-    flex: 0 0 auto;
-  }
-
-  /* FIX 3: Side panel is an overlay drawer at every breakpoint */
-  .side-nav {
-    width: 260px !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease !important;
-    z-index: 1000 !important;
-  }
-  .side-nav.open { transform: translateX(0) !important; }
-  .side-nav-overlay {
-    display: block !important;
-    background: rgba(0,0,0,0.5);
-    z-index: 999 !important;
-  }
-  /* Main content never shifts or resizes when the drawer opens */
-  #app .main, #app .app-footer, #app .app-header { margin-left: 0 !important; }
+  /* Chat icon is always available on the main game screen */
+  #app #chat-btn { display: inline-flex; align-items: center; justify-content: center; }
+  /* Drawer geometry/stacking now comes from the :root tokens (see top of file).
+     Main content never shifts when the drawer opens. */
+  #app .main, #app .app-footer { margin-left: 0; }
 </style>
 
 <script>
@@ -6120,11 +6047,11 @@ async function saveSessionHistory() {
 <!-- ══ FIX A: unified two-row fixed header · FIX B: auto-scoring ══ -->
 <style>
   #pk-header {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+    position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-header);
     background: var(--ink);
     border-bottom: 1px solid rgba(250,247,242,0.06);
     padding: 0 12px calc(6px) 12px;
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--pk-safe-top);
     font-family: 'DM Sans', sans-serif;
   }
   #pk-header-row1 {
@@ -6157,7 +6084,7 @@ async function saveSessionHistory() {
   #app > div:first-child { position: static !important; }
   #app .app-header { display: none !important; }
   #app .room-status-bar { display: none !important; }
-  body.pk-header-on #app { padding-top: var(--pk-header-h, 84px); }
+  body.pk-header-on #app { padding-top: var(--pk-header-h); }
   @keyframes pkScorePulse { 0%{transform:scale(1);} 40%{transform:scale(1.45);} 100%{transform:scale(1);} }
   .pk-score-pulse { display:inline-block; animation: pkScorePulse 0.45s ease; }
 </style>
@@ -6354,7 +6281,7 @@ async function saveSessionHistory() {
 
 <!-- ══ Account / Profile page (additive; reuses existing tokens & classes) ══ -->
 <style>
-#pk-profile-overlay { z-index: 1100; }
+#pk-profile-overlay { z-index: var(--z-profile); }
 .pk-profile-modal { max-width: 460px; max-height: 88dvh; overflow-y: auto; }
 .pk-profile-head { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
 .pk-profile-avatar {
