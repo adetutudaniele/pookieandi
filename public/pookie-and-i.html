@@ -5880,20 +5880,7 @@ async function saveSessionHistory() {
 
 <script>
 (function(){
-  // FIX 1: Ensure chat is enabled whenever the main game screen is visible.
-  function _pookieEnsureChatEnabled() {
-    var app = document.getElementById('app');
-    if (!app) return;
-    var visible = app.style.display !== 'none' && app.offsetParent !== null;
-    if (visible) document.body.classList.add('pookie-chat-enabled');
-  }
-  document.addEventListener('DOMContentLoaded', _pookieEnsureChatEnabled);
-  setInterval(_pookieEnsureChatEnabled, 500);
-  var _origShow = window.showScreen;
-  window.showScreen = function(id){
-    if (typeof _origShow === 'function') _origShow.apply(this, arguments);
-    if (id === 'app') document.body.classList.add('pookie-chat-enabled');
-  };
+  // Chat availability on the app screen is handled by the base showScreen().
 
   // FIX 4: Prefilled copy message — exact wording, with line break.
   function _pookieBuildMsg(code) {
@@ -5918,8 +5905,10 @@ async function saveSessionHistory() {
     var iv = document.getElementById('invite-msg');
     if (iv) { iv.textContent = msg; iv.style.whiteSpace = 'pre-line'; }
   }
+  // Exposed hook: called by showScreen(), updateConnectionUI() and the share
+  // reveal instead of an 800ms polling loop.
+  window.__pkRefreshPrefill = _pookieRefreshPrefill;
   document.addEventListener('DOMContentLoaded', _pookieRefreshPrefill);
-  setInterval(_pookieRefreshPrefill, 800);
 
   window.copyShareMsg = function() {
     var msg = _pookieBuildMsg(_pookieCurrentCode());
@@ -6016,12 +6005,18 @@ async function saveSessionHistory() {
     measure();
   }
 
+  // Header height is the single geometry source for #app's top padding.
   function measure(){
     var h = document.getElementById('pk-header');
     if (!h) return;
     document.documentElement.style.setProperty('--pk-header-h', h.offsetHeight + 'px');
   }
-  window.addEventListener('resize', measure);
+  window.__pkMeasureHeader = measure;
+  window.addEventListener('resize', measure, { passive: true });
+  window.addEventListener('orientationchange', measure, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', measure, { passive: true });
+  }
 
   /* keep the sync indicator inside row 2, right of the separator */
   function placeSync(){
@@ -6030,65 +6025,37 @@ async function saveSessionHistory() {
     if (dot && slot && dot.parentNode !== slot) slot.appendChild(dot);
   }
 
-  /* Row 2 status text */
-  function refreshStatus(){
-    var line = document.getElementById('room-status-line');
-    if (!line) return;
-    var room = (typeof currentRoom !== 'undefined') ? currentRoom : null;
-    if (!room) return;
-    var both = room.player1_connected && room.player2_connected;
-    var html;
-    if (both) html = '<span class="connected-dot green"></span> Both connected 🧡';
-    else if (room.player2_name) html = '<span class="connected-dot red"></span> Pookie disconnected';
-    else html = '<span class="connected-dot yellow"></span> Waiting for your pookie...';
-    if (line.innerHTML !== html) line.innerHTML = html;
-  }
+  /* Row-2 status text is written by the base updateConnectionUI(). */
 
-  setInterval(function(){ buildHeader(); placeSync(); refreshStatus(); measure(); }, 500);
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(buildHeader, 300); });
+  window.__pkBuildHeader = function(){
+    buildHeader();
+    placeSync();
+    measure();
+    // Observe real size changes instead of re-measuring on a timer.
+    var h = document.getElementById('pk-header');
+    if (h && !h.__pkObserved && window.ResizeObserver) {
+      h.__pkObserved = true;
+      new ResizeObserver(measure).observe(h);
+      new MutationObserver(function(){ placeSync(); measure(); })
+        .observe(h, { childList: true, subtree: true });
+    }
+  };
+  window.__pkPlaceSync = placeSync;
+  document.addEventListener('DOMContentLoaded', function(){ window.__pkBuildHeader(); });
 
   /* ───────── FIX B: automatic scoreboard updates ───────── */
-  var pulseNext = null;
-  var _origRender = window.renderScoreBar;
-  var lastRendered = null;
-  if (typeof _origRender === 'function') {
-    window.renderScoreBar = function(){
-      _origRender.apply(this, arguments);
-      var bar = document.getElementById('score-bar');
-      if (!bar) return;
-      var els = bar.querySelectorAll('.sb-score');
-      if (pulseNext && els.length === 2) {
-        var el = pulseNext === 'p1' ? els[0] : els[1];
-        if (el) { el.classList.remove('pk-score-pulse'); void el.offsetWidth; el.classList.add('pk-score-pulse'); }
-        pulseNext = null;
-      }
-    };
-  }
-
+  /* Pulse animation lives inside the base renderScoreBar(); it reads
+     window.__pkPulseNext and diffs the rendered scores itself. */
   function award(target, n){
     if (!n) return;
     try {
       if (!isPlayer1) return;      // single writer avoids double counting
       scores[target] = Math.max(0, (scores[target] || 0) + n);
-      pulseNext = target;
+      window.__pkPulseNext = target;
       renderScoreBar();
       pushScores();
     } catch(e){}
   }
-  /* pulse for everyone when scores arrive over realtime */
-  var lastScores = null;
-  setInterval(function(){
-    try {
-      var s = scores; if (!s) return;
-      var sig = s.p1 + ':' + s.p2;
-      if (lastScores !== null && lastScores !== sig) {
-        var prev = lastScores.split(':');
-        pulseNext = (+prev[0] !== s.p1) ? 'p1' : 'p2';
-        renderScoreBar();
-      }
-      lastScores = sig;
-    } catch(e){}
-  }, 400);
 
   /* Watch per-game counters and mirror increases onto the shared scoreboard */
   var snap = {};
@@ -6097,7 +6064,7 @@ async function saveSessionHistory() {
     truths:     ['p1Score', 'p2Score'],
     unpopular:  ['p1Shocked', 'p2Shocked']
   };
-  setInterval(function(){
+  window.__pkScanGameScores = function(){
     try {
       var st = state; if (!st) return;
       Object.keys(WATCH).forEach(function(gid){
@@ -6120,7 +6087,7 @@ async function saveSessionHistory() {
         });
       });
     } catch(e){}
-  }, 400);
+  };
 
   /* Manual point buttons for Word Association and Name That Song */
   function myKey(){ return isPlayer1 ? 'p1' : 'p2'; }
@@ -6131,7 +6098,7 @@ async function saveSessionHistory() {
       else {
         // player 2 asks player 1's client through the shared game state
         scores[target] = Math.max(0, (scores[target] || 0) + 1);
-        pulseNext = target;
+        window.__pkPulseNext = target;
         renderScoreBar();
         pushScores();
       }
@@ -6157,14 +6124,9 @@ async function saveSessionHistory() {
       area.appendChild(btn);
     } catch(e){}
   }
-  var _origBuildMain = window.buildMain;
-  if (typeof _origBuildMain === 'function') {
-    window.buildMain = function(){
-      _origBuildMain.apply(this, arguments);
-      injectGameButtons();
-    };
-  }
-  setInterval(injectGameButtons, 600);
+  // Called directly at the end of the base buildMain() — no wrapper, no poll.
+  window.__pkInjectGameButtons = injectGameButtons;
+  injectGameButtons();
 })();
 </script>
 
