@@ -2524,8 +2524,7 @@ async function signInWithGoogleFromLanding() {
   } catch(e) { showToast(e?.message || 'Could not start Google sign-in.'); }
 }
 
-// ─── START APP (create room) ────────────────────────────
-function startApp() {}
+// ─── START APP (create room) — single implementation below ──
 
 // ─── INVITE SCREEN ──────────────────────────────────────
 function showInviteScreen() {
@@ -4191,10 +4190,21 @@ function subscribeToRoom(roomId) {
   setupPresence();
 }
 
-// Override startApp to create room
-startApp = async function() {
-  p1Name = document.getElementById('name1').value.trim() || 'You';
-  p2Name = document.getElementById('name2').value.trim() || 'Partner';
+// Creates the room, then reveals the share box inline on the landing screen.
+async function startApp() {
+  const nameInput = document.getElementById('name1');
+  const myName = (nameInput && nameInput.value.trim()) || '';
+  if (!myName) {
+    showToast('Please enter your name first 🧡');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+  // The partner's name stays unknown until they actually join.
+  const n2 = document.getElementById('name2');
+  if (n2) n2.value = '';
+
+  p1Name = myName;
+  p2Name = 'Partner';
   isPlayer1 = true;
   sessionStartTime = Date.now();
 
@@ -4226,11 +4236,19 @@ startApp = async function() {
   subscribeToRoom(data.id);
   try { localStorage.setItem('pookie_room_id', data.id); } catch(e) {}
 
-  // Show invite screen with room code
+  try { localStorage.setItem('pookie_room_code', code); } catch(e) {}
   showRoomInvite(code);
-};
+}
 
+// Single implementation: reveal the share box inline on the landing screen
+// (the old full-screen invite route is no longer used).
 function showRoomInvite(code) {
+  if (typeof window.__pkRevealSharebox === 'function') {
+    showScreen('landing');
+    window.__pkRevealSharebox(code);
+    pollForPartner();
+    return;
+  }
   const url = 'pookieandi.lovable.app';
   const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
   document.getElementById('invite-name').textContent = name;
@@ -5460,6 +5478,7 @@ async function saveSessionHistory() {
     if (rcVal) rcVal.textContent = code;
     if (nameSpan) nameSpan.textContent = 'your pookie';
     if (msg) msg.textContent = `Hey 🧡 Join our date night on Pookie & I — open pookieandi.lovable.app and enter code: ${code}`;
+    if (typeof window.__pkRefreshPrefill === 'function') window.__pkRefreshPrefill();
     if (box) { box.style.opacity = '1'; box.style.transform = 'translateY(0)'; }
     // Swap the CTA into "Start date night"
     const startBtn = document.getElementById('startBtn');
@@ -5474,39 +5493,8 @@ async function saveSessionHistory() {
     if (js) js.style.display = 'none';
   }
 
-  const _origStartApp = window.startApp;
-  window.startApp = async function(){
-    const nameInput = document.getElementById('name1');
-    const myName = (nameInput && nameInput.value.trim()) || '';
-    if (!myName) {
-      window.showToast && window.showToast('Please enter your name first 🧡');
-      nameInput && nameInput.focus();
-      return;
-    }
-    // Force partner name to be unknown until they join.
-    const n2 = document.getElementById('name2');
-    if (n2) n2.value = '';
-    if (typeof _origStartApp === 'function') {
-      await _origStartApp.call(this);
-    }
-    // After the original flow creates the room, replace the invite-screen
-    // navigation with an inline reveal on the same landing screen.
-    try {
-      if (window.currentRoom) {
-        const code = window.currentRoom.room_code;
-        try { localStorage.setItem(LS_CODE, code); } catch(e) {}
-        // Bring the user back to the landing/stage view and reveal share UI.
-        window.showScreen && window.showScreen('landing');
-        _revealSharebox(code);
-      }
-    } catch(e) { console.warn('startApp reveal failed', e); }
-  };
-
-  // Override showRoomInvite so it does NOT navigate away, just reveals inline.
-  window.showRoomInvite = function(code){
-    _revealSharebox(code);
-    if (typeof window.pollForPartner === 'function') { try { window.pollForPartner(); } catch(e){} }
-  };
+  // Exposed for the base startApp()/showRoomInvite() — no wrappers.
+  window.__pkRevealSharebox = _revealSharebox;
 
   // Override copyRoomCode (invite-screen message) to drop partner name.
   window.copyRoomCode = function(code){
