@@ -29,6 +29,58 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SINGLE SOURCE OF TRUTH — CHROME GEOMETRY, STACKING, BREAKPOINTS, VIEWPORT
+   ───────────────────────────────────────────────────────────────────────────
+   GEOMETRY: every fixed chrome element (header, drawer, chat, timer) and all
+   content offsets MUST reference these variables. Never re-declare a width or
+   height for the same element elsewhere.
+
+   STACKING: one scale, low -> high. Nothing may declare a raw z-index number.
+     content(1) < sticky(100) < tooltip(400) < header(900) < chat-overlay(940)
+     < chat(960) < timer(970) < drawer-overlay(999) < drawer(1000)
+     < auth modal(1050) < profile(1100) < room-expired(1200) < toast(1500)
+     < offline banner(2000)
+
+   BREAKPOINTS: mobile-first single split at 768px.
+     mobile/small tablet portrait : (max-width: 767.98px)
+     tablet landscape / desktop   : (min-width: 768px)
+   767/768 integer pairs are forbidden — they leave a dead zone on fractional
+   (zoomed / iPad portrait) viewports.
+
+   VIEWPORT HEIGHT (documented strategy, full rework deferred to Phase 3):
+     1. Preferred: 100dvh via @supports (height: 100dvh).
+     2. Fallback:  calc(var(--app-vh) * 100), where --app-vh is set from
+        window.innerHeight by the mobile-hardening script.
+     Base rules below still use 100vh purely as a pre-@supports floor; the
+     @supports pair further down is the authority and must remain the LAST
+     min-height declaration for body/.screen/#landing.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* chrome geometry */
+  --pk-header-h: 84px;          /* measured at runtime by ResizeObserver */
+  --pk-sidebar-w: 260px;
+  --pk-chat-w: 320px;
+  --pk-safe-top: env(safe-area-inset-top, 0px);
+  --pk-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* stacking scale */
+  --z-content: 1;
+  --z-sticky: 100;
+  --z-tooltip: 400;
+  --z-header: 900;
+  --z-chat-overlay: 940;
+  --z-chat: 960;
+  --z-timer: 970;
+  --z-drawer-overlay: 999;
+  --z-drawer: 1000;
+  --z-modal: 1050;
+  --z-profile: 1100;
+  --z-room-expired: 1200;
+  --z-toast: 1500;
+  --z-offline: 2000;
+}
+
 /* Accessibility: visible focus indicator (WCAG 2.4.7) */
 :focus { outline: none; }
 :focus-visible {
