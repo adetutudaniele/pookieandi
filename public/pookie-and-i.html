@@ -1673,7 +1673,7 @@ emoji-picker {
   </div>
 
   <div class="side-nav-overlay" id="side-nav-overlay" onclick="toggleSideNav()"></div>
-  <div class="side-nav collapsed" id="side-nav">
+  <div class="side-nav" id="side-nav">
     <div class="side-nav-brand">
       <img src="/app-icon.png" alt="" class="side-nav-brand-logo" />
       <span class="side-nav-brand-name">Pookie <em>&amp;</em> I</span>
@@ -2575,6 +2575,19 @@ function showScreen(id) {
     el.style.display = 'flex';
     el.style.flexDirection = 'column';
   }
+  // Chat is only available on the app screen; leaving it closes any open panel.
+  if (id === 'app') {
+    document.body.classList.add('pookie-chat-enabled');
+    if (typeof window.__pkBuildHeader === 'function') window.__pkBuildHeader();
+  } else {
+    document.body.classList.remove('pookie-chat-enabled');
+    const cp = document.getElementById('chat-panel');
+    const co = document.getElementById('chat-overlay');
+    if (cp) cp.classList.remove('open');
+    if (co) co.classList.remove('open');
+    chatOpen = false;
+  }
+  if (typeof window.__pkRefreshPrefill === 'function') window.__pkRefreshPrefill();
   try { window.scrollTo({top:0,behavior:'instant'}); } catch(e) { window.scrollTo(0,0); }
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
@@ -4069,18 +4082,27 @@ function applyRemoteState(gs) {
     buildNav();
   }
   buildMain();
+  if (typeof window.__pkScanGameScores === 'function') window.__pkScanGameScores();
   setTimeout(() => { syncPaused = false; }, 200);
+}
+
+// ─── ROOM WRITES ────────────────────────────────────────
+// Every write to `rooms` goes through roomUpdate(), which delegates to the
+// retrying safeRoomUpdate layer (__pkSafeRoomUpdate) when it is available and
+// falls back to a direct update if that layer has not booted yet.
+function roomUpdate(patch) {
+  if (!currentRoom) return Promise.resolve({ ok: false, error: 'no-room' });
+  if (typeof window.__pkSafeRoomUpdate === 'function') {
+    return window.__pkSafeRoomUpdate(patch);
+  }
+  return sb.from('rooms').update(patch).eq('id', currentRoom.id);
 }
 
 function pushState() {
   if (syncPaused || !currentRoom) return;
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(async () => {
-    const gs = getFullState();
-    await sb.from('rooms').update({
-      game_state: gs,
-      active_game: activeGame
-    }).eq('id', currentRoom.id);
+  syncTimer = setTimeout(() => {
+    roomUpdate({ game_state: getFullState(), active_game: activeGame });
   }, 100);
 }
 
@@ -4272,7 +4294,8 @@ async function joinRoom() {
     .maybeSingle();
 
   if (error || !data) {
-    showToast('Room not found or expired');
+    showToast('This room has ended 🧡 Ready for a new date night? Start a fresh room below.');
+    try { localStorage.removeItem('pookie_room_id'); localStorage.removeItem('pookie_room_code'); } catch(e) {}
     return;
   }
 
@@ -4413,48 +4436,26 @@ function goBackToLanding() {
 // ═══════════════════════════════════════════════════════════
 // SIDE NAVIGATION
 // ═══════════════════════════════════════════════════════════
-// Side nav: on desktop we have an always-visible rail that collapses to icons.
-// On mobile it behaves as an off-canvas drawer.
-let sideNavOpen = false;     // mobile drawer open?
-let sideNavCollapsed = true; // desktop rail collapsed by default per design
-
-function _isMobileNav() { return window.innerWidth < 768; }
+// Single source of truth: the side nav is an off-canvas DRAWER at every
+// breakpoint (the desktop mini-rail was removed in Phase 2).
+let sideNavOpen = false;
 
 function _syncSideNav() {
   const nav = document.getElementById('side-nav');
   const overlay = document.getElementById('side-nav-overlay');
   if (!nav) return;
-  if (_isMobileNav()) {
-    nav.classList.toggle('open', sideNavOpen);
-    nav.classList.toggle('collapsed', !sideNavOpen);
-    if (overlay) overlay.classList.toggle('open', sideNavOpen);
-  } else {
-    nav.classList.toggle('collapsed', sideNavCollapsed);
-    nav.classList.remove('open');
-    if (overlay) overlay.classList.remove('open');
-  }
-  const expanded = _isMobileNav() ? sideNavOpen : !sideNavCollapsed;
+  nav.classList.toggle('open', sideNavOpen);
+  nav.classList.remove('collapsed');
+  if (overlay) overlay.classList.toggle('open', sideNavOpen);
   document.querySelectorAll('.hamburger-btn, .side-nav-toggle').forEach(b => {
-    b.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    b.setAttribute('aria-expanded', sideNavOpen ? 'true' : 'false');
   });
 }
 
-function toggleSideNav() {
-  if (_isMobileNav()) {
-    sideNavOpen = !sideNavOpen;
-  } else {
-    sideNavCollapsed = !sideNavCollapsed;
-  }
-  _syncSideNav();
-}
-
-function closeSideNav() {
-  if (_isMobileNav()) { sideNavOpen = false; }
-  _syncSideNav();
-}
+function toggleSideNav() { sideNavOpen = !sideNavOpen; _syncSideNav(); }
+function closeSideNav()  { sideNavOpen = false; _syncSideNav(); }
 
 document.addEventListener('DOMContentLoaded', () => { _syncSideNav(); });
-window.addEventListener('resize', () => { _syncSideNav(); });
 
 // ═══════════════════════════════════════════════════════════
 // THEME TOGGLE (light / dark mode)
@@ -4506,6 +4507,18 @@ function renderScoreBar() {
   if (canControl) html += `<button class="sb-pm" onclick="confirmResetScores()" style="margin-left:4px;font-size:11px;" title="Reset scores">↺</button>`;
 
   bar.innerHTML = html;
+
+  // Pulse the score that changed — locally or via realtime — no polling needed.
+  const sig = s1 + ':' + s2;
+  if (window.__pkLastScoreSig != null && window.__pkLastScoreSig !== sig) {
+    const prev = String(window.__pkLastScoreSig).split(':');
+    const which = window.__pkPulseNext || ((+prev[0] !== s1) ? 'p1' : 'p2');
+    const els = bar.querySelectorAll('.sb-score');
+    const el = which === 'p1' ? els[0] : els[1];
+    if (el) { el.classList.remove('pk-score-pulse'); void el.offsetWidth; el.classList.add('pk-score-pulse'); }
+  }
+  window.__pkPulseNext = null;
+  window.__pkLastScoreSig = sig;
 }
 
 function changeScore(player, delta) {
@@ -4524,7 +4537,7 @@ function confirmResetScores() {
 
 function pushScores() {
   if (!currentRoom) return;
-  sb.from('rooms').update({ scores }).eq('id', currentRoom.id).then(() => {});
+  roomUpdate({ scores });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -4634,7 +4647,8 @@ function updateChatBadge() {
 function renderChatMessages() {
   const container = document.getElementById('chat-messages');
   if (!chatMessages.length) {
-    container.innerHTML = '<div class="chat-empty">No messages yet — say hi! 👋</div>';
+    container.innerHTML = '<div class="chat-empty" style="text-align:center;opacity:0.75;padding:18px 8px;">'
+      + '<div style="font-size:28px;line-height:1;margin-bottom:6px;">🧡</div>Say something nice</div>';
     return;
   }
   const myRole = isPlayer1 ? 'p1' : 'p2';
@@ -4663,7 +4677,7 @@ function sendChatMsg() {
   renderChatMessages();
   updateChatBadge();
 
-  sb.from('rooms').update({ messages: chatMessages }).eq('id', currentRoom.id).then(() => {});
+  roomUpdate({ messages: chatMessages });
   const wrap = document.getElementById('emoji-picker-wrap');
   if (wrap) wrap.classList.remove('open');
 }
