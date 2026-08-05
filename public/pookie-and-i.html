@@ -29,6 +29,58 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SINGLE SOURCE OF TRUTH — CHROME GEOMETRY, STACKING, BREAKPOINTS, VIEWPORT
+   ───────────────────────────────────────────────────────────────────────────
+   GEOMETRY: every fixed chrome element (header, drawer, chat, timer) and all
+   content offsets MUST reference these variables. Never re-declare a width or
+   height for the same element elsewhere.
+
+   STACKING: one scale, low -> high. Nothing may declare a raw z-index number.
+     content(1) < sticky(100) < tooltip(400) < header(900) < chat-overlay(940)
+     < chat(960) < timer(970) < drawer-overlay(999) < drawer(1000)
+     < auth modal(1050) < profile(1100) < room-expired(1200) < toast(1500)
+     < offline banner(2000)
+
+   BREAKPOINTS: mobile-first single split at 768px.
+     mobile/small tablet portrait : (max-width: 767.98px)
+     tablet landscape / desktop   : (min-width: 768px)
+   767/768 integer pairs are forbidden — they leave a dead zone on fractional
+   (zoomed / iPad portrait) viewports.
+
+   VIEWPORT HEIGHT (documented strategy, full rework deferred to Phase 3):
+     1. Preferred: 100dvh via @supports (height: 100dvh).
+     2. Fallback:  calc(var(--app-vh) * 100), where --app-vh is set from
+        window.innerHeight by the mobile-hardening script.
+     Base rules below still use 100vh purely as a pre-@supports floor; the
+     @supports pair further down is the authority and must remain the LAST
+     min-height declaration for body/.screen/#landing.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* chrome geometry */
+  --pk-header-h: 84px;          /* measured at runtime by ResizeObserver */
+  --pk-sidebar-w: 260px;
+  --pk-chat-w: 320px;
+  --pk-safe-top: env(safe-area-inset-top, 0px);
+  --pk-safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* stacking scale */
+  --z-content: 1;
+  --z-sticky: 100;
+  --z-tooltip: 400;
+  --z-header: 900;
+  --z-chat-overlay: 940;
+  --z-chat: 960;
+  --z-timer: 970;
+  --z-drawer-overlay: 999;
+  --z-drawer: 1000;
+  --z-modal: 1050;
+  --z-profile: 1100;
+  --z-room-expired: 1200;
+  --z-toast: 1500;
+  --z-offline: 2000;
+}
+
 /* Accessibility: visible focus indicator (WCAG 2.4.7) */
 :focus { outline: none; }
 :focus-visible {
@@ -278,7 +330,7 @@ body {
   align-items: start;
   margin-bottom: 1.5rem;
 }
-@media (max-width: 768px) {
+@media (max-width: 767.98px) {
   .landing-intro-row { grid-template-columns: 1fr; gap: 1.5rem; }
 }
 .auth-choice-card {
@@ -358,7 +410,7 @@ body {
 #invite .orb2 { width: 160px; height: 160px; bottom: 40px; left: -40px; }
 
 .invite-inner {
-  position: relative; z-index: 1;
+  position: relative; z-index: var(--z-content);
   max-width: 420px; width: 100%;
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
@@ -464,7 +516,7 @@ body {
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-sticky);
 }
 .app-header-left { display: flex; flex-direction: column; }
 .app-header-title {
@@ -643,7 +695,7 @@ body {
   font-size: 13px;
   font-weight: 500;
   transition: transform 0.3s ease;
-  z-index: 9999;
+  z-index: var(--z-toast);
   white-space: nowrap;
   border: 1px solid rgba(250,247,242,0.1);
 }
@@ -799,59 +851,21 @@ body {
 
 /* ══ SIDE NAVIGATION ══ */
 .side-nav {
-  position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
-  background: var(--ink); z-index: 200;
+  position: fixed; top: 0; left: 0; bottom: 0; width: var(--pk-sidebar-w);
+  background: var(--ink); z-index: var(--z-drawer);
   transition: width 0.25s ease, transform 0.3s ease;
   display: flex; flex-direction: column;
   border-right: 1px solid rgba(250,247,242,0.08);
   overflow-y: auto; overflow-x: hidden;
 }
-/* Collapsed (mini rail) state — desktop default */
-.side-nav.collapsed { width: 64px; }
-.side-nav.collapsed .side-nav-brand-name,
-.side-nav.collapsed .side-nav-cat-header span:first-child,
-.side-nav.collapsed .side-nav-cat-chev,
-.side-nav.collapsed .side-nav-item-label,
-.side-nav.collapsed .side-nav-top-actions,
-.side-nav.collapsed #side-nav-history-leaderboard,
-.side-nav.collapsed .side-nav-user-name,
-.side-nav.collapsed .side-nav-signout,
-.side-nav.collapsed .side-nav-guest-msg,
-.side-nav.collapsed .side-nav-signin-label { display: none !important; }
-.side-nav.collapsed .side-nav-brand-name { visibility: hidden; width: 0; }
-.side-nav.collapsed .side-nav-cat-header { justify-content: center; padding: 8px 0; font-size: 18px; }
-.side-nav.collapsed .side-nav-item { justify-content: center; padding: 8px 0; }
-.side-nav.collapsed .side-nav-item .nav-dot { display: none; }
-.side-nav.collapsed .side-nav-cat-items { display: none; }
-.side-nav.collapsed .side-nav-section.collapsed .side-nav-cat-items { display: none; }
-.side-nav.collapsed .side-nav-brand { justify-content: center; flex-direction: column; gap: 6px; padding: 14px 8px; }
-.side-nav.collapsed .side-nav-toggle { margin: 0; }
-.side-nav.collapsed .side-nav-auth { padding: 0.75rem 0.5rem; display: flex; justify-content: center; }
-.side-nav.collapsed .side-nav-user { justify-content: center; }
-.side-nav.collapsed .side-nav-signin-btn { padding: 8px; font-size: 16px; }
-.side-nav.collapsed .side-nav-signin-btn .side-nav-signin-icon { display: inline !important; }
-/* Mobile: behave like the previous off-canvas drawer */
-@media (max-width: 767px) {
-  .side-nav { transform: translateX(-100%); width: 260px; }
-  .side-nav.collapsed { transform: translateX(-100%); width: 260px; }
-  .side-nav.open { transform: translateX(0); width: 260px; }
-  .side-nav.open.collapsed { width: 260px; }
-  .side-nav.open .side-nav-brand-name,
-  .side-nav.open .side-nav-cat-header span:first-child,
-  .side-nav.open .side-nav-cat-chev,
-  .side-nav.open .side-nav-item-label,
-  .side-nav.open .side-nav-top-actions,
-  .side-nav.open #side-nav-history-leaderboard,
-  .side-nav.open .side-nav-user-name,
-  .side-nav.open .side-nav-signout,
-  .side-nav.open .side-nav-guest-msg,
-  .side-nav.open .side-nav-signin-label { display: revert !important; }
-  .side-nav.open .side-nav-cat-items { display: block; }
-  .side-nav.open .side-nav-section.collapsed .side-nav-cat-items { display: none; }
-}
+/* Drawer-only at every breakpoint (mini-rail removed in Phase 2 stabilisation).
+   Closed = fully off-canvas; open = overlays main content from the left. */
+.side-nav { transform: translateX(-100%); }
+.side-nav.open { transform: translateX(0); }
+
 .side-nav-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.4); z-index: 199;
+  background: rgba(0,0,0,0.5); z-index: var(--z-drawer-overlay);
   opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
 .side-nav-overlay.open { opacity: 1; pointer-events: auto; }
@@ -1056,7 +1070,7 @@ html[data-theme="light"] .timer-widget {
 .timer-widget {
   position: absolute; top: 100%; right: 0;
   background: var(--ink); border: 1px solid rgba(250,247,242,0.12);
-  border-radius: 12px; padding: 1rem; z-index: 150;
+  border-radius: 12px; padding: 1rem; z-index: var(--z-timer);
   min-width: 220px; display: none;
   box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
@@ -1097,8 +1111,8 @@ html[data-theme="light"] .timer-widget {
 
 /* ══ CHAT PANEL (RIGHT SIDE) ══ */
 .chat-panel {
-  position: fixed; top: 0; right: 0; bottom: 0; width: 320px;
-  background: var(--ink); z-index: 501;
+  position: fixed; top: 0; right: 0; bottom: 0; width: var(--pk-chat-w);
+  background: var(--ink); z-index: var(--z-chat);
   transform: translateX(100%); transition: transform 0.3s ease;
   display: flex; flex-direction: column;
   border-left: 1px solid rgba(250,247,242,0.08);
@@ -1106,7 +1120,7 @@ html[data-theme="light"] .timer-widget {
 .chat-panel.open { transform: translateX(0); }
 .chat-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.3); z-index: 500;
+  background: rgba(0,0,0,0.3); z-index: var(--z-chat-overlay);
   opacity: 0; pointer-events: none; transition: opacity 0.25s;
 }
 .chat-overlay.open { opacity: 1; pointer-events: auto; }
@@ -1240,7 +1254,7 @@ html[data-theme="light"] .timer-widget {
 /* ══ AUTH MODAL ══ */
 .auth-modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5); z-index: 600;
+  background: rgba(0,0,0,0.5); z-index: var(--z-modal);
   display: none; align-items: center; justify-content: center;
 }
 .auth-modal-overlay.open { display: flex; }
@@ -1380,7 +1394,7 @@ html[data-theme="light"] .auth-pw-toggle { color: rgba(26,22,18,0.5); }
 }
 
 /* Prevent iOS auto-zoom on inputs (min 16px) */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   input, select, textarea {
     font-size: 16px !important;
   }
@@ -1419,21 +1433,18 @@ html, body { overscroll-behavior-y: none; }
   padding-top: env(safe-area-inset-top);
 }
 
-/* GPU-accelerate sliding panels */
+/* GPU-accelerate sliding panels.
+   NOTE: never set `transform` here — these ID selectors outrank the class-based
+   off-canvas transforms (.side-nav / .chat-panel) and would pin the panels open. */
 #side-nav, #chat-panel, #timer-widget, #side-nav-overlay, #chat-overlay {
   will-change: transform, opacity;
-  transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
-/* Z-index sanity for overlays */
-#side-nav-overlay, #chat-overlay { z-index: 900; }
-#side-nav { z-index: 950; }
-#chat-panel { z-index: 960; }
-#timer-widget { z-index: 970; }
-#auth-modal-overlay { z-index: 1000; }
-#offline-banner { z-index: 2000; }
+/* Overlay stacking is defined once in the :root token scale at the top of
+   this stylesheet. Do not add per-element z-index numbers here. */
+#offline-banner { z-index: var(--z-offline); }
 
 /* Prevent horizontal overflow on small screens */
 html, body, #landing, .screen { max-width: 100vw; }
@@ -1663,7 +1674,7 @@ emoji-picker {
   </div>
 
   <div class="side-nav-overlay" id="side-nav-overlay" onclick="toggleSideNav()"></div>
-  <div class="side-nav collapsed" id="side-nav">
+  <div class="side-nav" id="side-nav">
     <div class="side-nav-brand">
       <img src="/app-icon.png" alt="" class="side-nav-brand-logo" />
       <span class="side-nav-brand-name">Pookie <em>&amp;</em> I</span>
@@ -2514,13 +2525,12 @@ async function signInWithGoogleFromLanding() {
   } catch(e) { showToast(e?.message || 'Could not start Google sign-in.'); }
 }
 
-// ─── START APP (create room) ────────────────────────────
-function startApp() {}
+// ─── START APP (create room) — single implementation below ──
 
 // ─── INVITE SCREEN ──────────────────────────────────────
 function showInviteScreen() {
   let url = 'pookieandi.lovable.app';
-  const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
+  const name = p2Name && p2Name !== 'Pookie' ? p2Name : 'your pookie';
   document.getElementById('invite-name').textContent = name;
   document.getElementById('invite-url').textContent = url;
   document.getElementById('invite-msg').textContent = `Hey ${name} 🧡 I made us something for tonight — open this when we're on the call: ${url}`;
@@ -2565,6 +2575,19 @@ function showScreen(id) {
     el.style.display = 'flex';
     el.style.flexDirection = 'column';
   }
+  // Chat is only available on the app screen; leaving it closes any open panel.
+  if (id === 'app') {
+    document.body.classList.add('pookie-chat-enabled');
+    if (typeof window.__pkBuildHeader === 'function') window.__pkBuildHeader();
+  } else {
+    document.body.classList.remove('pookie-chat-enabled');
+    const cp = document.getElementById('chat-panel');
+    const co = document.getElementById('chat-overlay');
+    if (cp) cp.classList.remove('open');
+    if (co) co.classList.remove('open');
+    chatOpen = false;
+  }
+  if (typeof window.__pkRefreshPrefill === 'function') window.__pkRefreshPrefill();
   try { window.scrollTo({top:0,behavior:'instant'}); } catch(e) { window.scrollTo(0,0); }
   document.documentElement.scrollTop = 0;
   document.body.scrollTop = 0;
@@ -2667,6 +2690,9 @@ function buildMain() {
 
   main.innerHTML = html;
   attachEvents(game, s);
+  // Post-render hooks (replace the old 400–600ms DOM-mutating intervals).
+  if (typeof window.__pkInjectGameButtons === 'function') window.__pkInjectGameButtons();
+  if (typeof window.__pkScanGameScores === 'function') window.__pkScanGameScores();
 }
 
 function buildDrawGame(game, s) {
@@ -4059,18 +4085,27 @@ function applyRemoteState(gs) {
     buildNav();
   }
   buildMain();
+  if (typeof window.__pkScanGameScores === 'function') window.__pkScanGameScores();
   setTimeout(() => { syncPaused = false; }, 200);
+}
+
+// ─── ROOM WRITES ────────────────────────────────────────
+// Every write to `rooms` goes through roomUpdate(), which delegates to the
+// retrying safeRoomUpdate layer (__pkSafeRoomUpdate) when it is available and
+// falls back to a direct update if that layer has not booted yet.
+function roomUpdate(patch) {
+  if (!currentRoom) return Promise.resolve({ ok: false, error: 'no-room' });
+  if (typeof window.__pkSafeRoomUpdate === 'function') {
+    return window.__pkSafeRoomUpdate(patch);
+  }
+  return sb.from('rooms').update(patch).eq('id', currentRoom.id);
 }
 
 function pushState() {
   if (syncPaused || !currentRoom) return;
   clearTimeout(syncTimer);
-  syncTimer = setTimeout(async () => {
-    const gs = getFullState();
-    await sb.from('rooms').update({
-      game_state: gs,
-      active_game: activeGame
-    }).eq('id', currentRoom.id);
+  syncTimer = setTimeout(() => {
+    roomUpdate({ game_state: getFullState(), active_game: activeGame });
   }, 100);
 }
 
@@ -4101,20 +4136,22 @@ function updateConnectionUI() {
     p2Name = isPlayer1 ? p2n : currentRoom.player1_name;
   }
 
-  const n1 = currentRoom.player1_name || 'Player 1';
-  const n2 = p2n || '';
+  // Single source of truth for the row-2 status line.
   if (p1c && p2c) {
-    if (rsLine) rsLine.innerHTML = `<span class="connected-dot green"></span> ${escapeHtml(n1)} & ${escapeHtml(n2)}`;
+    if (rsLine) rsLine.innerHTML = '<span class="connected-dot green"></span> Both connected 🧡';
     bannerEl.style.display = 'none';
-  } else if ((isPlayer1 && !p2c) || (!isPlayer1 && !p1c)) {
-    if (p2n) {
-      if (rsLine) rsLine.innerHTML = '<span class="connected-dot red"></span> Partner disconnected';
-      bannerEl.style.display = 'block';
-    } else {
-      if (rsLine) rsLine.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your partner...';
-      bannerEl.style.display = 'none';
-    }
+  } else if (p2n) {
+    if (rsLine) rsLine.innerHTML = '<span class="connected-dot red"></span> Pookie disconnected';
+    bannerEl.style.display = 'block';
+  } else {
+    if (rsLine) rsLine.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your pookie...';
+    bannerEl.style.display = 'none';
   }
+
+  // Connection-driven chrome updates (previously done by polling intervals).
+  if (typeof window.__pkRenderExpiry === 'function') window.__pkRenderExpiry();
+  if (typeof window.__pkRefreshPrefill === 'function') window.__pkRefreshPrefill();
+  if (typeof window.__pkMeasureHeader === 'function') window.__pkMeasureHeader();
 }
 
 function subscribeToRoom(roomId) {
@@ -4154,10 +4191,21 @@ function subscribeToRoom(roomId) {
   setupPresence();
 }
 
-// Override startApp to create room
-startApp = async function() {
-  p1Name = document.getElementById('name1').value.trim() || 'You';
-  p2Name = document.getElementById('name2').value.trim() || 'Partner';
+// Creates the room, then reveals the share box inline on the landing screen.
+async function startApp() {
+  const nameInput = document.getElementById('name1');
+  const myName = (nameInput && nameInput.value.trim()) || '';
+  if (!myName) {
+    showToast('Please enter your name first 🧡');
+    if (nameInput) nameInput.focus();
+    return;
+  }
+  // The partner's name stays unknown until they actually join.
+  const n2 = document.getElementById('name2');
+  if (n2) n2.value = '';
+
+  p1Name = myName;
+  p2Name = 'Pookie';
   isPlayer1 = true;
   sessionStartTime = Date.now();
 
@@ -4189,13 +4237,21 @@ startApp = async function() {
   subscribeToRoom(data.id);
   try { localStorage.setItem('pookie_room_id', data.id); } catch(e) {}
 
-  // Show invite screen with room code
+  try { localStorage.setItem('pookie_room_code', code); } catch(e) {}
   showRoomInvite(code);
-};
+}
 
+// Single implementation: reveal the share box inline on the landing screen
+// (the old full-screen invite route is no longer used).
 function showRoomInvite(code) {
+  if (typeof window.__pkRevealSharebox === 'function') {
+    showScreen('landing');
+    window.__pkRevealSharebox(code);
+    pollForPartner();
+    return;
+  }
   const url = 'pookieandi.lovable.app';
-  const name = p2Name && p2Name !== 'Partner' ? p2Name : 'your pookie';
+  const name = p2Name && p2Name !== 'Pookie' ? p2Name : 'your pookie';
   document.getElementById('invite-name').textContent = name;
   document.getElementById('invite-url').textContent = url;
   document.getElementById('invite-msg').textContent = `Hey ${name}, 🧡 Join our date night, open ${url} and enter code: ${code}`;
@@ -4253,7 +4309,7 @@ async function joinRoom() {
     return;
   }
 
-  const myName = document.getElementById('name1').value.trim() || 'Partner';
+  const myName = document.getElementById('name1').value.trim() || 'Pookie';
 
   const { data, error } = await sb.from('rooms')
     .select('*')
@@ -4262,7 +4318,8 @@ async function joinRoom() {
     .maybeSingle();
 
   if (error || !data) {
-    showToast('Room not found or expired');
+    showToast('This room has ended 🧡 Ready for a new date night? Start a fresh room below.');
+    try { localStorage.removeItem('pookie_room_id'); localStorage.removeItem('pookie_room_code'); } catch(e) {}
     return;
   }
 
@@ -4403,48 +4460,26 @@ function goBackToLanding() {
 // ═══════════════════════════════════════════════════════════
 // SIDE NAVIGATION
 // ═══════════════════════════════════════════════════════════
-// Side nav: on desktop we have an always-visible rail that collapses to icons.
-// On mobile it behaves as an off-canvas drawer.
-let sideNavOpen = false;     // mobile drawer open?
-let sideNavCollapsed = true; // desktop rail collapsed by default per design
-
-function _isMobileNav() { return window.innerWidth < 768; }
+// Single source of truth: the side nav is an off-canvas DRAWER at every
+// breakpoint (the desktop mini-rail was removed in Phase 2).
+let sideNavOpen = false;
 
 function _syncSideNav() {
   const nav = document.getElementById('side-nav');
   const overlay = document.getElementById('side-nav-overlay');
   if (!nav) return;
-  if (_isMobileNav()) {
-    nav.classList.toggle('open', sideNavOpen);
-    nav.classList.toggle('collapsed', !sideNavOpen);
-    if (overlay) overlay.classList.toggle('open', sideNavOpen);
-  } else {
-    nav.classList.toggle('collapsed', sideNavCollapsed);
-    nav.classList.remove('open');
-    if (overlay) overlay.classList.remove('open');
-  }
-  const expanded = _isMobileNav() ? sideNavOpen : !sideNavCollapsed;
+  nav.classList.toggle('open', sideNavOpen);
+  nav.classList.remove('collapsed');
+  if (overlay) overlay.classList.toggle('open', sideNavOpen);
   document.querySelectorAll('.hamburger-btn, .side-nav-toggle').forEach(b => {
-    b.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    b.setAttribute('aria-expanded', sideNavOpen ? 'true' : 'false');
   });
 }
 
-function toggleSideNav() {
-  if (_isMobileNav()) {
-    sideNavOpen = !sideNavOpen;
-  } else {
-    sideNavCollapsed = !sideNavCollapsed;
-  }
-  _syncSideNav();
-}
-
-function closeSideNav() {
-  if (_isMobileNav()) { sideNavOpen = false; }
-  _syncSideNav();
-}
+function toggleSideNav() { sideNavOpen = !sideNavOpen; _syncSideNav(); }
+function closeSideNav()  { sideNavOpen = false; _syncSideNav(); }
 
 document.addEventListener('DOMContentLoaded', () => { _syncSideNav(); });
-window.addEventListener('resize', () => { _syncSideNav(); });
 
 // ═══════════════════════════════════════════════════════════
 // THEME TOGGLE (light / dark mode)
@@ -4496,6 +4531,18 @@ function renderScoreBar() {
   if (canControl) html += `<button class="sb-pm" onclick="confirmResetScores()" style="margin-left:4px;font-size:11px;" title="Reset scores">↺</button>`;
 
   bar.innerHTML = html;
+
+  // Pulse the score that changed — locally or via realtime — no polling needed.
+  const sig = s1 + ':' + s2;
+  if (window.__pkLastScoreSig != null && window.__pkLastScoreSig !== sig) {
+    const prev = String(window.__pkLastScoreSig).split(':');
+    const which = window.__pkPulseNext || ((+prev[0] !== s1) ? 'p1' : 'p2');
+    const els = bar.querySelectorAll('.sb-score');
+    const el = which === 'p1' ? els[0] : els[1];
+    if (el) { el.classList.remove('pk-score-pulse'); void el.offsetWidth; el.classList.add('pk-score-pulse'); }
+  }
+  window.__pkPulseNext = null;
+  window.__pkLastScoreSig = sig;
 }
 
 function changeScore(player, delta) {
@@ -4514,7 +4561,7 @@ function confirmResetScores() {
 
 function pushScores() {
   if (!currentRoom) return;
-  sb.from('rooms').update({ scores }).eq('id', currentRoom.id).then(() => {});
+  roomUpdate({ scores });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -4624,7 +4671,8 @@ function updateChatBadge() {
 function renderChatMessages() {
   const container = document.getElementById('chat-messages');
   if (!chatMessages.length) {
-    container.innerHTML = '<div class="chat-empty">No messages yet — say hi! 👋</div>';
+    container.innerHTML = '<div class="chat-empty" style="text-align:center;opacity:0.75;padding:18px 8px;">'
+      + '<div style="font-size:28px;line-height:1;margin-bottom:6px;">🧡</div>Say something nice</div>';
     return;
   }
   const myRole = isPlayer1 ? 'p1' : 'p2';
@@ -4653,7 +4701,7 @@ function sendChatMsg() {
   renderChatMessages();
   updateChatBadge();
 
-  sb.from('rooms').update({ messages: chatMessages }).eq('id', currentRoom.id).then(() => {});
+  roomUpdate({ messages: chatMessages });
   const wrap = document.getElementById('emoji-picker-wrap');
   if (wrap) wrap.classList.remove('open');
 }
@@ -4995,7 +5043,7 @@ async function saveSessionHistory() {
   try {
     await sb.from('session_history').insert({
       user_id: currentUser.id,
-      partner_name: partnerName || 'Partner',
+      partner_name: partnerName || 'Pookie',
       final_scores: scores,
       rounds_played: totalRoundsPlayed,
       duration_minutes: Math.max(1, duration),
@@ -5167,8 +5215,17 @@ async function saveSessionHistory() {
     else if (s === 'syncing'){ mark.style.background = '#fbbf24'; label.textContent = 'Syncing…'; }
     else if (s === 'retry')  { mark.style.background = '#f87171'; label.textContent = 'Sync issue — retrying…'; }
   }
-  // Re-attach dot whenever the status bar re-renders
-  setInterval(ensureStatusDot, 1500);
+  // Re-attach the dot only when the header actually re-renders (no polling).
+  ensureStatusDot();
+  (function observeHeader(){
+    var host = document.getElementById('pk-header') || document.body;
+    try {
+      new MutationObserver(function(){
+        ensureStatusDot();
+        if (typeof window.__pkPlaceSync === 'function') window.__pkPlaceSync();
+      }).observe(host, { childList: true, subtree: true });
+    } catch(e) {}
+  })();
 
   /* -------- Retrying rooms.update wrapper ------------------------------- */
   var inflight = 0;
@@ -5200,54 +5257,8 @@ async function saveSessionHistory() {
   }
   window.__pkSafeRoomUpdate = safeRoomUpdate;
 
-  /* -------- Wrap pushState / pushScores / chat / presence writes -------- */
-  function wrapPush() {
-    if (typeof window.pushState === 'function' && !window.pushState.__wrapped) {
-      var orig = window.pushState;
-      window.pushState = function() {
-        if (window.syncPaused || !window.currentRoom) return;
-        clearTimeout(window.syncTimer);
-        window.syncTimer = setTimeout(function(){
-          var gs = window.getFullState ? window.getFullState() : null;
-          if (!gs) return;
-          safeRoomUpdate({ game_state: gs, active_game: window.activeGame });
-        }, 100);
-      };
-      window.pushState.__wrapped = true;
-    }
-    if (typeof window.pushScores === 'function' && !window.pushScores.__wrapped) {
-      window.pushScores = function() {
-        if (!window.currentRoom) return;
-        safeRoomUpdate({ scores: window.scores });
-      };
-      window.pushScores.__wrapped = true;
-    }
-  }
-  wrapPush();
-  // In case scripts define these later, re-try once
-  setTimeout(wrapPush, 500);
-
-  /* -------- Chat send: intercept the raw supabase call at fetch level is
-     tricky, so instead monkey-patch sendChatMsg by wrapping its body. --- */
-  (function wrapChat(){
-    if (typeof window.sendChatMsg !== 'function' || window.sendChatMsg.__wrapped) return;
-    var origSend = window.sendChatMsg;
-    window.sendChatMsg = function() {
-      var input = document.getElementById('chat-input');
-      var text = input && input.value.trim();
-      if (!text || !window.currentRoom) return;
-      input.value = '';
-      var msg = { from: window.isPlayer1 ? 'p1' : 'p2', text: text, ts: Date.now() };
-      window.chatMessages.push(msg);
-      window.lastReadCount = window.chatMessages.length;
-      if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
-      if (typeof window.updateChatBadge === 'function') window.updateChatBadge();
-      safeRoomUpdate({ messages: window.chatMessages });
-      var wrap = document.getElementById('emoji-picker-wrap');
-      if (wrap) wrap.classList.remove('open');
-    };
-    window.sendChatMsg.__wrapped = true;
-  })();
+  /* pushState(), pushScores() and sendChatMsg() call roomUpdate() directly,
+     which routes through safeRoomUpdate above. No wrappers needed. */
 
   /* -------- Timer sync via game_state.__timer ---------------------------- */
   // Only the initiator (Player 1) is authoritative for timer commands.
@@ -5403,30 +5414,13 @@ async function saveSessionHistory() {
    Closed = fully hidden, open = overlays main content from the left. */
 .side-nav { transform: translateX(-100%) !important; width: 260px !important; }
 .side-nav.open { transform: translateX(0) !important; width: 260px !important; }
-/* When collapsed, force full-width contents visible (no mini-rail behavior). */
-.side-nav.collapsed .side-nav-brand-name,
-.side-nav.collapsed .side-nav-cat-header span:first-child,
-.side-nav.collapsed .side-nav-cat-chev,
-.side-nav.collapsed .side-nav-item-label,
-.side-nav.collapsed .side-nav-top-actions,
-.side-nav.collapsed #side-nav-history-leaderboard,
-.side-nav.collapsed .side-nav-user-name,
-.side-nav.collapsed .side-nav-signout,
-.side-nav.collapsed .side-nav-guest-msg,
-.side-nav.collapsed .side-nav-signin-label { display: revert !important; }
-.side-nav.collapsed .side-nav-brand-name { visibility: visible !important; width: auto !important; }
-.side-nav.collapsed .side-nav-brand { justify-content: flex-start !important; flex-direction: row !important; gap: 10px !important; padding: 14px 14px 10px !important; }
-.side-nav.collapsed .side-nav-cat-items { display: block !important; }
-.side-nav.collapsed .side-nav-section.collapsed .side-nav-cat-items { display: none !important; }
-.side-nav.collapsed .side-nav-cat-header { justify-content: space-between !important; padding: 0 1.25rem !important; font-size: 10px !important; }
-.side-nav.collapsed .side-nav-item { justify-content: flex-start !important; padding: 10px 1.25rem !important; }
-.side-nav.collapsed .side-nav-item .nav-dot { display: inline-block !important; }
+/* Mini-rail CSS removed in Phase 2 — the nav is drawer-only. */
 /* Room-expiry pill (below the room code) */
 .room-expiry-line { font-size: 11px; color: rgba(250,247,242,0.45); margin-top: 2px; }
 .room-expiry-line.warn { color: #E8A24C; }
 /* Full-screen expired overlay */
 .room-expired-overlay {
-  position: fixed; inset: 0; background: rgba(15,12,10,0.96); z-index: 9999;
+  position: fixed; inset: 0; background: rgba(15,12,10,0.96); z-index: var(--z-room-expired);
   display: none; align-items: center; justify-content: center; padding: 2rem;
   text-align: center; font-family: 'DM Sans', sans-serif;
 }
@@ -5471,22 +5465,8 @@ async function saveSessionHistory() {
   const LS_KEY = 'pookie_room_id';
   const LS_CODE = 'pookie_room_code';
 
-  // ── Sidebar: always drawer, never a mini-rail. ──────────────
-  window._syncSideNav = function() {
-    const nav = document.getElementById('side-nav');
-    const overlay = document.getElementById('side-nav-overlay');
-    if (!nav) return;
-    const isOpen = !!window.__sideNavOpen;
-    nav.classList.toggle('open', isOpen);
-    nav.classList.remove('collapsed');
-    if (overlay) overlay.classList.toggle('open', isOpen);
-    document.querySelectorAll('.hamburger-btn, .side-nav-toggle').forEach(b => {
-      b.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-  };
-  window.toggleSideNav = function(){ window.__sideNavOpen = !window.__sideNavOpen; window._syncSideNav(); };
-  window.closeSideNav  = function(){ window.__sideNavOpen = false; window._syncSideNav(); };
-  document.addEventListener('DOMContentLoaded', () => { window.__sideNavOpen = false; window._syncSideNav(); });
+  // Side-nav drawer behaviour lives in the base implementation (single source
+  // of truth); the duplicate override was removed in Phase 2.
 
   // ── Onboarding: partner-less share message + inline reveal after generate ──
   function _revealSharebox(code) {
@@ -5499,6 +5479,7 @@ async function saveSessionHistory() {
     if (rcVal) rcVal.textContent = code;
     if (nameSpan) nameSpan.textContent = 'your pookie';
     if (msg) msg.textContent = `Hey 🧡 Join our date night on Pookie & I — open pookieandi.lovable.app and enter code: ${code}`;
+    if (typeof window.__pkRefreshPrefill === 'function') window.__pkRefreshPrefill();
     if (box) { box.style.opacity = '1'; box.style.transform = 'translateY(0)'; }
     // Swap the CTA into "Start date night"
     const startBtn = document.getElementById('startBtn');
@@ -5513,39 +5494,8 @@ async function saveSessionHistory() {
     if (js) js.style.display = 'none';
   }
 
-  const _origStartApp = window.startApp;
-  window.startApp = async function(){
-    const nameInput = document.getElementById('name1');
-    const myName = (nameInput && nameInput.value.trim()) || '';
-    if (!myName) {
-      window.showToast && window.showToast('Please enter your name first 🧡');
-      nameInput && nameInput.focus();
-      return;
-    }
-    // Force partner name to be unknown until they join.
-    const n2 = document.getElementById('name2');
-    if (n2) n2.value = '';
-    if (typeof _origStartApp === 'function') {
-      await _origStartApp.call(this);
-    }
-    // After the original flow creates the room, replace the invite-screen
-    // navigation with an inline reveal on the same landing screen.
-    try {
-      if (window.currentRoom) {
-        const code = window.currentRoom.room_code;
-        try { localStorage.setItem(LS_CODE, code); } catch(e) {}
-        // Bring the user back to the landing/stage view and reveal share UI.
-        window.showScreen && window.showScreen('landing');
-        _revealSharebox(code);
-      }
-    } catch(e) { console.warn('startApp reveal failed', e); }
-  };
-
-  // Override showRoomInvite so it does NOT navigate away, just reveals inline.
-  window.showRoomInvite = function(code){
-    _revealSharebox(code);
-    if (typeof window.pollForPartner === 'function') { try { window.pollForPartner(); } catch(e){} }
-  };
+  // Exposed for the base startApp()/showRoomInvite() — no wrappers.
+  window.__pkRevealSharebox = _revealSharebox;
 
   // Override copyRoomCode (invite-screen message) to drop partner name.
   window.copyRoomCode = function(code){
@@ -5627,25 +5577,7 @@ async function saveSessionHistory() {
     } catch(e) { /* silent */ }
   }
 
-  // ── Friendlier expired message when joining ───────────────────
-  const _origJoinRoom = window.joinRoom;
-  window.joinRoom = async function(){
-    if (typeof _origJoinRoom !== 'function') return;
-    // Wrap the toast for the "not found or expired" message
-    const origToast = window.showToast;
-    let interceptedExpired = false;
-    window.showToast = function(msg){
-      if (msg === 'Room not found or expired') {
-        interceptedExpired = true;
-        origToast && origToast('This room has ended 🧡 Ready for a new date night? Start a fresh room below.');
-        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
-      } else {
-        origToast && origToast(msg);
-      }
-    };
-    try { await _origJoinRoom.call(this); }
-    finally { window.showToast = origToast; }
-  };
+  // The friendly "room has ended" copy is now inside the base joinRoom().
 
   // ── Room expiry countdown + full-screen expiry banner ─────────
   let __expiryTimer = null;
@@ -5691,10 +5623,9 @@ async function saveSessionHistory() {
     window.showScreen && window.showScreen('landing');
     try { location.reload(); } catch(e) {}
   };
-  // Piggyback on updateConnectionUI to keep expiry rendered.
-  const _origUpdConn = window.updateConnectionUI;
-  window.updateConnectionUI = function(){
-    if (typeof _origUpdConn === 'function') _origUpdConn.apply(this, arguments);
+  // Called by updateConnectionUI(). The 30s interval is RETAINED on purpose:
+  // the countdown is time-driven, so no DOM/state event can replace it.
+  window.__pkRenderExpiry = function(){
     _renderExpiry();
     if (!__expiryTimer) __expiryTimer = setInterval(_renderExpiry, 30000);
   };
@@ -5773,19 +5704,11 @@ async function saveSessionHistory() {
     animation: pookiePulseDot 1.6s ease-in-out infinite;
   }
 
-  /* 2) Ensure hamburger sits neatly inside header, above sibling content */
-  #app .app-header { position: relative; z-index: 105; }
-  #app .app-header-left { gap: 6px; align-items: center; }
-  #app .hamburger-btn.mobile-only-hb { position: relative; z-index: 2; flex: 0 0 auto; }
-  /* Drawer never pushes content */
-  #app .main, #app .app-footer { position: relative; z-index: 1; }
+  /* NOTE: the legacy #app .app-header is display:none (replaced by #pk-header).
+     Its layout rules were removed in Phase 2 as dead CSS. */
 
-  /* 1) Chat is hidden until both players are connected */
-  body:not(.pookie-chat-enabled) #chat-btn { display: none !important; }
-  body:not(.pookie-chat-enabled) #chat-panel,
-  body:not(.pookie-chat-enabled) #chat-overlay {
-    display: none !important;
-  }
+  /* Chat availability is driven by showScreen() adding .pookie-chat-enabled
+     to <body> on the app screen; no CSS gating needed. */
 
   /* 7) Tappable room-code digits */
   #landing-room-code, #room-status-code {
@@ -5796,7 +5719,7 @@ async function saveSessionHistory() {
 
   /* 8) How-to-play tooltip */
   .pookie-howto-tip {
-    position: fixed; z-index: 400;
+    position: fixed; z-index: var(--z-tooltip);
     background: var(--ink); color: var(--cream);
     border: 1px solid rgba(200,82,58,0.4);
     border-radius: 12px; padding: 12px 14px 10px;
@@ -5843,100 +5766,40 @@ async function saveSessionHistory() {
     }
   } catch(e) {}
 
-  // ── 1) Hide/close chat until both players are in game ─────────
-  function _bothConnected() {
-    try {
-      if (!window.currentRoom) return false;
-      var r = window.currentRoom;
-      if (r.player2_id || r.player2_name) return true;
-      // fallback: presence-based flag if the app sets it
-      if (window.partnerConnected === true) return true;
-    } catch(e){}
-    return false;
-  }
-  function _refreshChatVisibility() {
-    var on = _bothConnected();
-    document.body.classList.toggle('pookie-chat-enabled', on);
-    if (!on) {
-      // Force-close if it was left open
-      try {
-        var p = document.getElementById('chat-panel');
-        var o = document.getElementById('chat-overlay');
-        if (p) p.classList.remove('open');
-        if (o) o.classList.remove('open');
-        window.chatOpen = false;
-      } catch(e){}
-    }
-  }
-  // Wrap updateConnectionUI (called on partner join / presence updates)
-  var _origUpd = window.updateConnectionUI;
-  window.updateConnectionUI = function(){
-    if (typeof _origUpd === 'function') _origUpd.apply(this, arguments);
-    _refreshChatVisibility();
-  };
-  // Wrap showScreen to reset chat when leaving app view
-  var _origShowScreen = window.showScreen;
-  window.showScreen = function(id){
-    if (typeof _origShowScreen === 'function') _origShowScreen.apply(this, arguments);
-    if (id !== 'app') {
-      document.body.classList.remove('pookie-chat-enabled');
-      try {
-        var p = document.getElementById('chat-panel');
-        var o = document.getElementById('chat-overlay');
-        if (p) p.classList.remove('open');
-        if (o) o.classList.remove('open');
-        window.chatOpen = false;
-      } catch(e){}
-    } else {
-      _refreshChatVisibility();
-    }
-  };
-  document.addEventListener('DOMContentLoaded', _refreshChatVisibility);
-  setInterval(_refreshChatVisibility, 1500);
+  // Chat availability + panel reset now live inside the base showScreen().
 
-  // ── 7) Tap room-code digits to copy ──────────────────────────
-  function _wireCodeCopy(el) {
-    if (!el || el.__pookieCopyWired) return;
-    el.__pookieCopyWired = true;
-    el.setAttribute('role', 'button');
-    el.setAttribute('tabindex', '0');
-    el.setAttribute('aria-label', 'Copy room code');
-    el.title = 'Tap to copy';
-    var handler = function(){
-      var code = (el.textContent || '').trim();
-      if (!code || code === '----') return;
-      navigator.clipboard.writeText(code);
-    };
-    el.addEventListener('click', handler);
-    el.addEventListener('keydown', function(e){
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+  // ── Tap room-code digits to copy (event delegation — no re-wiring poll) ──
+  function _isCodeEl(el) {
+    return el && (el.id === 'landing-room-code' || el.id === 'room-status-code');
+  }
+  function _copyCodeFrom(el) {
+    var code = (el.textContent || '').replace(/[^0-9]/g, '');
+    if (code.length !== 4) return;
+    navigator.clipboard.writeText(code);
+  }
+  document.addEventListener('click', function(e){
+    var el = e.target && e.target.closest ? e.target.closest('#landing-room-code, #room-status-code') : null;
+    if (_isCodeEl(el)) _copyCodeFrom(el);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var el = e.target && e.target.closest ? e.target.closest('#landing-room-code, #room-status-code') : null;
+    if (_isCodeEl(el)) { e.preventDefault(); _copyCodeFrom(el); }
+  });
+  function _labelCodeEls(){
+    ['landing-room-code','room-status-code'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el || el.__pkLabelled) return;
+      el.__pkLabelled = true;
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', 'Copy room code');
+      el.title = 'Tap to copy';
     });
   }
-  document.addEventListener('DOMContentLoaded', function(){
-    _wireCodeCopy(document.getElementById('landing-room-code'));
-    _wireCodeCopy(document.getElementById('room-status-code'));
-  });
-  // Re-wire in case the elements are re-rendered
-  setInterval(function(){
-    _wireCodeCopy(document.getElementById('landing-room-code'));
-    _wireCodeCopy(document.getElementById('room-status-code'));
-  }, 2000);
+  document.addEventListener('DOMContentLoaded', _labelCodeEls);
 
-  // ── 9) Chat empty state polish ───────────────────────────────
-  function _polishChatEmpty() {
-    var wrap = document.getElementById('chat-messages');
-    if (!wrap) return;
-    var empty = wrap.querySelector('.chat-empty');
-    if (empty && !empty.__pookiePolished) {
-      empty.__pookiePolished = true;
-      empty.innerHTML = '<div style="font-size:28px;line-height:1;margin-bottom:6px;">🧡</div>Say something nice';
-      empty.style.textAlign = 'center';
-      empty.style.opacity = '0.75';
-      empty.style.padding = '18px 8px';
-    }
-  }
-  document.addEventListener('DOMContentLoaded', _polishChatEmpty);
-  setInterval(_polishChatEmpty, 2000);
+  // Chat empty-state copy is rendered by the base renderChatMessages().
 
   // ── 8) "How to play" tooltip on first session ────────────────
   var TIP_KEY = 'pookie_howto_seen_v1';
@@ -5997,73 +5860,17 @@ async function saveSessionHistory() {
 
 <!-- ══ Targeted fixes: chat icon, header layout, drawer overlay, copy text ══ -->
 <style>
-  /* FIX 1: Chat icon always visible on the main game screen */
-  #app #chat-btn { display: inline-flex !important; align-items: center; justify-content: center; }
-  #chat-panel, #chat-overlay { display: block !important; }
-
-  /* FIX 2: Hamburger + logo on one horizontal row inside a 56px header */
-  #app .app-header {
-    height: 56px;
-    min-height: 56px;
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    box-sizing: border-box;
-  }
-  #app .app-header-left {
-    flex-direction: row !important;
-    align-items: center !important;
-    gap: 10px !important;
-  }
-  #app .app-header-left > div {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    line-height: 1.1;
-  }
-  #app .app-header-title { font-size: 1.15rem; line-height: 1.1; }
-  #app .hamburger-btn.mobile-only-hb {
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 40px; height: 40px;
-    padding: 0;
-    flex: 0 0 auto;
-  }
-
-  /* FIX 3: Side panel is an overlay drawer at every breakpoint */
-  .side-nav {
-    width: 260px !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s ease !important;
-    z-index: 1000 !important;
-  }
-  .side-nav.open { transform: translateX(0) !important; }
-  .side-nav-overlay {
-    display: block !important;
-    background: rgba(0,0,0,0.5);
-    z-index: 999 !important;
-  }
-  /* Main content never shifts or resizes when the drawer opens */
-  #app .main, #app .app-footer, #app .app-header { margin-left: 0 !important; }
+  /* Chat icon is always available on the main game screen */
+  #app #chat-btn { display: inline-flex; align-items: center; justify-content: center; }
+  /* Drawer geometry/stacking now comes from the :root tokens (see top of file).
+     Main content never shifts when the drawer opens; it stays centred. */
+  #app .main { margin-left: auto; margin-right: auto; }
+  #app .app-footer { margin-left: 0; }
 </style>
 
 <script>
 (function(){
-  // FIX 1: Ensure chat is enabled whenever the main game screen is visible.
-  function _pookieEnsureChatEnabled() {
-    var app = document.getElementById('app');
-    if (!app) return;
-    var visible = app.style.display !== 'none' && app.offsetParent !== null;
-    if (visible) document.body.classList.add('pookie-chat-enabled');
-  }
-  document.addEventListener('DOMContentLoaded', _pookieEnsureChatEnabled);
-  setInterval(_pookieEnsureChatEnabled, 500);
-  var _origShow = window.showScreen;
-  window.showScreen = function(id){
-    if (typeof _origShow === 'function') _origShow.apply(this, arguments);
-    if (id === 'app') document.body.classList.add('pookie-chat-enabled');
-  };
+  // Chat availability on the app screen is handled by the base showScreen().
 
   // FIX 4: Prefilled copy message — exact wording, with line break.
   function _pookieBuildMsg(code) {
@@ -6088,8 +5895,10 @@ async function saveSessionHistory() {
     var iv = document.getElementById('invite-msg');
     if (iv) { iv.textContent = msg; iv.style.whiteSpace = 'pre-line'; }
   }
+  // Exposed hook: called by showScreen(), updateConnectionUI() and the share
+  // reveal instead of an 800ms polling loop.
+  window.__pkRefreshPrefill = _pookieRefreshPrefill;
   document.addEventListener('DOMContentLoaded', _pookieRefreshPrefill);
-  setInterval(_pookieRefreshPrefill, 800);
 
   window.copyShareMsg = function() {
     var msg = _pookieBuildMsg(_pookieCurrentCode());
@@ -6106,11 +5915,11 @@ async function saveSessionHistory() {
 <!-- ══ FIX A: unified two-row fixed header · FIX B: auto-scoring ══ -->
 <style>
   #pk-header {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+    position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-header);
     background: var(--ink);
     border-bottom: 1px solid rgba(250,247,242,0.06);
     padding: 0 12px calc(6px) 12px;
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: var(--pk-safe-top);
     font-family: 'DM Sans', sans-serif;
   }
   #pk-header-row1 {
@@ -6143,7 +5952,7 @@ async function saveSessionHistory() {
   #app > div:first-child { position: static !important; }
   #app .app-header { display: none !important; }
   #app .room-status-bar { display: none !important; }
-  body.pk-header-on #app { padding-top: var(--pk-header-h, 84px); }
+  body.pk-header-on #app { padding-top: var(--pk-header-h); }
   @keyframes pkScorePulse { 0%{transform:scale(1);} 40%{transform:scale(1.45);} 100%{transform:scale(1);} }
   .pk-score-pulse { display:inline-block; animation: pkScorePulse 0.45s ease; }
 </style>
@@ -6186,12 +5995,18 @@ async function saveSessionHistory() {
     measure();
   }
 
+  // Header height is the single geometry source for #app's top padding.
   function measure(){
     var h = document.getElementById('pk-header');
     if (!h) return;
     document.documentElement.style.setProperty('--pk-header-h', h.offsetHeight + 'px');
   }
-  window.addEventListener('resize', measure);
+  window.__pkMeasureHeader = measure;
+  window.addEventListener('resize', measure, { passive: true });
+  window.addEventListener('orientationchange', measure, { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', measure, { passive: true });
+  }
 
   /* keep the sync indicator inside row 2, right of the separator */
   function placeSync(){
@@ -6200,65 +6015,37 @@ async function saveSessionHistory() {
     if (dot && slot && dot.parentNode !== slot) slot.appendChild(dot);
   }
 
-  /* Row 2 status text */
-  function refreshStatus(){
-    var line = document.getElementById('room-status-line');
-    if (!line) return;
-    var room = (typeof currentRoom !== 'undefined') ? currentRoom : null;
-    if (!room) return;
-    var both = room.player1_connected && room.player2_connected;
-    var html;
-    if (both) html = '<span class="connected-dot green"></span> Both connected 🧡';
-    else if (room.player2_name) html = '<span class="connected-dot red"></span> Pookie disconnected';
-    else html = '<span class="connected-dot yellow"></span> Waiting for your pookie...';
-    if (line.innerHTML !== html) line.innerHTML = html;
-  }
+  /* Row-2 status text is written by the base updateConnectionUI(). */
 
-  setInterval(function(){ buildHeader(); placeSync(); refreshStatus(); measure(); }, 500);
-  document.addEventListener('DOMContentLoaded', function(){ setTimeout(buildHeader, 300); });
+  window.__pkBuildHeader = function(){
+    buildHeader();
+    placeSync();
+    measure();
+    // Observe real size changes instead of re-measuring on a timer.
+    var h = document.getElementById('pk-header');
+    if (h && !h.__pkObserved && window.ResizeObserver) {
+      h.__pkObserved = true;
+      new ResizeObserver(measure).observe(h);
+      new MutationObserver(function(){ placeSync(); measure(); })
+        .observe(h, { childList: true, subtree: true });
+    }
+  };
+  window.__pkPlaceSync = placeSync;
+  document.addEventListener('DOMContentLoaded', function(){ window.__pkBuildHeader(); });
 
   /* ───────── FIX B: automatic scoreboard updates ───────── */
-  var pulseNext = null;
-  var _origRender = window.renderScoreBar;
-  var lastRendered = null;
-  if (typeof _origRender === 'function') {
-    window.renderScoreBar = function(){
-      _origRender.apply(this, arguments);
-      var bar = document.getElementById('score-bar');
-      if (!bar) return;
-      var els = bar.querySelectorAll('.sb-score');
-      if (pulseNext && els.length === 2) {
-        var el = pulseNext === 'p1' ? els[0] : els[1];
-        if (el) { el.classList.remove('pk-score-pulse'); void el.offsetWidth; el.classList.add('pk-score-pulse'); }
-        pulseNext = null;
-      }
-    };
-  }
-
+  /* Pulse animation lives inside the base renderScoreBar(); it reads
+     window.__pkPulseNext and diffs the rendered scores itself. */
   function award(target, n){
     if (!n) return;
     try {
       if (!isPlayer1) return;      // single writer avoids double counting
       scores[target] = Math.max(0, (scores[target] || 0) + n);
-      pulseNext = target;
+      window.__pkPulseNext = target;
       renderScoreBar();
       pushScores();
     } catch(e){}
   }
-  /* pulse for everyone when scores arrive over realtime */
-  var lastScores = null;
-  setInterval(function(){
-    try {
-      var s = scores; if (!s) return;
-      var sig = s.p1 + ':' + s.p2;
-      if (lastScores !== null && lastScores !== sig) {
-        var prev = lastScores.split(':');
-        pulseNext = (+prev[0] !== s.p1) ? 'p1' : 'p2';
-        renderScoreBar();
-      }
-      lastScores = sig;
-    } catch(e){}
-  }, 400);
 
   /* Watch per-game counters and mirror increases onto the shared scoreboard */
   var snap = {};
@@ -6267,7 +6054,7 @@ async function saveSessionHistory() {
     truths:     ['p1Score', 'p2Score'],
     unpopular:  ['p1Shocked', 'p2Shocked']
   };
-  setInterval(function(){
+  window.__pkScanGameScores = function(){
     try {
       var st = state; if (!st) return;
       Object.keys(WATCH).forEach(function(gid){
@@ -6290,7 +6077,7 @@ async function saveSessionHistory() {
         });
       });
     } catch(e){}
-  }, 400);
+  };
 
   /* Manual point buttons for Word Association and Name That Song */
   function myKey(){ return isPlayer1 ? 'p1' : 'p2'; }
@@ -6301,7 +6088,7 @@ async function saveSessionHistory() {
       else {
         // player 2 asks player 1's client through the shared game state
         scores[target] = Math.max(0, (scores[target] || 0) + 1);
-        pulseNext = target;
+        window.__pkPulseNext = target;
         renderScoreBar();
         pushScores();
       }
@@ -6327,20 +6114,15 @@ async function saveSessionHistory() {
       area.appendChild(btn);
     } catch(e){}
   }
-  var _origBuildMain = window.buildMain;
-  if (typeof _origBuildMain === 'function') {
-    window.buildMain = function(){
-      _origBuildMain.apply(this, arguments);
-      injectGameButtons();
-    };
-  }
-  setInterval(injectGameButtons, 600);
+  // Called directly at the end of the base buildMain() — no wrapper, no poll.
+  window.__pkInjectGameButtons = injectGameButtons;
+  injectGameButtons();
 })();
 </script>
 
 <!-- ══ Account / Profile page (additive; reuses existing tokens & classes) ══ -->
 <style>
-#pk-profile-overlay { z-index: 1100; }
+#pk-profile-overlay { z-index: var(--z-profile); }
 .pk-profile-modal { max-width: 460px; max-height: 88dvh; overflow-y: auto; }
 .pk-profile-head { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
 .pk-profile-avatar {
