@@ -5196,8 +5196,17 @@ async function saveSessionHistory() {
     else if (s === 'syncing'){ mark.style.background = '#fbbf24'; label.textContent = 'Syncing…'; }
     else if (s === 'retry')  { mark.style.background = '#f87171'; label.textContent = 'Sync issue — retrying…'; }
   }
-  // Re-attach dot whenever the status bar re-renders
-  setInterval(ensureStatusDot, 1500);
+  // Re-attach the dot only when the header actually re-renders (no polling).
+  ensureStatusDot();
+  (function observeHeader(){
+    var host = document.getElementById('pk-header') || document.body;
+    try {
+      new MutationObserver(function(){
+        ensureStatusDot();
+        if (typeof window.__pkPlaceSync === 'function') window.__pkPlaceSync();
+      }).observe(host, { childList: true, subtree: true });
+    } catch(e) {}
+  })();
 
   /* -------- Retrying rooms.update wrapper ------------------------------- */
   var inflight = 0;
@@ -5229,54 +5238,8 @@ async function saveSessionHistory() {
   }
   window.__pkSafeRoomUpdate = safeRoomUpdate;
 
-  /* -------- Wrap pushState / pushScores / chat / presence writes -------- */
-  function wrapPush() {
-    if (typeof window.pushState === 'function' && !window.pushState.__wrapped) {
-      var orig = window.pushState;
-      window.pushState = function() {
-        if (window.syncPaused || !window.currentRoom) return;
-        clearTimeout(window.syncTimer);
-        window.syncTimer = setTimeout(function(){
-          var gs = window.getFullState ? window.getFullState() : null;
-          if (!gs) return;
-          safeRoomUpdate({ game_state: gs, active_game: window.activeGame });
-        }, 100);
-      };
-      window.pushState.__wrapped = true;
-    }
-    if (typeof window.pushScores === 'function' && !window.pushScores.__wrapped) {
-      window.pushScores = function() {
-        if (!window.currentRoom) return;
-        safeRoomUpdate({ scores: window.scores });
-      };
-      window.pushScores.__wrapped = true;
-    }
-  }
-  wrapPush();
-  // In case scripts define these later, re-try once
-  setTimeout(wrapPush, 500);
-
-  /* -------- Chat send: intercept the raw supabase call at fetch level is
-     tricky, so instead monkey-patch sendChatMsg by wrapping its body. --- */
-  (function wrapChat(){
-    if (typeof window.sendChatMsg !== 'function' || window.sendChatMsg.__wrapped) return;
-    var origSend = window.sendChatMsg;
-    window.sendChatMsg = function() {
-      var input = document.getElementById('chat-input');
-      var text = input && input.value.trim();
-      if (!text || !window.currentRoom) return;
-      input.value = '';
-      var msg = { from: window.isPlayer1 ? 'p1' : 'p2', text: text, ts: Date.now() };
-      window.chatMessages.push(msg);
-      window.lastReadCount = window.chatMessages.length;
-      if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
-      if (typeof window.updateChatBadge === 'function') window.updateChatBadge();
-      safeRoomUpdate({ messages: window.chatMessages });
-      var wrap = document.getElementById('emoji-picker-wrap');
-      if (wrap) wrap.classList.remove('open');
-    };
-    window.sendChatMsg.__wrapped = true;
-  })();
+  /* pushState(), pushScores() and sendChatMsg() call roomUpdate() directly,
+     which routes through safeRoomUpdate above. No wrappers needed. */
 
   /* -------- Timer sync via game_state.__timer ---------------------------- */
   // Only the initiator (Player 1) is authoritative for timer commands.
@@ -5483,22 +5446,8 @@ async function saveSessionHistory() {
   const LS_KEY = 'pookie_room_id';
   const LS_CODE = 'pookie_room_code';
 
-  // ── Sidebar: always drawer, never a mini-rail. ──────────────
-  window._syncSideNav = function() {
-    const nav = document.getElementById('side-nav');
-    const overlay = document.getElementById('side-nav-overlay');
-    if (!nav) return;
-    const isOpen = !!window.__sideNavOpen;
-    nav.classList.toggle('open', isOpen);
-    nav.classList.remove('collapsed');
-    if (overlay) overlay.classList.toggle('open', isOpen);
-    document.querySelectorAll('.hamburger-btn, .side-nav-toggle').forEach(b => {
-      b.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-  };
-  window.toggleSideNav = function(){ window.__sideNavOpen = !window.__sideNavOpen; window._syncSideNav(); };
-  window.closeSideNav  = function(){ window.__sideNavOpen = false; window._syncSideNav(); };
-  document.addEventListener('DOMContentLoaded', () => { window.__sideNavOpen = false; window._syncSideNav(); });
+  // Side-nav drawer behaviour lives in the base implementation (single source
+  // of truth); the duplicate override was removed in Phase 2.
 
   // ── Onboarding: partner-less share message + inline reveal after generate ──
   function _revealSharebox(code) {
@@ -5639,25 +5588,7 @@ async function saveSessionHistory() {
     } catch(e) { /* silent */ }
   }
 
-  // ── Friendlier expired message when joining ───────────────────
-  const _origJoinRoom = window.joinRoom;
-  window.joinRoom = async function(){
-    if (typeof _origJoinRoom !== 'function') return;
-    // Wrap the toast for the "not found or expired" message
-    const origToast = window.showToast;
-    let interceptedExpired = false;
-    window.showToast = function(msg){
-      if (msg === 'Room not found or expired') {
-        interceptedExpired = true;
-        origToast && origToast('This room has ended 🧡 Ready for a new date night? Start a fresh room below.');
-        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
-      } else {
-        origToast && origToast(msg);
-      }
-    };
-    try { await _origJoinRoom.call(this); }
-    finally { window.showToast = origToast; }
-  };
+  // The friendly "room has ended" copy is now inside the base joinRoom().
 
   // ── Room expiry countdown + full-screen expiry banner ─────────
   let __expiryTimer = null;
@@ -5703,10 +5634,9 @@ async function saveSessionHistory() {
     window.showScreen && window.showScreen('landing');
     try { location.reload(); } catch(e) {}
   };
-  // Piggyback on updateConnectionUI to keep expiry rendered.
-  const _origUpdConn = window.updateConnectionUI;
-  window.updateConnectionUI = function(){
-    if (typeof _origUpdConn === 'function') _origUpdConn.apply(this, arguments);
+  // Called by updateConnectionUI(). The 30s interval is RETAINED on purpose:
+  // the countdown is time-driven, so no DOM/state event can replace it.
+  window.__pkRenderExpiry = function(){
     _renderExpiry();
     if (!__expiryTimer) __expiryTimer = setInterval(_renderExpiry, 30000);
   };
@@ -5847,100 +5777,40 @@ async function saveSessionHistory() {
     }
   } catch(e) {}
 
-  // ── 1) Hide/close chat until both players are in game ─────────
-  function _bothConnected() {
-    try {
-      if (!window.currentRoom) return false;
-      var r = window.currentRoom;
-      if (r.player2_id || r.player2_name) return true;
-      // fallback: presence-based flag if the app sets it
-      if (window.partnerConnected === true) return true;
-    } catch(e){}
-    return false;
-  }
-  function _refreshChatVisibility() {
-    var on = _bothConnected();
-    document.body.classList.toggle('pookie-chat-enabled', on);
-    if (!on) {
-      // Force-close if it was left open
-      try {
-        var p = document.getElementById('chat-panel');
-        var o = document.getElementById('chat-overlay');
-        if (p) p.classList.remove('open');
-        if (o) o.classList.remove('open');
-        window.chatOpen = false;
-      } catch(e){}
-    }
-  }
-  // Wrap updateConnectionUI (called on partner join / presence updates)
-  var _origUpd = window.updateConnectionUI;
-  window.updateConnectionUI = function(){
-    if (typeof _origUpd === 'function') _origUpd.apply(this, arguments);
-    _refreshChatVisibility();
-  };
-  // Wrap showScreen to reset chat when leaving app view
-  var _origShowScreen = window.showScreen;
-  window.showScreen = function(id){
-    if (typeof _origShowScreen === 'function') _origShowScreen.apply(this, arguments);
-    if (id !== 'app') {
-      document.body.classList.remove('pookie-chat-enabled');
-      try {
-        var p = document.getElementById('chat-panel');
-        var o = document.getElementById('chat-overlay');
-        if (p) p.classList.remove('open');
-        if (o) o.classList.remove('open');
-        window.chatOpen = false;
-      } catch(e){}
-    } else {
-      _refreshChatVisibility();
-    }
-  };
-  document.addEventListener('DOMContentLoaded', _refreshChatVisibility);
-  setInterval(_refreshChatVisibility, 1500);
+  // Chat availability + panel reset now live inside the base showScreen().
 
-  // ── 7) Tap room-code digits to copy ──────────────────────────
-  function _wireCodeCopy(el) {
-    if (!el || el.__pookieCopyWired) return;
-    el.__pookieCopyWired = true;
-    el.setAttribute('role', 'button');
-    el.setAttribute('tabindex', '0');
-    el.setAttribute('aria-label', 'Copy room code');
-    el.title = 'Tap to copy';
-    var handler = function(){
-      var code = (el.textContent || '').trim();
-      if (!code || code === '----') return;
-      navigator.clipboard.writeText(code);
-    };
-    el.addEventListener('click', handler);
-    el.addEventListener('keydown', function(e){
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
+  // ── Tap room-code digits to copy (event delegation — no re-wiring poll) ──
+  function _isCodeEl(el) {
+    return el && (el.id === 'landing-room-code' || el.id === 'room-status-code');
+  }
+  function _copyCodeFrom(el) {
+    var code = (el.textContent || '').replace(/[^0-9]/g, '');
+    if (code.length !== 4) return;
+    navigator.clipboard.writeText(code);
+  }
+  document.addEventListener('click', function(e){
+    var el = e.target && e.target.closest ? e.target.closest('#landing-room-code, #room-status-code') : null;
+    if (_isCodeEl(el)) _copyCodeFrom(el);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var el = e.target && e.target.closest ? e.target.closest('#landing-room-code, #room-status-code') : null;
+    if (_isCodeEl(el)) { e.preventDefault(); _copyCodeFrom(el); }
+  });
+  function _labelCodeEls(){
+    ['landing-room-code','room-status-code'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el || el.__pkLabelled) return;
+      el.__pkLabelled = true;
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', 'Copy room code');
+      el.title = 'Tap to copy';
     });
   }
-  document.addEventListener('DOMContentLoaded', function(){
-    _wireCodeCopy(document.getElementById('landing-room-code'));
-    _wireCodeCopy(document.getElementById('room-status-code'));
-  });
-  // Re-wire in case the elements are re-rendered
-  setInterval(function(){
-    _wireCodeCopy(document.getElementById('landing-room-code'));
-    _wireCodeCopy(document.getElementById('room-status-code'));
-  }, 2000);
+  document.addEventListener('DOMContentLoaded', _labelCodeEls);
 
-  // ── 9) Chat empty state polish ───────────────────────────────
-  function _polishChatEmpty() {
-    var wrap = document.getElementById('chat-messages');
-    if (!wrap) return;
-    var empty = wrap.querySelector('.chat-empty');
-    if (empty && !empty.__pookiePolished) {
-      empty.__pookiePolished = true;
-      empty.innerHTML = '<div style="font-size:28px;line-height:1;margin-bottom:6px;">🧡</div>Say something nice';
-      empty.style.textAlign = 'center';
-      empty.style.opacity = '0.75';
-      empty.style.padding = '18px 8px';
-    }
-  }
-  document.addEventListener('DOMContentLoaded', _polishChatEmpty);
-  setInterval(_polishChatEmpty, 2000);
+  // Chat empty-state copy is rendered by the base renderChatMessages().
 
   // ── 8) "How to play" tooltip on first session ────────────────
   var TIP_KEY = 'pookie_howto_seen_v1';
