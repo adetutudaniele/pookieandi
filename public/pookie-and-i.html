@@ -2690,6 +2690,9 @@ function buildMain() {
 
   main.innerHTML = html;
   attachEvents(game, s);
+  // Post-render hooks (replace the old 400–600ms DOM-mutating intervals).
+  if (typeof window.__pkInjectGameButtons === 'function') window.__pkInjectGameButtons();
+  if (typeof window.__pkScanGameScores === 'function') window.__pkScanGameScores();
 }
 
 function buildDrawGame(game, s) {
