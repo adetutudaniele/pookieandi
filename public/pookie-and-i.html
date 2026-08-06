@@ -6740,5 +6740,119 @@ html[data-theme="light"] .pk-device-meta { color: rgba(26,22,18,0.5); }
 })();
 </script>
 
+<!-- ══ PHASE 3 · responsive shell behaviour (event-driven, no timers) ══ -->
+<script>
+(function(){
+  'use strict';
+  var root = document.documentElement, body = document.body;
+  var DOCK_MIN = 1024;
+  var dockMQ = window.matchMedia('(min-width: ' + DOCK_MIN + 'px)');
+  var mobileMQ = window.matchMedia('(max-width: 767.98px)');
+  var lastFocus = { nav: null, chat: null };
+  var frame = 0;
+
+  function el(id){ return document.getElementById(id); }
+  function isOpen(node){ return !!(node && node.classList.contains('open')); }
+
+  /* Single sync pass: dock state, scroll lock, aria — coalesced into one rAF
+     so class changes never cause layout thrash or duplicate measurement. */
+  function sync(){
+    if (frame) return;
+    frame = requestAnimationFrame(function(){
+      frame = 0;
+      var nav = el('side-nav'), chat = el('chat-panel');
+      var navOpen = isOpen(nav), chatOpen = isOpen(chat);
+      var docked = dockMQ.matches;
+
+      body.classList.toggle('pk-nav-docked', docked && navOpen);
+      body.classList.toggle('pk-chat-docked', docked && chatOpen);
+      // Lock the page behind a true overlay only (docked panels keep scrolling)
+      body.classList.toggle('pk-scroll-lock', !docked && (navOpen || chatOpen));
+
+      if (nav) nav.setAttribute('aria-hidden', navOpen ? 'false' : 'true');
+      if (chat) chat.setAttribute('aria-hidden', chatOpen ? 'false' : 'true');
+      var chatBtn = el('chat-btn');
+      if (chatBtn) chatBtn.setAttribute('aria-expanded', chatOpen ? 'true' : 'false');
+
+      if (typeof window.__pkMeasureHeader === 'function') window.__pkMeasureHeader();
+    });
+  }
+
+  /* Focus handling: move focus into a panel when it opens, restore on close. */
+  function watchFocus(node, key){
+    if (!node) return;
+    var wasOpen = isOpen(node);
+    return function(){
+      var now = isOpen(node);
+      if (now === wasOpen) return;
+      wasOpen = now;
+      if (now) {
+        lastFocus[key] = document.activeElement;
+        var target = node.querySelector('input, textarea, button, [href], [tabindex]:not([tabindex="-1"])');
+        if (target && !mobileMQ.matches) { try { target.focus({ preventScroll: true }); } catch(e){} }
+      } else if (lastFocus[key] && document.contains(lastFocus[key])) {
+        try { lastFocus[key].focus({ preventScroll: true }); } catch(e){}
+        lastFocus[key] = null;
+      }
+    };
+  }
+
+  function observe(node, key){
+    if (!node || node.__pkPhase3) return;
+    node.__pkPhase3 = true;
+    var onFocus = watchFocus(node, key);
+    new MutationObserver(function(){ sync(); if (onFocus) onFocus(); })
+      .observe(node, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  /* Escape closes the topmost open panel (profile modal keeps its own handler) */
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape') return;
+    if (isOpen(el('chat-panel')) && typeof window.toggleChat === 'function') { window.toggleChat(); return; }
+    if (isOpen(el('side-nav')) && typeof window.closeSideNav === 'function') { window.closeSideNav(); }
+  });
+
+  /* On-screen keyboard: keep the chat composer above the keyboard on mobile */
+  var vv = window.visualViewport;
+  if (vv) {
+    var kbFrame = 0;
+    var onVV = function(){
+      if (kbFrame) return;
+      kbFrame = requestAnimationFrame(function(){
+        kbFrame = 0;
+        var inset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+        root.style.setProperty('--pk-kb', (inset > 60 ? inset : 0) + 'px');
+        if (inset > 60 && isOpen(el('chat-panel'))) {
+          var list = el('chat-messages');
+          if (list) list.scrollTop = list.scrollHeight;
+        }
+      });
+    };
+    vv.addEventListener('resize', onVV, { passive: true });
+    vv.addEventListener('scroll', onVV, { passive: true });
+  }
+
+  /* Breakpoint / orientation changes re-run the same single sync pass */
+  ['change'].forEach(function(evt){
+    dockMQ.addEventListener(evt, sync);
+    mobileMQ.addEventListener(evt, sync);
+  });
+  window.addEventListener('orientationchange', sync, { passive: true });
+  window.addEventListener('resize', sync, { passive: true });
+
+  function init(){
+    observe(el('side-nav'), 'nav');
+    observe(el('chat-panel'), 'chat');
+    var chat = el('chat-panel');
+    if (chat) { chat.setAttribute('role', 'dialog'); chat.setAttribute('aria-label', 'Chat'); }
+    var nav = el('side-nav');
+    if (nav) { nav.setAttribute('role', 'navigation'); nav.setAttribute('aria-label', 'Games and settings'); }
+    sync();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+
 </body>
 </html>
