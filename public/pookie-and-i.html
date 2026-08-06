@@ -1478,6 +1478,155 @@ emoji-picker {
 
 /* Never let the top score bar overlap game content — additive safety */
 #score-bar { top: env(safe-area-inset-top, 0); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PHASE 3 — RESPONSIVE LAYOUT & CROSS-DEVICE UX
+   Layout / spacing / interaction only. Uses the Phase 2 tokens
+   (--pk-header-h, --pk-sidebar-w, --pk-chat-w, --z-*) as the single source
+   of truth; no new design language, no per-device patches.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* spacing scale (shared by shell + content) */
+  --pk-gap-xs: 6px;
+  --pk-gap-sm: 10px;
+  --pk-gap-md: 16px;
+  --pk-gap-lg: 24px;
+  --pk-shell-pad: clamp(14px, 4vw, 28px);
+  --pk-content-max: 680px;
+  /* on-screen-keyboard inset, written by the Phase 3 visualViewport handler */
+  --pk-kb: 0px;
+}
+
+/* ── Responsive chrome widths ─────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  :root { --pk-sidebar-w: min(86vw, 320px); --pk-chat-w: 100%; }
+}
+@media (min-width: 768px) {
+  :root { --pk-sidebar-w: 280px; --pk-chat-w: 340px; --pk-content-max: 720px; }
+}
+@media (min-width: 1280px) {
+  :root { --pk-sidebar-w: 300px; --pk-chat-w: 380px; --pk-content-max: 780px; }
+}
+
+/* ── Coordinated shell: sidebar → content → chat.
+      From 1024px up the panels DOCK instead of overlaying, so content is
+      never covered and always knows its available width. ─────────────── */
+@media (min-width: 1024px) {
+  body.pk-nav-docked #pk-header,
+  body.pk-nav-docked #app { padding-left: var(--pk-sidebar-w); }
+  body.pk-chat-docked #pk-header,
+  body.pk-chat-docked #app { padding-right: var(--pk-chat-w); }
+  body.pk-nav-docked .side-nav-overlay,
+  body.pk-chat-docked .chat-overlay { display: none; }
+  body.pk-nav-docked .side-nav,
+  body.pk-chat-docked .chat-panel { top: var(--pk-header-h); box-shadow: none; }
+  #pk-header, #app { transition: padding 0.25s ease; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #pk-header, #app, .side-nav, .chat-panel, .side-nav-overlay, .chat-overlay {
+    transition: none !important;
+  }
+}
+
+/* Content column: fluid gutters, one predictable measure at every width */
+.main {
+  max-width: var(--pk-content-max);
+  padding: var(--pk-gap-lg) var(--pk-shell-pad) calc(var(--pk-gap-lg) + var(--pk-safe-bottom));
+  width: 100%;
+}
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  /* Tablet: use the extra room instead of sitting halfway between layouts */
+  .main { padding-left: clamp(24px, 6vw, 56px); padding-right: clamp(24px, 6vw, 56px); }
+}
+
+/* ── Header polish ────────────────────────────────────────────────────── */
+#pk-header { padding-left: var(--pk-shell-pad); padding-right: var(--pk-shell-pad); }
+#pk-header-row1 { min-height: 52px; gap: var(--pk-gap-sm); }
+#pk-header-row1 .pk-h-center { overflow-x: auto; scrollbar-width: none; }
+#pk-header-row1 .pk-h-center::-webkit-scrollbar { display: none; }
+@media (max-height: 480px) and (orientation: landscape) {
+  #pk-header-row1 { min-height: 44px; }
+  #pk-header-row2 { font-size: 11.5px; }
+}
+
+/* ── Drawer (mobile + tablet overlay mode) ───────────────────────────── */
+.side-nav { box-shadow: 0 0 40px rgba(0,0,0,0.35); }
+.side-nav-item { min-height: 44px; }
+body.pk-scroll-lock { overflow: hidden; overscroll-behavior: none; }
+
+/* ── Chat: full-screen messaging surface on mobile ───────────────────── */
+@media (max-width: 767.98px) {
+  .chat-panel { width: 100%; border-left: none; }
+  .chat-panel-header { padding-top: max(var(--pk-safe-top), 12px); min-height: 52px; }
+  .chat-messages {
+    padding: var(--pk-gap-md) var(--pk-shell-pad);
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  }
+  .chat-msg { max-width: 78%; font-size: 14px; }
+  .chat-input-row { padding-left: var(--pk-shell-pad); padding-right: var(--pk-shell-pad); }
+}
+/* Composer always visible above the on-screen keyboard */
+.chat-panel { bottom: 0; }
+.chat-input-row {
+  flex: 0 0 auto;
+  padding-bottom: calc(max(env(safe-area-inset-bottom), 12px) + var(--pk-kb));
+  transition: padding-bottom 0.15s ease;
+}
+.chat-messages { min-height: 0; }
+
+/* ── Typography hierarchy (small screens stay readable) ──────────────── */
+.landing-title { font-size: clamp(2.1rem, 11vw, 3.6rem); line-height: 1.05; }
+.game-title { font-size: clamp(1.25rem, 5.2vw, 1.6rem); }
+.card-content { font-size: clamp(1.05rem, 4.4vw, 1.2rem); }
+.game-desc, .rules-list li { line-height: 1.6; }
+.side-nav-title, .chat-panel-title { line-height: 1.2; }
+
+/* ── Buttons: consistent sizing, hierarchy and states ────────────────── */
+.btn-primary, .btn-secondary, .auth-btn, .side-nav-action-btn, .app-share-btn {
+  min-height: 44px;
+}
+.btn-row { gap: var(--pk-gap-sm); flex-wrap: wrap; }
+.btn-row > * { min-width: 0; }
+.btn-secondary { font-weight: 500; }
+.btn-primary:disabled, .btn-secondary:disabled, .auth-btn:disabled,
+.chat-send-btn:disabled, .side-nav-action-btn:disabled {
+  opacity: 0.45; cursor: not-allowed; transform: none !important;
+}
+.btn-primary:focus-visible, .btn-secondary:focus-visible,
+.auth-btn:focus-visible, .chat-send-btn:focus-visible,
+.side-nav-item:focus-visible, .app-share-btn:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+@media (max-width: 359.98px) {
+  .btn-row { flex-direction: column; }
+  .btn-row > * { width: 100%; }
+}
+
+/* ── Modals / overlays: safe on short and small screens ──────────────── */
+.auth-modal, .pk-profile-modal, .invite-card {
+  width: min(100%, 460px);
+  max-height: min(88dvh, 88vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.auth-modal-overlay {
+  padding: max(var(--pk-safe-top), 16px) 16px max(var(--pk-safe-bottom), 16px);
+}
+
+/* ── Scrolling: one obvious scroll container ─────────────────────────── */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+#app { overflow-x: hidden; }
+
+/* ── Touch accessibility ─────────────────────────────────────────────── */
+@media (hover: none) and (pointer: coarse) {
+  .nav-btn, .score-btn, .pk-device-btn, .chat-panel-close,
+  .emoji-toggle-btn, .app-share-btn, .pk-avatar-edit {
+    min-height: 44px; min-width: 44px;
+  }
+  .score-btn-row, .qa-input-row { gap: var(--pk-gap-sm); }
+}
 </style>
 </head>
 <body>
@@ -6584,6 +6733,120 @@ html[data-theme="light"] .pk-device-meta { color: rgba(26,22,18,0.5); }
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape') closeProfilePage();
   });
+})();
+</script>
+
+<!-- ══ PHASE 3 · responsive shell behaviour (event-driven, no timers) ══ -->
+<script>
+(function(){
+  'use strict';
+  var root = document.documentElement, body = document.body;
+  var DOCK_MIN = 1024;
+  var dockMQ = window.matchMedia('(min-width: ' + DOCK_MIN + 'px)');
+  var mobileMQ = window.matchMedia('(max-width: 767.98px)');
+  var lastFocus = { nav: null, chat: null };
+  var frame = 0;
+
+  function el(id){ return document.getElementById(id); }
+  function isOpen(node){ return !!(node && node.classList.contains('open')); }
+
+  /* Single sync pass: dock state, scroll lock, aria — coalesced into one rAF
+     so class changes never cause layout thrash or duplicate measurement. */
+  function sync(){
+    if (frame) return;
+    frame = requestAnimationFrame(function(){
+      frame = 0;
+      var nav = el('side-nav'), chat = el('chat-panel');
+      var navOpen = isOpen(nav), chatOpen = isOpen(chat);
+      var docked = dockMQ.matches;
+
+      body.classList.toggle('pk-nav-docked', docked && navOpen);
+      body.classList.toggle('pk-chat-docked', docked && chatOpen);
+      // Lock the page behind a true overlay only (docked panels keep scrolling)
+      body.classList.toggle('pk-scroll-lock', !docked && (navOpen || chatOpen));
+
+      if (nav) nav.setAttribute('aria-hidden', navOpen ? 'false' : 'true');
+      if (chat) chat.setAttribute('aria-hidden', chatOpen ? 'false' : 'true');
+      var chatBtn = el('chat-btn');
+      if (chatBtn) chatBtn.setAttribute('aria-expanded', chatOpen ? 'true' : 'false');
+
+      if (typeof window.__pkMeasureHeader === 'function') window.__pkMeasureHeader();
+    });
+  }
+
+  /* Focus handling: move focus into a panel when it opens, restore on close. */
+  function watchFocus(node, key){
+    if (!node) return;
+    var wasOpen = isOpen(node);
+    return function(){
+      var now = isOpen(node);
+      if (now === wasOpen) return;
+      wasOpen = now;
+      if (now) {
+        lastFocus[key] = document.activeElement;
+        var target = node.querySelector('input, textarea, button, [href], [tabindex]:not([tabindex="-1"])');
+        if (target && !mobileMQ.matches) { try { target.focus({ preventScroll: true }); } catch(e){} }
+      } else if (lastFocus[key] && document.contains(lastFocus[key])) {
+        try { lastFocus[key].focus({ preventScroll: true }); } catch(e){}
+        lastFocus[key] = null;
+      }
+    };
+  }
+
+  function observe(node, key){
+    if (!node || node.__pkPhase3) return;
+    node.__pkPhase3 = true;
+    var onFocus = watchFocus(node, key);
+    new MutationObserver(function(){ sync(); if (onFocus) onFocus(); })
+      .observe(node, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  /* Escape closes the topmost open panel (profile modal keeps its own handler) */
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Escape') return;
+    if (isOpen(el('chat-panel')) && typeof window.toggleChat === 'function') { window.toggleChat(); return; }
+    if (isOpen(el('side-nav')) && typeof window.closeSideNav === 'function') { window.closeSideNav(); }
+  });
+
+  /* On-screen keyboard: keep the chat composer above the keyboard on mobile */
+  var vv = window.visualViewport;
+  if (vv) {
+    var kbFrame = 0;
+    var onVV = function(){
+      if (kbFrame) return;
+      kbFrame = requestAnimationFrame(function(){
+        kbFrame = 0;
+        var inset = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+        root.style.setProperty('--pk-kb', (inset > 60 ? inset : 0) + 'px');
+        if (inset > 60 && isOpen(el('chat-panel'))) {
+          var list = el('chat-messages');
+          if (list) list.scrollTop = list.scrollHeight;
+        }
+      });
+    };
+    vv.addEventListener('resize', onVV, { passive: true });
+    vv.addEventListener('scroll', onVV, { passive: true });
+  }
+
+  /* Breakpoint / orientation changes re-run the same single sync pass */
+  ['change'].forEach(function(evt){
+    dockMQ.addEventListener(evt, sync);
+    mobileMQ.addEventListener(evt, sync);
+  });
+  window.addEventListener('orientationchange', sync, { passive: true });
+  window.addEventListener('resize', sync, { passive: true });
+
+  function init(){
+    observe(el('side-nav'), 'nav');
+    observe(el('chat-panel'), 'chat');
+    var chat = el('chat-panel');
+    if (chat) { chat.setAttribute('role', 'dialog'); chat.setAttribute('aria-label', 'Chat'); }
+    var nav = el('side-nav');
+    if (nav) { nav.setAttribute('role', 'navigation'); nav.setAttribute('aria-label', 'Games and settings'); }
+    sync();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 
