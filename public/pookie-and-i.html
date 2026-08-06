@@ -1552,10 +1552,8 @@ emoji-picker {
 
 /* ── Drawer (mobile + tablet overlay mode) ───────────────────────────── */
 .side-nav { box-shadow: 0 0 40px rgba(0,0,0,0.35); }
-.side-nav[aria-hidden="true"] { visibility: hidden; }
-.side-nav.open { visibility: visible; }
 .side-nav-item { min-height: 44px; }
-body.pk-scroll-lock { overflow: hidden; touch-action: none; }
+body.pk-scroll-lock { overflow: hidden; overscroll-behavior: none; }
 
 /* ── Chat: full-screen messaging surface on mobile ───────────────────── */
 @media (max-width: 767.98px) {
@@ -1576,8 +1574,6 @@ body.pk-scroll-lock { overflow: hidden; touch-action: none; }
   transition: padding-bottom 0.15s ease;
 }
 .chat-messages { min-height: 0; }
-.chat-panel[aria-hidden="true"] { visibility: hidden; }
-.chat-panel.open { visibility: visible; }
 
 /* ── Typography hierarchy (small screens stay readable) ──────────────── */
 .landing-title { font-size: clamp(2.1rem, 11vw, 3.6rem); line-height: 1.05; }
