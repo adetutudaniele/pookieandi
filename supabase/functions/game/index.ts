@@ -152,13 +152,15 @@ async function snapshot(me: Participant) {
     }
   }
 
-  // Scores are derived from server-written score events only.
+  // Scores are derived from server-written score events only, and they run for
+  // the whole room (across every game session) because the scoreboard the
+  // players see is a running date-night total, not a per-game total.
   const scores: Record<string, number> = { P1: 0, P2: 0 };
+  const byId = new Map((participants ?? []).map((p: any) => [p.id, p.role]));
   const { data: events } = await admin
     .from("score_events")
     .select("participant_id, points")
-    .in("game_session_id", session ? [session.id] : ["00000000-0000-0000-0000-000000000000"]);
-  const byId = new Map((participants ?? []).map((p: any) => [p.id, p.role]));
+    .in("participant_id", [...byId.keys()]);
   for (const e of events ?? []) {
     const role = byId.get(e.participant_id);
     if (role) scores[role] += e.points;
