@@ -517,6 +517,12 @@ async function submitAction(me: Participant, body: any) {
   if (!round) throw new EngineError("No round in progress", "NO_ROUND");
   const actionId = String(body.action_id ?? "");
   if (!actionId) throw new EngineError("Missing action id", "BAD_REQUEST");
+  // A version number only identifies a state within one round, so the round
+  // itself is part of the expectation: an action aimed at a finished round
+  // must never land on its successor.
+  if (body.round_id && body.round_id !== round.id) {
+    return { ...(await snapshot(me)), rejected: "STALE" };
+  }
   return applyThroughEngine(me, session, round, {
     actionId,
     type: String(body.action_type ?? ""),
