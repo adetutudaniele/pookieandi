@@ -4206,10 +4206,17 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Expose for the mobile hardening layer (offline/realtime reconnect on focus)
 try { window.sb = sb; } catch(e){}
+window.__PK_SUPABASE_URL = SUPABASE_URL;
+window.__PK_SUPABASE_KEY = SUPABASE_KEY;
 
+// ─── ENGINE-BACKED ROOM LAYER ───────────────────────────────────────
+// All room, participant, chat, score and presence truth now comes from the
+// server engine (PKEngine). The browser never invents state: it sends an
+// operation, the server validates it, and the UI re-renders from the snapshot
+// the server sends back. `currentRoom` is kept in the legacy shape purely so
+// the existing rendering code keeps working unchanged.
 let currentRoom = null;
 let isPlayer1 = false;
-let roomChannel = null;
 let syncPaused = false;
 let syncTimer = null;
 
@@ -4238,10 +4245,9 @@ function applyRemoteState(gs) {
   setTimeout(() => { syncPaused = false; }, 200);
 }
 
-// ─── ROOM WRITES ────────────────────────────────────────
-// Every write to `rooms` goes through roomUpdate(), which delegates to the
-// retrying safeRoomUpdate layer (__pkSafeRoomUpdate) when it is available and
-// falls back to a direct update if that layer has not booted yet.
+// Bridge for games that have not moved onto the round engine yet. It is the
+// only remaining direct write to the room row and disappears with the last
+// legacy game.
 function roomUpdate(patch) {
   if (!currentRoom) return Promise.resolve({ ok: false, error: 'no-room' });
   if (typeof window.__pkSafeRoomUpdate === 'function') {
@@ -4257,6 +4263,76 @@ function pushState() {
     roomUpdate({ game_state: getFullState(), active_game: activeGame });
   }, 100);
 }
+
+// ─── SNAPSHOT → UI ──────────────────────────────────────────────────
+let _lastStateSig = null;
+let _partnerWasHere = false;
+
+function applyEngineSnapshot(snap) {
+  if (!snap || !snap.room) return;
+  const me = snap.me;
+  isPlayer1 = me.role === 'P1';
+  const p1 = PKEngine.participant('P1');
+  const p2 = PKEngine.participant('P2');
+
+  currentRoom = {
+    id: snap.room.id,
+    room_code: snap.room.code,
+    created_at: snap.room.createdAt,
+    expires_at: snap.room.expiresAt,
+    player1_name: p1 ? p1.display_name : 'Pookie',
+    player2_name: p2 ? p2.display_name : null,
+    player1_connected: PKEngine.isPresent('P1'),
+    player2_connected: PKEngine.isPresent('P2'),
+    game_state: snap.room.legacyState,
+    active_game: snap.room.legacyGame
+  };
+
+  // Names are always shown from my own point of view.
+  p1Name = isPlayer1 ? currentRoom.player1_name : (currentRoom.player2_name || 'Pookie');
+  p2Name = isPlayer1 ? (currentRoom.player2_name || 'Pookie') : currentRoom.player1_name;
+
+  // Scores are server-owned; the bar simply renders them.
+  scores = { p1: isPlayer1 ? snap.scores.P1 : snap.scores.P2,
+             p2: isPlayer1 ? snap.scores.P2 : snap.scores.P1 };
+
+  // Chat: one row per message, so nothing can overwrite anything.
+  const prevLen = chatMessages.length;
+  chatMessages = (snap.messages || []).map(m => ({
+    from: (p1 && m.participant_id === p1.id) ? 'p1' : 'p2',
+    mine: m.participant_id === me.id,
+    text: m.message,
+    ts: new Date(m.created_at).getTime()
+  }));
+  if (chatOpen) {
+    lastReadCount = chatMessages.length;
+    renderChatMessages();
+  } else if (chatMessages.length > prevLen) {
+    updateChatBadge();
+  }
+
+  updateConnectionUI();
+  renderScoreBar();
+
+  // Legacy game state only re-renders when it actually changed.
+  const sig = JSON.stringify(snap.room.legacyState || null) + '|' + snap.room.legacyGame;
+  if (sig !== _lastStateSig) {
+    _lastStateSig = sig;
+    if (snap.room.legacyState && snap.room.legacyState.state) applyRemoteState(snap.room.legacyState);
+  }
+
+  if (currentRoom.player2_name && !_partnerWasHere) {
+    _partnerWasHere = true;
+    const waitEl = document.getElementById('invite-waiting');
+    if (waitEl) waitEl.textContent = `${currentRoom.player2_name} has joined! 🧡`;
+    if (isPlayer1 && document.getElementById('screen-landing')?.classList.contains('active')) {
+      showToast(`${currentRoom.player2_name} joined! 🧡`);
+      setTimeout(() => goToApp(), 1200);
+    }
+  }
+}
+
+try { PKEngine.on(applyEngineSnapshot); } catch(e) { console.error('engine unavailable', e); }
 
 function updateConnectionUI() {
   if (!currentRoom) return;
@@ -4279,65 +4355,24 @@ function updateConnectionUI() {
   const p2c = currentRoom.player2_connected;
   const p2n = currentRoom.player2_name;
 
-  if (p2n) {
-    namesEl.textContent = currentRoom.player1_name + ' & ' + p2n;
-    p1Name = isPlayer1 ? currentRoom.player1_name : p2n;
-    p2Name = isPlayer1 ? p2n : currentRoom.player1_name;
-  }
+  if (namesEl && p2n) namesEl.textContent = p1Name + ' & ' + p2Name;
 
   // Single source of truth for the row-2 status line.
   if (p1c && p2c) {
     if (rsLine) rsLine.innerHTML = '<span class="connected-dot green"></span> Both connected 🧡';
-    bannerEl.style.display = 'none';
+    if (bannerEl) bannerEl.style.display = 'none';
   } else if (p2n) {
     if (rsLine) rsLine.innerHTML = '<span class="connected-dot red"></span> Pookie disconnected';
-    bannerEl.style.display = 'block';
+    if (bannerEl) bannerEl.style.display = 'block';
   } else {
     if (rsLine) rsLine.innerHTML = '<span class="connected-dot yellow"></span> Waiting for your pookie...';
-    bannerEl.style.display = 'none';
+    if (bannerEl) bannerEl.style.display = 'none';
   }
 
   // Connection-driven chrome updates (previously done by polling intervals).
   if (typeof window.__pkRenderExpiry === 'function') window.__pkRenderExpiry();
   if (typeof window.__pkRefreshPrefill === 'function') window.__pkRefreshPrefill();
   if (typeof window.__pkMeasureHeader === 'function') window.__pkMeasureHeader();
-}
-
-function subscribeToRoom(roomId) {
-  if (roomChannel) { sb.removeChannel(roomChannel); }
-  roomChannel = sb.channel('room-' + roomId)
-    .on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'rooms',
-      filter: 'id=eq.' + roomId
-    }, (payload) => {
-      const newRow = payload.new;
-      currentRoom = newRow;
-      updateConnectionUI();
-      if (newRow.game_state && newRow.game_state.state) {
-        applyRemoteState(newRow.game_state);
-      }
-      // Sync chat messages
-      if (newRow.messages && Array.isArray(newRow.messages)) {
-        const prevLen = chatMessages.length;
-        chatMessages = newRow.messages;
-        if (chatOpen) {
-          lastReadCount = chatMessages.length;
-          renderChatMessages();
-        } else if (chatMessages.length > prevLen) {
-          updateChatBadge();
-        }
-      }
-      // Sync scores
-      if (newRow.scores && typeof newRow.scores === 'object') {
-        scores = newRow.scores;
-        renderScoreBar();
-      }
-    })
-    .subscribe();
-
-  setupPresence();
 }
 
 // Creates the room, then reveals the share box inline on the landing screen.
@@ -4364,30 +4399,23 @@ async function startApp() {
     localStorage.setItem('pookie_last', new Date().toISOString());
   } catch(e) {}
 
-  const code = pendingRoomCode;
-  const { data, error } = await sb.from('rooms').insert({
-    room_code: code,
-    player1_name: p1Name,
-    player2_name: null,
-    player1_connected: true,
-    player2_connected: false,
-    active_game: activeGame,
-    game_state: getFullState()
-  }).select().single();
-
-  if (error) {
-    console.error('Room creation failed:', error);
-    showToast('Failed to create room');
-    goToApp();
+  let snap;
+  try {
+    snap = await PKEngine.createRoom(myName);
+  } catch (err) {
+    console.error('Room creation failed:', err);
+    showToast(err.code === 'OFFLINE' ? "You're offline — check your connection 🧡" : 'Failed to create room');
     return;
   }
 
-  currentRoom = data;
-  subscribeToRoom(data.id);
-  try { localStorage.setItem('pookie_room_id', data.id); } catch(e) {}
+  try {
+    localStorage.setItem('pookie_room_id', snap.room.id);
+    localStorage.setItem('pookie_room_code', snap.room.code);
+  } catch(e) {}
 
-  try { localStorage.setItem('pookie_room_code', code); } catch(e) {}
-  showRoomInvite(code);
+  // Keep a signed-in host's play attributed to their account.
+  PKEngine.linkUser().catch(() => {});
+  showRoomInvite(snap.room.code);
 }
 
 // Single implementation: reveal the share box inline on the landing screen
@@ -4396,7 +4424,6 @@ function showRoomInvite(code) {
   if (typeof window.__pkRevealSharebox === 'function') {
     showScreen('landing');
     window.__pkRevealSharebox(code);
-    pollForPartner();
     return;
   }
   const url = 'pookieandi.lovable.app';
@@ -4422,7 +4449,6 @@ function showRoomInvite(code) {
   inviteInner.insertBefore(rcDiv, inviteCard);
 
   showScreen('invite');
-  pollForPartner();
 }
 
 function copyRoomCode(code) {
@@ -4431,24 +4457,8 @@ function copyRoomCode(code) {
   navigator.clipboard.writeText(msg).then(() => showToast('Room code copied! 🧡'));
 }
 
-async function pollForPartner() {
-  if (!currentRoom) return;
-  const checkInterval = setInterval(async () => {
-    const { data } = await sb.from('rooms').select('*').eq('id', currentRoom.id).single();
-    if (data) {
-      currentRoom = data;
-      if (data.player2_connected && data.player2_name) {
-        clearInterval(checkInterval);
-        p2Name = data.player2_name;
-        const waitEl = document.getElementById('invite-waiting');
-        if (waitEl) waitEl.textContent = `${data.player2_name} has joined! 🧡`;
-        showToast(`${data.player2_name} joined! 🧡`);
-        setTimeout(() => goToApp(), 1500);
-      }
-    }
-  }, 2000);
-  setTimeout(() => clearInterval(checkInterval), 300000);
-}
+// The partner's arrival now arrives as a snapshot, so there is nothing to poll.
+function pollForPartner() {}
 
 async function joinRoom() {
   const codeInput = document.getElementById('joinCodeInput');
@@ -4459,58 +4469,30 @@ async function joinRoom() {
   }
 
   const myName = document.getElementById('name1').value.trim() || 'Pookie';
-
-  const { data, error } = await sb.from('rooms')
-    .select('*')
-    .eq('room_code', code)
-    .gte('expires_at', new Date().toISOString())
-    .maybeSingle();
-
-  if (error || !data) {
-    showToast('This room has ended 🧡 Ready for a new date night? Start a fresh room below.');
-    try { localStorage.removeItem('pookie_room_id'); localStorage.removeItem('pookie_room_code'); } catch(e) {}
-    return;
-  }
-
-  if (data.player2_connected && data.player2_name) {
-    if (data.player2_name !== myName) {
-      showToast('Room is already full');
-      return;
-    }
-  }
-
-  isPlayer1 = false;
   sessionStartTime = Date.now();
-  const { data: updated, error: updateErr } = await sb.from('rooms').update({
-    player2_name: myName,
-    player2_connected: true
-  }).eq('id', data.id).select().single();
 
-  if (updateErr) {
-    showToast('Failed to join room');
+  let snap;
+  try {
+    snap = await PKEngine.joinRoom(code, myName);
+  } catch (err) {
+    if (err.code === 'ROOM_FULL') {
+      showToast('This room already has two players');
+    } else if (err.code === 'OFFLINE') {
+      showToast("You're offline — check your connection 🧡");
+    } else {
+      showToast('This room has ended 🧡 Ready for a new date night? Start a fresh room below.');
+      try { localStorage.removeItem('pookie_room_id'); localStorage.removeItem('pookie_room_code'); } catch(e) {}
+    }
     return;
   }
 
-  currentRoom = updated;
-  p1Name = myName;
-  p2Name = updated.player1_name;
+  try {
+    localStorage.setItem('pookie_room_id', snap.room.id);
+    localStorage.setItem('pookie_room_code', snap.room.code);
+  } catch(e) {}
+  PKEngine.linkUser().catch(() => {});
 
-  if (updated.game_state && updated.game_state.state) {
-    applyRemoteState(updated.game_state);
-  }
-
-  subscribeToRoom(updated.id);
-  try { localStorage.setItem('pookie_room_id', updated.id); } catch(e) {}
-
-  if (updated.messages && Array.isArray(updated.messages)) {
-    chatMessages = updated.messages;
-    if (chatMessages.length) updateChatBadge();
-  }
-  if (updated.scores && typeof updated.scores === 'object') {
-    scores = updated.scores;
-  }
-
-  showToast(`Joined ${updated.player1_name}'s room! 🧡`);
+  showToast(`Joined ${currentRoom.player1_name}'s room! 🧡`);
   goToApp();
 }
 
@@ -4534,69 +4516,17 @@ goToApp = function() {
   } catch(e) {}
 };
 
-// Handle page unload
+// Leaving the page just stops the heartbeat — the server decides who is
+// present, so a closed tab goes stale on its own with no write from us.
 window.addEventListener('beforeunload', () => {
   if (!currentRoom) return;
-  // Save session history if authenticated
   saveSessionHistory();
-  const field = isPlayer1 ? 'player1_connected' : 'player2_connected';
-  const url = `${SUPABASE_URL}/rest/v1/rooms?id=eq.${currentRoom.id}`;
-  const body = JSON.stringify({ [field]: false });
-  try {
-    navigator.sendBeacon(url + '&apikey=' + SUPABASE_KEY, new Blob([body], { type: 'application/json' }));
-  } catch(e) {
-    fetch(url, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Prefer': 'return=minimal' },
-      body, keepalive: true
-    }).catch(() => {});
-  }
+  try { PKEngine.stopHeartbeat(); } catch(e) {}
 });
 
-// ═══════════════════════════════════════════════════════════
-// PRESENCE
-// ═══════════════════════════════════════════════════════════
-let presenceChannel = null;
-let heartbeatInterval = null;
+// Presence is heartbeat-based inside the engine; there is no separate channel.
+function setupPresence() {}
 
-function setupPresence() {
-  if (!currentRoom) return;
-  if (presenceChannel) sb.removeChannel(presenceChannel);
-
-  presenceChannel = sb.channel('presence-' + currentRoom.id, {
-    config: { presence: { key: isPlayer1 ? 'player1' : 'player2' } }
-  });
-
-  presenceChannel.on('presence', { event: 'sync' }, () => {
-    const presState = presenceChannel.presenceState();
-    const p1Online = !!presState['player1']?.length;
-    const p2Online = !!presState['player2']?.length;
-
-    if (currentRoom) {
-      const updates = {};
-      if (currentRoom.player1_connected !== p1Online) updates.player1_connected = p1Online;
-      if (currentRoom.player2_connected !== p2Online) updates.player2_connected = p2Online;
-      if (!p2Online && currentRoom.player2_connected) updates.player2_connected = false;
-      if (!p1Online && currentRoom.player1_connected) updates.player1_connected = false;
-      if (Object.keys(updates).length) {
-        sb.from('rooms').update(updates).eq('id', currentRoom.id).then(() => {});
-      }
-    }
-  });
-
-  presenceChannel.subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') {
-      await presenceChannel.track({ online: true, ts: Date.now() });
-    }
-  });
-
-  clearInterval(heartbeatInterval);
-  heartbeatInterval = setInterval(() => {
-    if (presenceChannel) {
-      presenceChannel.track({ online: true, ts: Date.now() });
-    }
-  }, 10000);
-}
 
 // ═══════════════════════════════════════════════════════════
 // GO BACK TO LANDING
