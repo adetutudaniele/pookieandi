@@ -137,7 +137,7 @@
   };
 
   engine.startGame = function (gameType) {
-    return adopt(call ? call('start_game', { participant_token: engine.token, game_type: gameType }).then(adopt) : null);
+    return call('start_game', { participant_token: engine.token, game_type: gameType }).then(adopt);
   };
   engine.rematch = function (gameType) {
     return call('start_rematch', { participant_token: engine.token, game_type: gameType }).then(adopt);
