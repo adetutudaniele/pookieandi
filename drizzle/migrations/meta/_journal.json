@@ -8,6 +8,13 @@
       "when": 1789753201406,
       "tag": "0000_multiplayer_engine_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789970777689,
+      "tag": "0001_score_events_room_level",
+      "breakpoints": true
     }
   ]
 }

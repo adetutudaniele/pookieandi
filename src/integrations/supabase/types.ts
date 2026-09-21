@@ -432,7 +432,7 @@ export type Database = {
       score_events: {
         Row: {
           created_at: string
-          game_session_id: string
+          game_session_id: string | null
           id: string
           participant_id: string
           points: number
@@ -441,7 +441,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          game_session_id: string
+          game_session_id?: string | null
           id?: string
           participant_id: string
           points?: number
@@ -450,7 +450,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          game_session_id?: string
+          game_session_id?: string | null
           id?: string
           participant_id?: string
           points?: number

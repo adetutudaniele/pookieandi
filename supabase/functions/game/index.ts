@@ -182,6 +182,11 @@ async function snapshot(me: Participant) {
       status: room.status,
       inviteToken: room.invite_token,
       expiresAt: room.expires_at,
+      createdAt: room.created_at,
+      // Bridge for games not yet migrated to the round engine. Removed in the
+      // final phase once every game runs through rounds and actions.
+      legacyState: room.game_state,
+      legacyGame: room.active_game,
     },
     me: { id: me.id, role: me.role, displayName: me.display_name, userId: me.user_id },
     participants: participants ?? [],
@@ -587,7 +592,7 @@ async function heartbeat(me: Participant) {
   await admin.from("participants")
     .update({ status: "CONNECTED", last_seen_at: new Date().toISOString() })
     .eq("id", me.id);
-  return { ok: true };
+  return { ok: true, room: { id: me.room_id } };
 }
 
 
@@ -600,12 +605,12 @@ async function sendMessage(me: Participant, body: any) {
     participant_id: me.id,
     message,
   });
-  return { ok: true };
+  return { ok: true, room: { id: me.room_id } };
 }
 
 async function leaveRoom(me: Participant) {
   await admin.from("participants").update({ status: "LEFT" }).eq("id", me.id);
-  return { ok: true };
+  return { ok: true, room: { id: me.room_id } };
 }
 
 /** A guest who signs in keeps the same participant identity. */
@@ -622,6 +627,13 @@ async function linkUser(me: Participant, req: Request) {
 // ════════════════════════════════════════════════════════════════════
 // Router
 // ════════════════════════════════════════════════════════════════════
+
+/** Operations that change room state and therefore need a change signal. */
+const MUTATING = new Set([
+  "join_room", "start_game", "start_rematch", "submit_action",
+  "submit_private_submission", "adjust_score", "reset_scores", "heartbeat",
+  "send_message", "complete_game", "leave_room", "link_user",
+]);
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return fail("BAD_METHOD", "POST only", 405);
@@ -635,47 +647,60 @@ Deno.serve(async (req) => {
 
   const op = String(body.op ?? "");
   try {
-    switch (op) {
-      case "create_room":
-        return json(await createRoom(body));
-      case "join_room":
-        return json(await joinRoom(body));
-      case "reconnect_participant":
-      case "get_state":
-        return json(await snapshot(await authParticipant(body.participant_token)));
-      case "start_game":
-        return json(await startSession(
-          await authParticipant(body.participant_token),
-          String(body.game_type ?? ""),
-          false,
-        ));
-      case "start_rematch":
-        return json(await startSession(
-          await authParticipant(body.participant_token),
-          String(body.game_type ?? ""),
-          true,
-        ));
-      case "submit_action":
-        return json(await submitAction(await authParticipant(body.participant_token), body));
-      case "submit_private_submission":
-        return json(await submitPrivate(await authParticipant(body.participant_token), body));
-      case "adjust_score":
-        return json(await adjustScore(await authParticipant(body.participant_token), body));
-      case "reset_scores":
-        return json(await resetScores(await authParticipant(body.participant_token)));
-      case "heartbeat":
-        return json(await heartbeat(await authParticipant(body.participant_token)));
-      case "send_message":
-        return json(await sendMessage(await authParticipant(body.participant_token), body));
-      case "complete_game":
-        return json(await completeGame(await authParticipant(body.participant_token)));
-      case "leave_room":
-        return json(await leaveRoom(await authParticipant(body.participant_token)));
-      case "link_user":
-        return json(await linkUser(await authParticipant(body.participant_token), req));
-      default:
-        return fail("UNKNOWN_OP", `Unknown operation ${op}`);
+    const run = async () => {
+      switch (op) {
+        case "create_room":
+          return await createRoom(body);
+        case "join_room":
+          return await joinRoom(body);
+        case "reconnect_participant":
+        case "get_state":
+          return await snapshot(await authParticipant(body.participant_token));
+        case "start_game":
+          return await startSession(
+            await authParticipant(body.participant_token),
+            String(body.game_type ?? ""),
+            false,
+          );
+        case "start_rematch":
+          return await startSession(
+            await authParticipant(body.participant_token),
+            String(body.game_type ?? ""),
+            true,
+          );
+        case "submit_action":
+          return await submitAction(await authParticipant(body.participant_token), body);
+        case "submit_private_submission":
+          return await submitPrivate(await authParticipant(body.participant_token), body);
+        case "adjust_score":
+          return await adjustScore(await authParticipant(body.participant_token), body);
+        case "reset_scores":
+          return await resetScores(await authParticipant(body.participant_token));
+        case "heartbeat":
+          return await heartbeat(await authParticipant(body.participant_token));
+        case "send_message":
+          return await sendMessage(await authParticipant(body.participant_token), body);
+        case "complete_game":
+          return await completeGame(await authParticipant(body.participant_token));
+        case "leave_room":
+          return await leaveRoom(await authParticipant(body.participant_token));
+        case "link_user":
+          return await linkUser(await authParticipant(body.participant_token), req);
+        default:
+          return null;
+      }
+    };
+
+    const result = await run() as any;
+    if (result === null) return fail("UNKNOWN_OP", `Unknown operation ${op}`);
+    // Every write bumps the room row. Clients subscribe to that single row and
+    // re-read an authoritative snapshot, so there is exactly one change signal
+    // instead of one subscription per table.
+    if (MUTATING.has(op) && result?.room?.id) {
+      await admin.from("rooms").update({ updated_at: new Date().toISOString() })
+        .eq("id", result.room.id);
     }
+    return json(result);
   } catch (err) {
     if (err instanceof EngineError) {
       const status = err.code === "UNAUTHORIZED" ? 401 : err.code === "NOT_ALLOWED" ? 403 : 400;
