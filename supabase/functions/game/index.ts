@@ -533,6 +533,64 @@ async function submitAction(me: Participant, body: any) {
   });
 }
 
+/** Roles of both slots in a room, so manual scoring can target either player. */
+async function roomParticipants(roomId: string) {
+  const { data } = await admin.from("participants")
+    .select("id, role").eq("room_id", roomId);
+  return data ?? [];
+}
+
+/**
+ * The scoreboard's +/- buttons. Only P1 holds the controls in the UI, and the
+ * server enforces that rather than trusting the client to hide the buttons.
+ */
+async function adjustScore(me: Participant, body: any) {
+  if (me.role !== "P1") throw new EngineError("Only the host can change scores", "NOT_ALLOWED");
+  const role = body.role === "P2" ? "P2" : "P1";
+  const delta = Number(body.delta) > 0 ? 1 : -1;
+  const people = await roomParticipants(me.room_id);
+  const target = people.find((p: any) => p.role === role);
+  if (!target) throw new EngineError("That player has not joined yet", "NO_PARTICIPANT");
+
+  const current = (await snapshot(me)).scores[role] ?? 0;
+  if (delta < 0 && current <= 0) return snapshot(me); // never below zero
+  const session = await activeSession(me.room_id);
+  await admin.from("score_events").insert({
+    game_session_id: session?.id ?? null,
+    participant_id: target.id,
+    reason: "manual_adjust",
+    points: delta,
+  });
+  return snapshot(me);
+}
+
+/** Reset writes compensating events rather than deleting history. */
+async function resetScores(me: Participant) {
+  if (me.role !== "P1") throw new EngineError("Only the host can reset scores", "NOT_ALLOWED");
+  const people = await roomParticipants(me.room_id);
+  const current = (await snapshot(me)).scores;
+  const session = await activeSession(me.room_id);
+  const rows = people
+    .filter((p: any) => (current[p.role] ?? 0) !== 0)
+    .map((p: any) => ({
+      game_session_id: session?.id ?? null,
+      participant_id: p.id,
+      reason: "manual_reset",
+      points: -(current[p.role] ?? 0),
+    }));
+  if (rows.length) await admin.from("score_events").insert(rows);
+  return snapshot(me);
+}
+
+/** Liveness: the client pings, the server owns "is my pookie still here?". */
+async function heartbeat(me: Participant) {
+  await admin.from("participants")
+    .update({ status: "CONNECTED", last_seen_at: new Date().toISOString() })
+    .eq("id", me.id);
+  return { ok: true };
+}
+
+
 async function sendMessage(me: Participant, body: any) {
   const message = String(body.message ?? "").trim().slice(0, 500);
   if (!message) throw new EngineError("Message is empty", "BAD_REQUEST");
