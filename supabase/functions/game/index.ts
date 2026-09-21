@@ -182,6 +182,11 @@ async function snapshot(me: Participant) {
       status: room.status,
       inviteToken: room.invite_token,
       expiresAt: room.expires_at,
+      createdAt: room.created_at,
+      // Bridge for games not yet migrated to the round engine. Removed in the
+      // final phase once every game runs through rounds and actions.
+      legacyState: room.game_state,
+      legacyGame: room.active_game,
     },
     me: { id: me.id, role: me.role, displayName: me.display_name, userId: me.user_id },
     participants: participants ?? [],
