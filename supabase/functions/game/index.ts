@@ -587,7 +587,7 @@ async function heartbeat(me: Participant) {
   await admin.from("participants")
     .update({ status: "CONNECTED", last_seen_at: new Date().toISOString() })
     .eq("id", me.id);
-  return { ok: true };
+  return { ok: true, room: { id: me.room_id } };
 }
 
 
@@ -600,12 +600,12 @@ async function sendMessage(me: Participant, body: any) {
     participant_id: me.id,
     message,
   });
-  return { ok: true };
+  return { ok: true, room: { id: me.room_id } };
 }
 
 async function leaveRoom(me: Participant) {
   await admin.from("participants").update({ status: "LEFT" }).eq("id", me.id);
-  return { ok: true };
+  return { ok: true, room: { id: me.room_id } };
 }
 
 /** A guest who signs in keeps the same participant identity. */
@@ -622,6 +622,13 @@ async function linkUser(me: Participant, req: Request) {
 // ════════════════════════════════════════════════════════════════════
 // Router
 // ════════════════════════════════════════════════════════════════════
+
+/** Operations that change room state and therefore need a change signal. */
+const MUTATING = new Set([
+  "join_room", "start_game", "start_rematch", "submit_action",
+  "submit_private_submission", "adjust_score", "reset_scores", "heartbeat",
+  "send_message", "complete_game", "leave_room", "link_user",
+]);
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return fail("BAD_METHOD", "POST only", 405);
