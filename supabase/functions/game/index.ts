@@ -659,6 +659,12 @@ Deno.serve(async (req) => {
         return json(await submitAction(await authParticipant(body.participant_token), body));
       case "submit_private_submission":
         return json(await submitPrivate(await authParticipant(body.participant_token), body));
+      case "adjust_score":
+        return json(await adjustScore(await authParticipant(body.participant_token), body));
+      case "reset_scores":
+        return json(await resetScores(await authParticipant(body.participant_token)));
+      case "heartbeat":
+        return json(await heartbeat(await authParticipant(body.participant_token)));
       case "send_message":
         return json(await sendMessage(await authParticipant(body.participant_token), body));
       case "complete_game":
