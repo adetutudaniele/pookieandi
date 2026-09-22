@@ -4332,7 +4332,15 @@ function applyEngineSnapshot(snap) {
   }
 }
 
-try { PKEngine.on(applyEngineSnapshot); } catch(e) { console.error('engine unavailable', e); }
+try { PKEngine.on(applyEngineSnapshot); } catch(e) { console.error('engine unavailable', e); 
+  // The host waits on the invite screen; the moment the server says a second
+  // player is in the room, both of them are in the app together.
+  if (snap.participants.some(p => p.role === 'P2') &&
+      document.getElementById('invite') &&
+      document.getElementById('invite').style.display !== 'none') {
+    goToApp();
+  }
+}
 
 function updateConnectionUI() {
   if (!currentRoom) return;

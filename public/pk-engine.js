@@ -174,8 +174,12 @@
   engine.completeGame = function () {
     return call('complete_game', { participant_token: engine.token }).then(adopt);
   };
-  engine.linkUser = function () {
-    return call('link_user', { participant_token: engine.token }).then(adopt);
+  // Guests have no account to link to, so this is a no-op for them.
+  engine.linkUser = async function () {
+    var session = null;
+    try { session = (await window.sb.auth.getSession()).data.session; } catch (e) {}
+    if (!session) return engine.snapshot;
+    return adopt(await call('link_user', { participant_token: engine.token }));
   };
   engine.leave = function () {
     var t = engine.token;
