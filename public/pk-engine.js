@@ -8,9 +8,10 @@
  * from the snapshot. No state is pushed from the browser.
  */
 (function () {
-  var URL_BASE = window.__PK_SUPABASE_URL;
-  var ANON = window.__PK_SUPABASE_KEY;
-  var FN = URL_BASE + '/functions/v1/game';
+  // Config is published by the app's inline script, which runs after this
+  // file loads, so it is read at call time rather than at load time.
+  function fnUrl() { return window.__PK_SUPABASE_URL + '/functions/v1/game'; }
+  function anonKey() { return window.__PK_SUPABASE_KEY; }
   var TOKEN_KEY = 'pookie_participant_token';
 
   var listeners = [];
@@ -37,6 +38,7 @@
   /** One request shape for every operation; throws an Error with `.code`. */
   async function call(op, extra) {
     var body = Object.assign({ op: op }, extra || {});
+    var ANON = anonKey();
     var headers = { 'Content-Type': 'application/json', apikey: ANON, Authorization: 'Bearer ' + ANON };
     // A signed-in player sends their real session so the server can attribute
     // history and leaderboard points to their account.
@@ -49,7 +51,7 @@
 
     var res, payload;
     try {
-      res = await fetch(FN, { method: 'POST', headers: headers, body: JSON.stringify(body) });
+      res = await fetch(fnUrl(), { method: 'POST', headers: headers, body: JSON.stringify(body) });
       payload = await res.json();
     } catch (e) {
       var offline = new Error('You seem to be offline');
@@ -172,8 +174,12 @@
   engine.completeGame = function () {
     return call('complete_game', { participant_token: engine.token }).then(adopt);
   };
-  engine.linkUser = function () {
-    return call('link_user', { participant_token: engine.token }).then(adopt);
+  // Guests have no account to link to, so this is a no-op for them.
+  engine.linkUser = async function () {
+    var session = null;
+    try { session = (await window.sb.auth.getSession()).data.session; } catch (e) {}
+    if (!session) return engine.snapshot;
+    return adopt(await call('link_user', { participant_token: engine.token }));
   };
   engine.leave = function () {
     var t = engine.token;

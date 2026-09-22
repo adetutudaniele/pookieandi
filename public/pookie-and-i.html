@@ -15,6 +15,7 @@
 <link rel="apple-touch-icon" href="/app-icon.png">
 <script defer src="https://cloud.umami.is/script.js" data-website-id="802e19a5-b733-481c-820c-1eef1d603559"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/pk-engine.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
 <script type="module">
@@ -4293,8 +4294,7 @@ function applyEngineSnapshot(snap) {
   p2Name = isPlayer1 ? (currentRoom.player2_name || 'Pookie') : currentRoom.player1_name;
 
   // Scores are server-owned; the bar simply renders them.
-  scores = { p1: isPlayer1 ? snap.scores.P1 : snap.scores.P2,
-             p2: isPlayer1 ? snap.scores.P2 : snap.scores.P1 };
+  scores = { p1: snap.scores.P1, p2: snap.scores.P2 };
 
   // Chat: one row per message, so nothing can overwrite anything.
   const prevLen = chatMessages.length;
@@ -4332,7 +4332,17 @@ function applyEngineSnapshot(snap) {
   }
 }
 
-try { PKEngine.on(applyEngineSnapshot); } catch(e) { console.error('engine unavailable', e); }
+try { PKEngine.on(applyEngineSnapshot); } catch(e) { console.error('engine unavailable', e); 
+  // The host waits on the invite screen; the moment the server says a second
+  // player is in the room, both of them are in the app together.
+  var waiting = ['landing', 'invite'].some(function (id) {
+    var el = document.getElementById(id);
+    return el && el.style.display !== 'none';
+  });
+  if (isPlayer1 && waiting && snap.participants.some(p => p.role === 'P2')) {
+    goToApp();
+  }
+}
 
 function updateConnectionUI() {
   if (!currentRoom) return;
@@ -4624,24 +4634,26 @@ function renderScoreBar() {
   window.__pkLastScoreSig = sig;
 }
 
+// Scores are awarded by the server. The button shows an optimistic value and
+// the authoritative snapshot immediately confirms or corrects it.
 function changeScore(player, delta) {
+  if (!currentRoom) return;
   scores[player] = Math.max(0, scores[player] + delta);
+  window.__pkPulseNext = player;
   renderScoreBar();
-  pushScores();
+  PKEngine.adjustScore(player === 'p1' ? 'P1' : 'P2', delta).catch(err => {
+    if (err.code === 'NOT_ALLOWED') showToast('Only the host can change scores');
+    PKEngine.refresh().catch(() => {});
+  });
 }
 
 function confirmResetScores() {
   if (confirm('Reset both scores to 0?')) {
-    scores = { p1: 0, p2: 0 };
-    renderScoreBar();
-    pushScores();
+    PKEngine.resetScores().catch(() => PKEngine.refresh().catch(() => {}));
   }
 }
 
-function pushScores() {
-  if (!currentRoom) return;
-  roomUpdate({ scores });
-}
+function pushScores() { /* scores are server-owned; nothing to push */ }
 
 // ═══════════════════════════════════════════════════════════
 // COUNTDOWN TIMER
@@ -4774,13 +4786,16 @@ function sendChatMsg() {
   if (!text || !currentRoom) return;
   input.value = '';
 
-  const msg = { from: isPlayer1 ? 'p1' : 'p2', text, ts: Date.now() };
-  chatMessages.push(msg);
+  // Optimistic echo; the server's row is what everyone ends up rendering.
+  chatMessages.push({ from: isPlayer1 ? 'p1' : 'p2', text, ts: Date.now() });
   lastReadCount = chatMessages.length;
   renderChatMessages();
   updateChatBadge();
 
-  roomUpdate({ messages: chatMessages });
+  PKEngine.sendMessage(text).catch(() => {
+    showToast('Message did not send — check your connection');
+    PKEngine.refresh().catch(() => {});
+  });
   const wrap = document.getElementById('emoji-picker-wrap');
   if (wrap) wrap.classList.remove('open');
 }
@@ -5421,51 +5436,23 @@ async function saveSessionHistory() {
 
   /* -------- Full-state resync helper ------------------------------------ */
   async function fullResync(reason) {
-    if (!window.currentRoom) return;
+    if (!window.PKEngine || !window.PKEngine.hasSession()) return;
     try {
-      var res = await client.from('rooms').select('*').eq('id', window.currentRoom.id).maybeSingle();
-      if (res.error || !res.data) return;
-      var row = res.data;
-      window.currentRoom = row;
-      if (row.game_state && row.game_state.state && typeof window.applyRemoteState === 'function') {
-        window.applyRemoteState(row.game_state);
-      }
-      if (row.messages && Array.isArray(row.messages)) {
-        window.chatMessages = row.messages;
-        if (window.chatOpen) {
-          window.lastReadCount = window.chatMessages.length;
-          if (typeof window.renderChatMessages === 'function') window.renderChatMessages();
-        } else if (typeof window.updateChatBadge === 'function') {
-          window.updateChatBadge();
-        }
-      }
-      if (row.scores && typeof row.scores === 'object') {
-        window.scores = row.scores;
-        if (typeof window.renderScoreBar === 'function') window.renderScoreBar();
-      }
-      if (typeof window.updateConnectionUI === 'function') window.updateConnectionUI();
+      await window.PKEngine.refresh();
       setSyncStatus('synced');
     } catch(e) {
+      setSyncStatus('retry');
       console.warn('[sync] fullResync failed', reason, e);
     }
   }
   window.__pkFullResync = fullResync;
 
-  /* -------- Channel-drop watchdog: every 5s check + resync -------------- */
+  /* -------- Reconnect watchdog: re-read the truth if the room row has
+     gone quiet for too long (a dropped socket looks exactly like silence). */
   setInterval(function(){
-    if (!window.currentRoom) return;
-    var ch = window.roomChannel;
-    var unhealthy = !ch || (ch.state && ch.state !== 'joined' && ch.state !== 'joining');
-    if (unhealthy) {
-      setSyncStatus('retry');
-      try {
-        if (typeof window.subscribeToRoom === 'function') {
-          window.subscribeToRoom(window.currentRoom.id);
-        }
-      } catch(e){}
-      fullResync('watchdog');
-    }
-  }, 5000);
+    if (!window.PKEngine || !window.PKEngine.hasSession()) return;
+    fullResync('watchdog');
+  }, 20000);
 
   /* -------- Hook the existing mobile reconnect helper ------------------- */
   window.__pkResyncPresence = function(){
@@ -5610,50 +5597,39 @@ async function saveSessionHistory() {
   }
 
   // ── Rejoin prompt when returning within 24h ───────────────────
+  // Rejoin uses the durable participant token, so the player keeps the same
+  // identity, role, score and history instead of claiming a slot again.
   async function _maybeShowRejoin() {
-    let roomId = null;
-    try { roomId = localStorage.getItem(LS_KEY); } catch(e) {}
-    if (!roomId || !window.sb) return;
+    if (!window.PKEngine || !window.PKEngine.hasSession()) return;
+    let snap = null;
     try {
-      const { data } = await window.sb.from('rooms').select('*').eq('id', roomId).maybeSingle();
-      if (!data) return;
-      const created = new Date(data.created_at).getTime();
-      const now = Date.now();
-      if (now - created >= ROOM_TTL_MS) {
-        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
-        return;
-      }
-      const stage = document.getElementById('landing-inner');
-      if (!stage) return;
-      if (document.getElementById('rejoin-banner')) return;
-      const wrap = document.createElement('div');
-      wrap.id = 'rejoin-banner';
-      wrap.className = 'rejoin-banner';
-      wrap.innerHTML = `
-        <div class="rejoin-banner-title">Welcome back 🧡 Your room <strong>${data.room_code}</strong> is still active — want to rejoin?</div>
-        <div class="rejoin-banner-actions">
-          <button class="primary" id="rejoin-yes">Rejoin room</button>
-          <button id="rejoin-no">Start a new room</button>
-        </div>`;
-      stage.insertBefore(wrap, stage.firstChild);
-      document.getElementById('rejoin-yes').onclick = async () => {
-        // Make sure the stage (with name input + join field) is visible.
-        if (typeof window.showStage === 'function') { try { window.showStage(); } catch(e){} }
-        const n1 = document.getElementById('name1');
-        if (!n1.value.trim()) {
-          window.showToast && window.showToast('Enter your name to rejoin 🧡');
-          n1.focus();
-          return;
-        }
-        const codeInput = document.getElementById('joinCodeInput');
-        if (codeInput) codeInput.value = data.room_code;
-        if (typeof window.joinRoom === 'function') await window.joinRoom();
-      };
-      document.getElementById('rejoin-no').onclick = () => {
-        try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
-        wrap.remove();
-      };
-    } catch(e) { /* silent */ }
+      snap = await window.PKEngine.resume();
+    } catch(e) {
+      try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e2) {}
+      return;
+    }
+    if (!snap) return;
+    const stage = document.getElementById('landing-inner');
+    if (!stage || document.getElementById('rejoin-banner')) return;
+    const wrap = document.createElement('div');
+    wrap.id = 'rejoin-banner';
+    wrap.className = 'rejoin-banner';
+    wrap.innerHTML = `
+      <div class="rejoin-banner-title">Welcome back 🧡 Your room <strong>${snap.room.code}</strong> is still active — want to rejoin?</div>
+      <div class="rejoin-banner-actions">
+        <button class="primary" id="rejoin-yes">Rejoin room</button>
+        <button id="rejoin-no">Start a new room</button>
+      </div>`;
+    stage.insertBefore(wrap, stage.firstChild);
+    document.getElementById('rejoin-yes').onclick = () => {
+      wrap.remove();
+      window.goToApp && window.goToApp();
+    };
+    document.getElementById('rejoin-no').onclick = async () => {
+      try { await window.PKEngine.leave(); } catch(e) {}
+      try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_CODE); } catch(e) {}
+      wrap.remove();
+    };
   }
 
   // The friendly "room has ended" copy is now inside the base joinRoom().
