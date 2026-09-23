@@ -4331,6 +4331,8 @@ function applyEngineSnapshot(snap) {
       const el = document.getElementById(id);
       return el && el.style.display !== 'none';
     });
+    const banner = document.getElementById('rejoin-banner');
+    if (banner) banner.remove();
     if (isPlayer1 && waiting) {
       showToast(`${currentRoom.player2_name} joined! 🧡`);
       setTimeout(() => goToApp(), 1200);
