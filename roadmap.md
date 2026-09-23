@@ -7,12 +7,13 @@
 - [x] Atomic primitives: claim_participant_slot, apply_round_state
 - [x] Completed sessions immutable (trigger)
 - [x] Realtime publication for public state tables
-- [ ] Server game engine (edge function `game`) — operations + four patterns
-- [ ] Authoritative timers, server scoring, chat rows
+- [x] Server game engine (edge function `game`) — operations + four patterns
+- [x] Authoritative timers, server scoring, chat rows
 
 ## Phase 2 — Connect existing UI
-- [ ] Client engine adapter in public/pookie-and-i.html (visuals unchanged)
-- [ ] Reconnect via participant token, realtime resubscribe
+- [x] Client engine adapter (public/pk-engine.js) wired in, visuals unchanged
+- [x] Rooms, chat, scores, presence now server-authoritative
+- [x] Reconnect via participant token, realtime resubscribe
 
 ## Phase 3 — Representative games
 - [ ] Deep Questions, Finish My Sentence, Two Truths & a Lie, Rate Us, 20 Questions
