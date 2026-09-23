@@ -4321,28 +4321,26 @@ function applyEngineSnapshot(snap) {
     if (snap.room.legacyState && snap.room.legacyState.state) applyRemoteState(snap.room.legacyState);
   }
 
+  // The host waits on the landing/invite screen; the moment the server says a
+  // second player is in the room, both of them are in the app together.
   if (currentRoom.player2_name && !_partnerWasHere) {
     _partnerWasHere = true;
     const waitEl = document.getElementById('invite-waiting');
     if (waitEl) waitEl.textContent = `${currentRoom.player2_name} has joined! 🧡`;
-    if (isPlayer1 && document.getElementById('screen-landing')?.classList.contains('active')) {
+    const waiting = ['landing', 'invite'].some(id => {
+      const el = document.getElementById(id);
+      return el && el.style.display !== 'none';
+    });
+    const banner = document.getElementById('rejoin-banner');
+    if (banner) banner.remove();
+    if (isPlayer1 && waiting) {
       showToast(`${currentRoom.player2_name} joined! 🧡`);
       setTimeout(() => goToApp(), 1200);
     }
   }
 }
 
-try { PKEngine.on(applyEngineSnapshot); } catch(e) { console.error('engine unavailable', e); 
-  // The host waits on the invite screen; the moment the server says a second
-  // player is in the room, both of them are in the app together.
-  var waiting = ['landing', 'invite'].some(function (id) {
-    var el = document.getElementById(id);
-    return el && el.style.display !== 'none';
-  });
-  if (isPlayer1 && waiting && snap.participants.some(p => p.role === 'P2')) {
-    goToApp();
-  }
-}
+try { PKEngine.on(applyEngineSnapshot); } catch(e) { console.error('engine unavailable', e); }
 
 function updateConnectionUI() {
   if (!currentRoom) return;
